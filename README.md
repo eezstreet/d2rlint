@@ -38,8 +38,8 @@ export default class MyCustomRule extends Rule {
   }
 
   Evaluate(workspace: Workspace): void {
-    // check if something in the workspace isn't satisfactory
-    return true;
+    // check if something in the workspace isn't satisfactory, print if not
+    return;
   }
 }
 ```
