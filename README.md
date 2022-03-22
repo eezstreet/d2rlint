@@ -1,6 +1,6 @@
 # D2RLint (d2rlint)
 
-Taking cues from projects such as [https://eslint.org/](eslint), D2RLint will
+Taking cues from projects such as [eslint](https://eslint.org/), D2RLint will
 examine the tab-delimited spreadsheet ("Excel") files and JSON string tables for
 Diablo II: Resurrected, and make note of any errors.
 
