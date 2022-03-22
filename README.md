@@ -6,6 +6,54 @@ Diablo II: Resurrected, and make note of any errors.
 
 This is designed to be the direct successor of Paul Siramy's D2TxtAnalyzer.
 
+## For users
+
+On first use, the executable will first print a message telling you that it
+wrote a config file:
+
+```
+d2rlint didn't start, because the configuration file was missing. One has been generated for you.
+Please edit the configuration file (config.json) to set your workspace location.
+By default, this will look in the current working directory.
+Press any key to continue.
+```
+
+You will find that it has produced a `config.json` file:
+
+```json
+{
+  "workspace": "",
+  "rules": {
+    "Levels/ValidMonsters": {
+      "action": "warn"
+    }
+  }
+}
+```
+
+Please type the location where any .txt files can be found in the "workspace"
+folder. This is recursive; for example, you can type
+`C:/Program Files (x86)/Diablo II/MyMod` and it will search for everything. Or
+you can type `C:/` for all it cares.
+
+You can adjust the level of concern for each individual rule within the
+`"rules"` section. There are three "action levels":
+
+- `"warn"`: the default for most rules, this will warn about the rule but
+  continue execution
+- `"ignore"`: if this is set, the rule will be ignored (the rule is not even
+  evaluated)
+- `"error"`: throw an error if this rule fails and don't continue
+
+Please note that only `"ignore"` has any impact at the moment as this tool is
+still under development.
+
+### List of Rules
+
+- `Levels/ValidMonsters`: Fields within `mon1-mon25`, `umon1-25` and `nmon1-25`
+  (in Levels.txt) are checked against `id` in MonStats.txt. Any missing will
+  trigger a warning/error.
+
 ## For developers
 
 This project uses [deno](https://deno.land/). It is _strongly_ recommended that
