@@ -8,6 +8,7 @@ import { LoadWorkspace } from "./lib/workspace.ts";
 
 // Import all rules here so that they get loaded.
 import "./rules/levels.ts";
+import "./rules/basic.ts";
 /////////////////////////////////////////////////
 
 // Load workspace, iterate through rules, passing workspace into rule
@@ -24,3 +25,7 @@ allRules.forEach((rule) => {
     rule.Evaluate(ws);
   }
 });
+
+console.log(`Checking complete. Press any key to continue...`);
+Deno.stdin.readSync(new Uint8Array(32));
+Deno.exit(0);

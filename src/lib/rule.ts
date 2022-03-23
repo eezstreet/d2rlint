@@ -3,7 +3,9 @@
  * Each rule checks the entire workspace for problems and reports it according to the rule settings.
  */
 
-import { RuleAction } from "./config.ts";
+// @deno-types="https://deno.land/x/chalk_deno@v4.1.1-deno/index.d.ts"
+import chalk from "https://deno.land/x/chalk_deno@v4.1.1-deno/source/index.js";
+import { GetConfig, RuleAction } from "./config.ts";
 import { Workspace } from "./workspace.ts";
 
 export type Constructor<T extends unknown = unknown> = {
@@ -64,4 +66,56 @@ export abstract class Rule {
    * Gets the rule name. This can be for example "Monsters/Monstats2"
    */
   abstract GetRuleName(): string;
+
+  /**
+   * Makes a log message.
+   */
+  Log(msg: string): void {
+    const config = GetConfig();
+    const { log } = config;
+    Deno.writeTextFileSync(log, `${msg}\r\n`, { append: true });
+  }
+
+  /**
+   * Makes a log/console message.
+   * @param msg - the message to print to the log (and console)
+   */
+  Message(msg: string): void {
+    this.Log(`MESSAGE\t${this.GetRuleName()}\t${msg}`);
+    console.log(
+      `${chalk.cyan("MESSAGE")}\t${chalk.grey(this.GetRuleName())}\t${msg}`,
+    );
+  }
+
+  /**
+   * Makes a log/console warning.
+   * @param msg - the message to print to the log (and console)
+   */
+  Warn(msg: string): void {
+    const config = GetConfig();
+    const ruleName = this.GetRuleName();
+
+    if (
+      config.rules[ruleName] === undefined ||
+      config.rules[ruleName].action === undefined
+    ) {
+      return;
+    }
+
+    const action = config.rules[ruleName].action;
+    if (action === "warn") {
+      this.Log(`WARN\t${ruleName}\t${msg}`);
+      console.log(
+        `${chalk.yellowBright("WARN")}\t${chalk.grey(ruleName)}\t${msg}`,
+      );
+    } else if (action === "error") {
+      this.Log(`ERROR\t${ruleName}\t${msg}`);
+      console.log(
+        `${chalk.redBright("ERROR")}\t${chalk.grey(ruleName)}\t${msg}`,
+      );
+      console.log("Press any key to exit...");
+      Deno.stdin.readSync(new Uint8Array(32));
+      Deno.exit(1);
+    }
+  }
 }

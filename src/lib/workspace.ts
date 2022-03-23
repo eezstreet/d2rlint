@@ -1,60 +1,41 @@
 import * as fs from "https://deno.land/std@0.130.0/fs/mod.ts";
+import { ExcelColumns } from "../rules/basic.ts";
 
 /**
  * Entries for every Excel file.
  */
-export class D2RExcelRecord {}
+export abstract class D2RExcelRecord {
+  abstract GetFileName(): string;
 
-export class D2RActInfo extends D2RExcelRecord {
-  act: unknown;
-  town: unknown;
-  start: unknown;
-  maxnpcitemlevel: unknown;
-  classlevelrangestart: unknown;
-  classlevelrangeend: unknown;
-  wanderingnpcstart: unknown;
-  wanderingnpcrange: unknown;
-  commonactcof: unknown;
-  waypoint1: unknown;
-  waypoint2: unknown;
-  waypoint3: unknown;
-  waypoint4: unknown;
-  waypoint5: unknown;
-  waypoint6: unknown;
-  waypoint7: unknown;
-  waypoint8: unknown;
-  waypoint9: unknown;
-  wanderingmonsterpopulatechance: unknown;
-  wanderingmonsterregiontotal: unknown;
-  wanderingpopulaterandomchance: unknown;
+  GetOptionalFields(): string[] {
+    return [];
+  }
+
+  GetAllFields(): string[] {
+    return [];
+  }
 }
 
-export class D2RArmor extends D2RExcelRecord {
+// misc.txt, armor.txt and weapons.txt all share the same base record type.
+// however, some of the fields are optional.
+// for whatever reason, Blizzard didn't make them all use the same column headers
+export abstract class D2RItemExcelRecord extends D2RExcelRecord {
   name: unknown;
-  version: unknown;
   compactsave: unknown;
-  rarity: unknown;
-  spawnable: unknown;
-  minac: unknown;
-  maxac: unknown;
-  speed: unknown;
-  reqstr: unknown;
-  reqdex: unknown;
-  block: unknown;
-  durability: unknown;
-  nodurability: unknown;
+  version: unknown;
   level: unknown;
   levelreq: unknown;
+  reqstr: unknown;
+  reqdex: unknown;
+  rarity: unknown;
+  spawnable: unknown;
+  speed: unknown;
+  nodurability: unknown;
   cost: unknown;
-  "gamble cost": unknown; // fixme: unused?
+  "gamble cost": unknown;
   code: unknown;
-  namestr: unknown;
-  "magic lvl": unknown; // fixme: unused?
-  "auto prefix": unknown;
   alternategfx: unknown;
-  normcode: unknown;
-  ubercode: unknown;
-  ultracode: unknown;
+  namestr: unknown;
   component: unknown;
   invwidth: unknown;
   invheight: unknown;
@@ -64,22 +45,11 @@ export class D2RArmor extends D2RExcelRecord {
   flippyfile: unknown;
   invfile: unknown;
   uniqueinvfile: unknown;
-  setinvfile: unknown;
-  rarm: unknown;
-  larm: unknown;
-  torso: unknown;
-  legs: unknown;
-  rspad: unknown;
-  lspad: unknown;
-  useable: unknown;
-  stackable: unknown;
-  minstack: unknown;
-  maxstack: unknown;
-  spawnstack: unknown;
   transmogrify: unknown;
   tmogtype: unknown;
   tmogmin: unknown;
   tmogmax: unknown;
+  useable: unknown;
   type: unknown;
   type2: unknown;
   dropsound: unknown;
@@ -90,16 +60,33 @@ export class D2RArmor extends D2RExcelRecord {
   transtbl: unknown;
   lightradius: unknown;
   belt: unknown;
+  autobelt: unknown;
+  stackable: unknown;
+  minstack: unknown;
+  maxstack: unknown;
+  spawnstack: unknown;
   quest: unknown;
   questdiffcheck: unknown;
-  missiletype: unknown; // ?
+  missiletype: unknown;
+  spellicon: unknown;
+  pspell: unknown;
+  state: unknown;
+  cstate1: unknown;
+  cstate2: unknown;
+  len: unknown;
+  stat1: unknown;
+  calc1: unknown;
+  stat2: unknown;
+  calc2: unknown;
+  stat3: unknown;
+  calc3: unknown;
+  spelldesc: unknown;
+  spelldescstr: unknown;
+  spelldesccalc: unknown;
   durwarning: unknown;
   qntwarning: unknown;
-  mindam: unknown;
-  maxdam: unknown;
-  strbonus: unknown;
-  dexbonus: unknown;
   gemoffset: unknown;
+  bettergem: unknown;
   bitfield1: unknown;
   charsimin: unknown;
   charsimax: unknown;
@@ -166,41 +153,227 @@ export class D2RArmor extends D2RExcelRecord {
   halbumagicmin: unknown;
   halbumagicmax: unknown;
   halbumagiclvl: unknown;
-  jamellamin: unknown;
-  jamellamax: unknown;
-  jamellamagicmin: unknown;
-  jamellamagicmax: unknown;
-  jamellamagiclvl: unknown;
-  larzukmin: unknown;
-  larzukmax: unknown;
-  larzukmagicmin: unknown;
-  larzukmagicmax: unknown;
-  larzukmagiclvl: unknown;
   malahmin: unknown;
   malahmax: unknown;
   malahmagicmin: unknown;
   malahmagicmax: unknown;
   malahmagiclvl: unknown;
+  larzukmin: unknown;
+  larzukmax: unknown;
+  larzukmagicmin: unknown;
+  larzukmagicmax: unknown;
+  larzukmagiclvl: unknown;
   anyamin: unknown;
   anyamax: unknown;
   anyamagicmin: unknown;
   anyamagicmax: unknown;
   anyamagiclvl: unknown;
+  jamellamin: unknown;
+  jamellamax: unknown;
+  jamellamagicmin: unknown;
+  jamellamagicmax: unknown;
+  jamellamagiclvl: unknown;
   transform: unknown;
   invtrans: unknown;
   skipname: unknown;
   nightmareupgrade: unknown;
   hellupgrade: unknown;
-  nameable: unknown;
+  mindam: unknown;
+  maxdam: unknown;
   permstoreitem: unknown;
-  worldevent: unknown; // only in D2R
-  // new in retail release
+  multibuy: unknown;
+  nameable: unknown;
+  worldevent: unknown;
   showlevel: unknown;
+  spelldescstr2: unknown;
+  spelldesccolor: unknown;
+  minac: unknown;
+  maxac: unknown;
+  block: unknown;
+  durability: unknown;
+  "magic lvl": unknown; // fixme: unused?
+  "auto prefix": unknown;
+  normcode: unknown;
+  ubercode: unknown;
+  ultracode: unknown;
+  setinvfile: unknown;
+  rarm: unknown;
+  larm: unknown;
+  torso: unknown;
+  legs: unknown;
+  rspad: unknown;
+  lspad: unknown;
+  strbonus: unknown;
+  dexbonus: unknown;
+  "1or2handed": unknown;
+  "2handed": unknown;
+  "2handmindam": unknown;
+  "2handmaxdam": unknown;
+  minmisdam: unknown;
+  maxmisdam: unknown;
+  rangeadder: unknown;
+  wclass: unknown;
+  "2handedwclass": unknown;
+  "hit class": unknown;
+
+  abstract GetOptionalFields(): (keyof D2RItemExcelRecord)[];
+}
+
+export class D2RArmor extends D2RItemExcelRecord {
+  GetFileName(): string {
+    return "armor.txt";
+  }
+
+  GetOptionalFields(): (keyof D2RItemExcelRecord)[] {
+    return [
+      "autobelt",
+      "spellicon",
+      "pspell",
+      "state",
+      "cstate1",
+      "cstate2",
+      "len",
+      "stat1",
+      "stat2",
+      "stat3",
+      "calc1",
+      "calc2",
+      "calc3",
+      "spelldesc",
+      "spelldescstr",
+      "spelldesccalc",
+      "spelldesccolor",
+      "spelldescstr2",
+      "bettergem",
+      "multibuy",
+      "1or2handed",
+      "2handed",
+      "2handmindam",
+      "2handmaxdam",
+      "minmisdam",
+      "maxmisdam",
+      "rangeadder",
+      "wclass",
+      "2handedwclass",
+      "hit class",
+    ];
+  }
+}
+
+export class D2RMisc extends D2RItemExcelRecord {
+  GetFileName(): string {
+    return "misc.txt";
+  }
+
+  GetOptionalFields(): (keyof D2RItemExcelRecord)[] {
+    return [
+      "minac",
+      "maxac",
+      "block",
+      "durability",
+      "magic lvl",
+      "auto prefix",
+      "normcode",
+      "ubercode",
+      "ultracode",
+      "setinvfile",
+      "rarm",
+      "larm",
+      "torso",
+      "legs",
+      "rspad",
+      "lspad",
+      "strbonus",
+      "dexbonus",
+      "1or2handed",
+      "2handed",
+      "2handmindam",
+      "2handmaxdam",
+      "minmisdam",
+      "maxmisdam",
+      "rangeadder",
+      "wclass",
+      "2handedwclass",
+      "hit class",
+    ];
+  }
+}
+
+export class D2RWeapons extends D2RItemExcelRecord {
+  GetFileName(): string {
+    return "weapons.txt";
+  }
+
+  GetOptionalFields(): (keyof D2RItemExcelRecord)[] {
+    return [
+      "minac",
+      "maxac",
+      "block",
+      "rarm",
+      "larm",
+      "torso",
+      "legs",
+      "rspad",
+      "lspad",
+      "autobelt",
+      "spellicon",
+      "pspell",
+      "state",
+      "cstate1",
+      "cstate2",
+      "len",
+      "stat1",
+      "stat2",
+      "stat3",
+      "spelldesc",
+      "spelldescstr",
+      "spelldescstr2",
+      "spelldesccalc",
+      "bettergem",
+      "multibuy",
+      "spelldesccolor",
+      "calc1",
+      "calc2",
+      "calc3",
+    ];
+  }
+}
+
+export class D2RActInfo extends D2RExcelRecord {
+  act: unknown;
+  town: unknown;
+  start: unknown;
+  maxnpcitemlevel: unknown;
+  classlevelrangestart: unknown;
+  classlevelrangeend: unknown;
+  wanderingnpcstart: unknown;
+  wanderingnpcrange: unknown;
+  commonactcof: unknown;
+  waypoint1: unknown;
+  waypoint2: unknown;
+  waypoint3: unknown;
+  waypoint4: unknown;
+  waypoint5: unknown;
+  waypoint6: unknown;
+  waypoint7: unknown;
+  waypoint8: unknown;
+  waypoint9: unknown;
+  wanderingmonsterpopulatechance: unknown;
+  wanderingmonsterregiontotal: unknown;
+  wanderingpopulaterandomchance: unknown;
+
+  GetFileName(): string {
+    return "actinfo.txt";
+  }
 }
 
 export class D2RArmType extends D2RExcelRecord {
   name: unknown;
   token: unknown;
+
+  GetFileName(): string {
+    return "armtype.txt";
+  }
 }
 
 export class D2RAutomagic extends D2RExcelRecord {
@@ -243,6 +416,10 @@ export class D2RAutomagic extends D2RExcelRecord {
   etype5: unknown;
   multiply: unknown;
   add: unknown;
+
+  GetFileName(): string {
+    return "automagic.txt";
+  }
 }
 
 export class D2RAutomap extends D2RExcelRecord {
@@ -259,6 +436,10 @@ export class D2RAutomap extends D2RExcelRecord {
   cel3: unknown;
   //type4
   cel4: unknown;
+
+  GetFileName(): string {
+    return "automap.txt";
+  }
 }
 
 export class D2RBelts extends D2RExcelRecord {
@@ -328,11 +509,19 @@ export class D2RBelts extends D2RExcelRecord {
   box16right: unknown;
   box16top: unknown;
   box16bottom: unknown;
+
+  GetFileName(): string {
+    return "belts.txt";
+  }
 }
 
 export class D2RBodyLocs extends D2RExcelRecord {
   "body location": unknown;
   code: unknown;
+
+  GetFileName(): string {
+    return "bodylocs.txt";
+  }
 }
 
 export class D2RBooks extends D2RExcelRecord {
@@ -345,6 +534,10 @@ export class D2RBooks extends D2RExcelRecord {
   bookskill: unknown;
   basecost: unknown;
   costpercharge: unknown;
+
+  GetFileName(): string {
+    return "books.txt";
+  }
 }
 
 export class D2RCharStats extends D2RExcelRecord {
@@ -431,21 +624,37 @@ export class D2RCharStats extends D2RExcelRecord {
   item10loc: unknown;
   item10count: unknown;
   item10quality: unknown;
+
+  GetFileName(): string {
+    return "charstats.txt";
+  }
 }
 
 export class D2RColors extends D2RExcelRecord {
   "transform color": unknown;
   code: unknown;
+
+  GetFileName(): string {
+    return "colors.txt";
+  }
 }
 
 export class D2RCompCode extends D2RExcelRecord {
   component: unknown;
   code: unknown;
+
+  GetFileName(): string {
+    return "compcode.txt";
+  }
 }
 
 export class D2RComposit extends D2RExcelRecord {
   name: unknown;
   token: unknown;
+
+  GetFileName(): string {
+    return "composit.txt";
+  }
 }
 
 export class D2RCubemain extends D2RExcelRecord {
@@ -553,11 +762,19 @@ export class D2RCubemain extends D2RExcelRecord {
   "c mod 5 param": unknown;
   "c mod 5 min": unknown;
   "c mod 5 max": unknown;
+
+  GetFileName(): string {
+    return "cubemain.txt";
+  }
 }
 
 export class D2RCubemod extends D2RExcelRecord {
   "cube modifier type": unknown;
   code: unknown;
+
+  GetFileName(): string {
+    return "cubemod.txt";
+  }
 }
 
 export class D2RDifficultyLevels extends D2RExcelRecord {
@@ -591,15 +808,27 @@ export class D2RDifficultyLevels extends D2RExcelRecord {
   gambleunique: unknown;
   gambleuber: unknown;
   gambleultra: unknown;
+
+  GetFileName(): string {
+    return "difficultylevels.txt";
+  }
 }
 
 export class D2RElemTypes extends D2RExcelRecord {
   "elemental type": unknown;
   code: unknown;
+
+  GetFileName(): string {
+    return "elemtypes.txt";
+  }
 }
 
 export class D2REvents extends D2RExcelRecord {
   event: unknown;
+
+  GetFileName(): string {
+    return "events.txt";
+  }
 }
 
 export class D2RExperience extends D2RExcelRecord {
@@ -612,11 +841,19 @@ export class D2RExperience extends D2RExcelRecord {
   druid: unknown;
   assassin: unknown;
   expratio: unknown;
+
+  GetFileName(): string {
+    return "experience.txt";
+  }
 }
 
 export class D2RGamble extends D2RExcelRecord {
   name: unknown;
   code: unknown;
+
+  GetFileName(): string {
+    return "gamble.txt";
+  }
 }
 
 export class D2RGems extends D2RExcelRecord {
@@ -660,6 +897,10 @@ export class D2RGems extends D2RExcelRecord {
   shieldmod3param: unknown;
   shieldmod3min: unknown;
   shieldmod3max: unknown;
+
+  GetFileName(): string {
+    return "gems.txt";
+  }
 }
 
 export class D2RHireling extends D2RExcelRecord {
@@ -738,11 +979,19 @@ export class D2RHireling extends D2RExcelRecord {
   resurrectcostmultiplier: unknown;
   resurrectcostdivisor: unknown;
   resurrectcostmax: unknown;
+
+  GetFileName(): string {
+    return "hireling.txt";
+  }
 }
 
 export class D2RHitclass extends D2RExcelRecord {
   "hit class": unknown;
   code: unknown;
+
+  GetFileName(): string {
+    return "hitclass.txt";
+  }
 }
 
 export class D2RInventory extends D2RExcelRecord {
@@ -819,6 +1068,10 @@ export class D2RInventory extends D2RExcelRecord {
   glovesbottom: unknown;
   gloveswidth: unknown;
   glovesheight: unknown;
+
+  GetFileName(): string {
+    return "inventory.txt";
+  }
 }
 
 export class D2RItemRatio extends D2RExcelRecord {
@@ -842,6 +1095,10 @@ export class D2RItemRatio extends D2RExcelRecord {
   hiqualitydivisor: unknown;
   normal: unknown;
   normaldivisor: unknown;
+
+  GetFileName(): string {
+    return "itemratio.txt";
+  }
 }
 
 export class D2RItemStatCost extends D2RExcelRecord {
@@ -895,6 +1152,10 @@ export class D2RItemStatCost extends D2RExcelRecord {
   dgrpstr2: unknown;
   stuff: unknown;
   advdisplay: unknown;
+
+  GetFileName(): string {
+    return "itemstatcost.txt";
+  }
 }
 
 export class D2RItemTypes extends D2RExcelRecord {
@@ -933,6 +1194,10 @@ export class D2RItemTypes extends D2RExcelRecord {
   invgfx5: unknown;
   invgfx6: unknown;
   storepage: unknown;
+
+  GetFileName(): string {
+    return "itemtypes.txt";
+  }
 }
 
 export class D2RLevels extends D2RExcelRecord {
@@ -1119,10 +1384,18 @@ export class D2RLevels extends D2RExcelRecord {
   objprb5: unknown;
   objprb6: unknown;
   objprb7: unknown;
+
+  GetFileName(): string {
+    return "levels.txt";
+  }
 }
 
 export class D2RLowQualityItems extends D2RExcelRecord {
   name: unknown;
+
+  GetFileName(): string {
+    return "lowqualityitems.txt";
+  }
 }
 
 export class D2RLvlMaze extends D2RExcelRecord {
@@ -1134,6 +1407,10 @@ export class D2RLvlMaze extends D2RExcelRecord {
   sizex: unknown;
   sizey: unknown;
   merge: unknown;
+
+  GetFileName(): string {
+    return "lvlmaze.txt";
+  }
 }
 
 export class D2RLvlPrest extends D2RExcelRecord {
@@ -1160,6 +1437,10 @@ export class D2RLvlPrest extends D2RExcelRecord {
   file5: unknown;
   file6: unknown;
   dt1mask: unknown;
+
+  GetFileName(): string {
+    return "lvlprest.txt";
+  }
 }
 
 export class D2RLvlSub extends D2RExcelRecord {
@@ -1185,6 +1466,10 @@ export class D2RLvlSub extends D2RExcelRecord {
   prob4: unknown;
   trials4: unknown;
   max4: unknown;
+
+  GetFileName(): string {
+    return "lvlsub.txt";
+  }
 }
 
 export class D2RLvlTypes extends D2RExcelRecord {
@@ -1223,6 +1508,10 @@ export class D2RLvlTypes extends D2RExcelRecord {
   "file 31": unknown;
   "file 32": unknown;
   act: unknown;
+
+  GetFileName(): string {
+    return "lvltypes.txt";
+  }
 }
 
 export class D2RLvlWarp extends D2RExcelRecord {
@@ -1241,6 +1530,10 @@ export class D2RLvlWarp extends D2RExcelRecord {
   nointeract: unknown;
   direction: unknown;
   uniqueid: unknown;
+
+  GetFileName(): string {
+    return "lvlwarp.txt";
+  }
 }
 
 export class D2RMagicPrefix extends D2RExcelRecord {
@@ -1283,6 +1576,10 @@ export class D2RMagicPrefix extends D2RExcelRecord {
   etype5: unknown;
   multiply: unknown;
   add: unknown;
+
+  GetFileName(): string {
+    return "magicprefix.txt";
+  }
 }
 
 export class D2RMagicSuffix extends D2RExcelRecord {
@@ -1325,181 +1622,18 @@ export class D2RMagicSuffix extends D2RExcelRecord {
   etype5: unknown;
   multiply: unknown;
   add: unknown;
-}
 
-export class D2RMisc extends D2RExcelRecord {
-  name: unknown;
-  compactsave: unknown;
-  version: unknown;
-  level: unknown;
-  levelreq: unknown;
-  reqstr: unknown;
-  reqdex: unknown;
-  rarity: unknown;
-  spawnable: unknown;
-  speed: unknown;
-  nodurability: unknown;
-  cost: unknown;
-  "gamble cost": unknown;
-  code: unknown;
-  alternategfx: unknown;
-  namestr: unknown;
-  component: unknown;
-  invwidth: unknown;
-  invheight: unknown;
-  hasinv: unknown;
-  gemsockets: unknown;
-  gemapplytype: unknown;
-  flippyfile: unknown;
-  invfile: unknown;
-  uniqueinvfile: unknown;
-  transmogrify: unknown;
-  tmogtype: unknown;
-  tmogmin: unknown;
-  tmogmax: unknown;
-  useable: unknown;
-  type: unknown;
-  type2: unknown;
-  dropsound: unknown;
-  dropsfxframe: unknown;
-  usesound: unknown;
-  unique: unknown;
-  transparent: unknown;
-  transtbl: unknown;
-  lightradius: unknown;
-  belt: unknown;
-  autobelt: unknown;
-  stackable: unknown;
-  minstack: unknown;
-  maxstack: unknown;
-  spawnstack: unknown;
-  quest: unknown;
-  questdiffcheck: unknown;
-  missiletype: unknown;
-  spellicon: unknown;
-  pspell: unknown;
-  state: unknown;
-  cstate1: unknown;
-  cstate2: unknown;
-  len: unknown;
-  stat1: unknown;
-  calc1: unknown;
-  stat2: unknown;
-  calc2: unknown;
-  stat3: unknown;
-  calc3: unknown;
-  spelldesc: unknown;
-  spelldescstr: unknown;
-  spelldesccalc: unknown;
-  durwarning: unknown;
-  qntwarning: unknown;
-  gemoffset: unknown;
-  bettergem: unknown;
-  bitfield1: unknown;
-  charsimin: unknown;
-  charsimax: unknown;
-  charsimagicmin: unknown;
-  charsimagicmax: unknown;
-  charsimagiclvl: unknown;
-  gheedmin: unknown;
-  gheedmax: unknown;
-  gheedmagicmin: unknown;
-  gheedmagicmax: unknown;
-  gheedmagiclvl: unknown;
-  akaramin: unknown;
-  akaramax: unknown;
-  akaramagicmin: unknown;
-  akaramagicmax: unknown;
-  akaramagiclvl: unknown;
-  faramin: unknown;
-  faramax: unknown;
-  faramagicmin: unknown;
-  faramagicmax: unknown;
-  faramagiclvl: unknown;
-  lysandermin: unknown;
-  lysandermax: unknown;
-  lysandermagicmin: unknown;
-  lysandermagicmax: unknown;
-  lysandermagiclvl: unknown;
-  drognanmin: unknown;
-  drognanmax: unknown;
-  drognanmagicmin: unknown;
-  drognanmagicmax: unknown;
-  drognanmagiclvl: unknown;
-  hratlimin: unknown;
-  hratlimax: unknown;
-  hratlimagicmin: unknown;
-  hratlimagicmax: unknown;
-  hratlimagiclvl: unknown;
-  alkormin: unknown;
-  alkormax: unknown;
-  alkormagicmin: unknown;
-  alkormagicmax: unknown;
-  alkormagiclvl: unknown;
-  ormusmin: unknown;
-  ormusmax: unknown;
-  ormusmagicmin: unknown;
-  ormusmagicmax: unknown;
-  ormusmagiclvl: unknown;
-  elzixmin: unknown;
-  elzixmax: unknown;
-  elzixmagicmin: unknown;
-  elzixmagicmax: unknown;
-  elzixmagiclvl: unknown;
-  ashearamin: unknown;
-  ashearamax: unknown;
-  ashearamagicmin: unknown;
-  ashearamagicmax: unknown;
-  ashearamagiclvl: unknown;
-  cainmin: unknown;
-  cainmax: unknown;
-  cainmagicmin: unknown;
-  cainmagicmax: unknown;
-  cainmagiclvl: unknown;
-  halbumin: unknown;
-  halbumax: unknown;
-  halbumagicmin: unknown;
-  halbumagicmax: unknown;
-  halbumagiclvl: unknown;
-  malahmin: unknown;
-  malahmax: unknown;
-  malahmagicmin: unknown;
-  malahmagicmax: unknown;
-  malahmagiclvl: unknown;
-  larzukmin: unknown;
-  larzukmax: unknown;
-  larzukmagicmin: unknown;
-  larzukmagicmax: unknown;
-  larzukmagiclvl: unknown;
-  anyamin: unknown;
-  anyamax: unknown;
-  anyamagicmin: unknown;
-  anyamagicmax: unknown;
-  anyamagiclvl: unknown;
-  jamellamin: unknown;
-  jamellamax: unknown;
-  jamellamagicmin: unknown;
-  jamellamagicmax: unknown;
-  jamellamagiclvl: unknown;
-  transform: unknown;
-  invtrans: unknown;
-  skipname: unknown;
-  nightmareupgrade: unknown;
-  hellupgrade: unknown;
-  mindam: unknown;
-  maxdam: unknown;
-  permstoreitem: unknown;
-  multibuy: unknown;
-  nameable: unknown;
-  worldevent: unknown;
-  // new in retail release
-  showlevel: unknown;
-  spelldescstr2: unknown;
-  spelldesccolor: unknown;
+  GetFileName(): string {
+    return "magicsuffix.txt";
+  }
 }
 
 export class D2RMissCalc extends D2RExcelRecord {
   code: unknown;
+
+  GetFileName(): string {
+    return "misscalc.txt";
+  }
 }
 
 export class D2RMissiles extends D2RExcelRecord {
@@ -1647,10 +1781,18 @@ export class D2RMissiles extends D2RExcelRecord {
   clthitsubmissile2: unknown;
   clthitsubmissile3: unknown;
   clthitsubmissile4: unknown;
+
+  GetFileName(): string {
+    return "missiles.txt";
+  }
 }
 
 export class D2RMonAi extends D2RExcelRecord {
   ai: unknown;
+
+  GetFileName(): string {
+    return "monai.txt";
+  }
 }
 
 export class D2RMonEquip extends D2RExcelRecord {
@@ -1666,6 +1808,10 @@ export class D2RMonEquip extends D2RExcelRecord {
   item3: unknown;
   loc3: unknown;
   mod3: unknown;
+
+  GetFileName(): string {
+    return "monequip.txt";
+  }
 }
 
 export class D2RMonLvl extends D2RExcelRecord {
@@ -1700,21 +1846,37 @@ export class D2RMonLvl extends D2RExcelRecord {
   "l-xp": unknown;
   "l-xp(n)": unknown;
   "l-xp(h)": unknown;
+
+  GetFileName(): string {
+    return "monlvl.txt";
+  }
 }
 
 export class D2RMonMode extends D2RExcelRecord {
   name: unknown;
   token: unknown;
   code: unknown;
+
+  GetFileName(): string {
+    return "monmode.txt";
+  }
 }
 
 export class D2RMonPlace extends D2RExcelRecord {
   code: unknown;
+
+  GetFileName(): string {
+    return "monplace.txt";
+  }
 }
 
 export class D2RMonPreset extends D2RExcelRecord {
   act: unknown;
   place: unknown;
+
+  GetFileName(): string {
+    return "monpreset.txt";
+  }
 }
 
 export class D2RMonProp extends D2RExcelRecord {
@@ -1809,6 +1971,10 @@ export class D2RMonProp extends D2RExcelRecord {
   "par6 (h)": unknown;
   "min6 (h)": unknown;
   "max6 (h)": unknown;
+
+  GetFileName(): string {
+    return "monprop.txt";
+  }
 }
 
 export class D2RMonSeq extends D2RExcelRecord {
@@ -1817,6 +1983,10 @@ export class D2RMonSeq extends D2RExcelRecord {
   frame: unknown;
   dir: unknown;
   event: unknown;
+
+  GetFileName(): string {
+    return "monseq.txt";
+  }
 }
 
 export class D2RMonSounds extends D2RExcelRecord {
@@ -1861,6 +2031,10 @@ export class D2RMonSounds extends D2RExcelRecord {
   cvtsk3: unknown;
   cvttgt3: unknown;
   eol: unknown;
+
+  GetFileName(): string {
+    return "monsounds.txt";
+  }
 }
 
 export class D2RMonStats extends D2RExcelRecord {
@@ -2117,6 +2291,10 @@ export class D2RMonStats extends D2RExcelRecord {
   splgetmodechart: unknown;
   splendgeneric: unknown;
   splclientend: unknown;
+
+  GetFileName(): string {
+    return "monstats.txt";
+  }
 }
 
 export class D2RMonStats2 extends D2RExcelRecord {
@@ -2245,6 +2423,10 @@ export class D2RMonStats2 extends D2RExcelRecord {
   resurrectskill: unknown;
   // new in retail release
   spawnuniquemod: unknown;
+
+  GetFileName(): string {
+    return "monstats2.txt";
+  }
 }
 
 export class D2RMonType extends D2RExcelRecord {
@@ -2254,6 +2436,10 @@ export class D2RMonType extends D2RExcelRecord {
   equiv3: unknown;
   strplur: unknown;
   element: unknown;
+
+  GetFileName(): string {
+    return "montype.txt";
+  }
 }
 
 export class D2RMonUMod extends D2RExcelRecord {
@@ -2273,6 +2459,10 @@ export class D2RMonUMod extends D2RExcelRecord {
   "upick (n)": unknown;
   "upick (h)": unknown;
   constants: unknown;
+
+  GetFileName(): string {
+    return "monumod.txt";
+  }
 }
 
 export class D2RNPC extends D2RExcelRecord {
@@ -2295,6 +2485,10 @@ export class D2RNPC extends D2RExcelRecord {
   "max buy": unknown;
   "max buy (n)": unknown;
   "max buy (h)": unknown;
+
+  GetFileName(): string {
+    return "npc.txt";
+  }
 }
 
 export class D2RObjects extends D2RExcelRecord {
@@ -2443,6 +2637,10 @@ export class D2RObjects extends D2RExcelRecord {
   drawunder: unknown;
   openwarp: unknown;
   automap: unknown;
+
+  GetFileName(): string {
+    return "objects.txt";
+  }
 }
 
 export class D2RObjGroup extends D2RExcelRecord {
@@ -2471,22 +2669,38 @@ export class D2RObjGroup extends D2RExcelRecord {
   id7: unknown;
   density7: unknown;
   prob7: unknown;
+
+  GetFileName(): string {
+    return "objgroup.txt";
+  }
 }
 
 export class D2RObjMode extends D2RExcelRecord {
   name: unknown;
   token: unknown;
+
+  GetFileName(): string {
+    return "objmode.txt";
+  }
 }
 
 export class D2RObjPreset extends D2RExcelRecord {
   index: unknown;
   act: unknown;
   objectclass: unknown;
+
+  GetFileName(): string {
+    return "objpreset.txt";
+  }
 }
 
 export class D2RObjType extends D2RExcelRecord {
   name: unknown;
   token: unknown;
+
+  GetFileName(): string {
+    return "objtype.txt";
+  }
 }
 
 export class D2ROverlay extends D2RExcelRecord {
@@ -2512,6 +2726,10 @@ export class D2ROverlay extends D2RExcelRecord {
   blue: unknown;
   numdirections: unknown;
   localblood: unknown;
+
+  GetFileName(): string {
+    return "overlay.txt";
+  }
 }
 
 export class D2RPetType extends D2RExcelRecord {
@@ -2535,22 +2753,38 @@ export class D2RPetType extends D2RExcelRecord {
   micon3: unknown;
   mclass4: unknown;
   micon4: unknown;
+
+  GetFileName(): string {
+    return "pettype.txt";
+  }
 }
 
 export class D2RPlayerClass extends D2RExcelRecord {
   "player class": unknown;
   code: unknown;
+
+  GetFileName(): string {
+    return "playerclass.txt";
+  }
 }
 
 export class D2RPlrMode extends D2RExcelRecord {
   name: unknown;
   token: unknown;
   code: unknown;
+
+  GetFileName(): string {
+    return "plrmode.txt";
+  }
 }
 
 export class D2RPlrType extends D2RExcelRecord {
   name: unknown;
   token: unknown;
+
+  GetFileName(): string {
+    return "plrtype.txt";
+  }
 }
 
 export class D2RProperties extends D2RExcelRecord {
@@ -2583,6 +2817,10 @@ export class D2RProperties extends D2RExcelRecord {
   stat7: unknown;
   set7: unknown;
   val7: unknown;
+
+  GetFileName(): string {
+    return "properties.txt";
+  }
 }
 
 export class D2RQualityItems extends D2RExcelRecord {
@@ -2604,9 +2842,13 @@ export class D2RQualityItems extends D2RExcelRecord {
   boots: unknown;
   gloves: unknown;
   belt: unknown;
+
+  GetFileName(): string {
+    return "qualityitems.txt";
+  }
 }
 
-export class D2RRarePrefix extends D2RExcelRecord {
+export abstract class D2RRareBase extends D2RExcelRecord {
   name: unknown;
   version: unknown;
   itype1: unknown;
@@ -2622,20 +2864,16 @@ export class D2RRarePrefix extends D2RExcelRecord {
   etype4: unknown;
 }
 
-export class D2RRareSuffix extends D2RExcelRecord {
-  name: unknown;
-  version: unknown;
-  itype1: unknown;
-  itype2: unknown;
-  itype3: unknown;
-  itype4: unknown;
-  itype5: unknown;
-  itype6: unknown;
-  itype7: unknown;
-  etype1: unknown;
-  etype2: unknown;
-  etype3: unknown;
-  etype4: unknown;
+export class D2RRarePrefix extends D2RRareBase {
+  GetFileName(): string {
+    return "rareprefix.txt";
+  }
+}
+
+export class D2RRareSuffix extends D2RRareBase {
+  GetFileName(): string {
+    return "raresuffix.txt";
+  }
 }
 
 export class D2RRunes extends D2RExcelRecord {
@@ -2685,6 +2923,10 @@ export class D2RRunes extends D2RExcelRecord {
   t1param7: unknown;
   t1min7: unknown;
   t1max7: unknown;
+
+  GetFileName(): string {
+    return "runes.txt";
+  }
 }
 
 export class D2RSetItems extends D2RExcelRecord {
@@ -2781,6 +3023,10 @@ export class D2RSetItems extends D2RExcelRecord {
   amin5b: unknown;
   amax5b: unknown;
   worldevent: unknown;
+
+  GetFileName(): string {
+    return "setitems.txt";
+  }
 }
 
 export class D2RSets extends D2RExcelRecord {
@@ -2851,6 +3097,10 @@ export class D2RSets extends D2RExcelRecord {
   fparam8: unknown;
   fmin8: unknown;
   fmax8: unknown;
+
+  GetFileName(): string {
+    return "sets.txt";
+  }
 }
 
 export class D2RShrines extends D2RExcelRecord {
@@ -2865,10 +3115,18 @@ export class D2RShrines extends D2RExcelRecord {
   stringphrase: unknown;
   effectclass: unknown;
   levelmin: unknown;
+
+  GetFileName(): string {
+    return "shrines.txt";
+  }
 }
 
 export class D2RSkillCalc extends D2RExcelRecord {
   code: unknown;
+
+  GetFileName(): string {
+    return "skillcalc.txt";
+  }
 }
 
 export class D2RSkillDesc extends D2RExcelRecord {
@@ -2988,6 +3246,10 @@ export class D2RSkillDesc extends D2RExcelRecord {
   dsc3textb7: unknown;
   dsc3calca7: unknown;
   dsc3calcb7: unknown;
+
+  GetFileName(): string {
+    return "skilldesc.txt";
+  }
 }
 
 export class D2RSkills extends D2RExcelRecord {
@@ -3237,6 +3499,10 @@ export class D2RSkills extends D2RExcelRecord {
   srvstopfunc: unknown;
   useservermissilesonremoteclients: unknown;
   cltstopfunc: unknown;
+
+  GetFileName(): string {
+    return "skills.txt";
+  }
 }
 
 export class D2RSoundEnviron extends D2RExcelRecord {
@@ -3276,6 +3542,10 @@ export class D2RSoundEnviron extends D2RExcelRecord {
   "vox eax reflect delay": unknown;
   "vox eax reverb": unknown;
   "vox eax rev delay": unknown;
+
+  GetFileName(): string {
+    return "soundenviron.txt";
+  }
 }
 
 export class D2RSounds extends D2RExcelRecord {
@@ -3315,6 +3585,10 @@ export class D2RSounds extends D2RExcelRecord {
   "block 3": unknown;
   hdoptout: unknown;
   delay: unknown;
+
+  GetFileName(): string {
+    return "sounds.txt";
+  }
 }
 
 export class D2RStates extends D2RExcelRecord {
@@ -3389,11 +3663,19 @@ export class D2RStates extends D2RExcelRecord {
   canstack: unknown;
   // new in retail release
   hidedead: unknown;
+
+  GetFileName(): string {
+    return "states.txt";
+  }
 }
 
 export class D2RStorePage extends D2RExcelRecord {
   "store page": unknown;
   code: unknown;
+
+  GetFileName(): string {
+    return "storepage.txt";
+  }
 }
 
 export class D2RSuperUniques extends D2RExcelRecord {
@@ -3416,6 +3698,10 @@ export class D2RSuperUniques extends D2RExcelRecord {
   tc: unknown;
   "tc(n)": unknown;
   "tc(h)": unknown;
+
+  GetFileName(): string {
+    return "superuniques.txt";
+  }
 }
 
 export class D2RTreasureClassEx extends D2RExcelRecord {
@@ -3448,10 +3734,18 @@ export class D2RTreasureClassEx extends D2RExcelRecord {
   prob9: unknown;
   item10: unknown;
   prob10: unknown;
+
+  GetFileName(): string {
+    return "treasureclassex.txt";
+  }
 }
 
 export class D2RUniqueAppellation extends D2RExcelRecord {
   name: unknown;
+
+  GetFileName(): string {
+    return "uniqueappellation.txt";
+  }
 }
 
 export class D2RUniqueItems extends D2RExcelRecord {
@@ -3523,188 +3817,52 @@ export class D2RUniqueItems extends D2RExcelRecord {
   min12: unknown;
   max12: unknown;
   worldevent: unknown;
+
+  GetFileName(): string {
+    return "uniqueitems.txt";
+  }
 }
 
 export class D2RUniquePrefix extends D2RExcelRecord {
   name: unknown;
+
+  GetFileName(): string {
+    return "uniqueprefix.txt";
+  }
 }
 
 export class D2RUniqueSuffix extends D2RExcelRecord {
   name: unknown;
+
+  GetFileName(): string {
+    return "uniquesuffix.txt";
+  }
 }
 
 export class D2RWanderingMon extends D2RExcelRecord {
   class: unknown;
+
+  GetFileName(): string {
+    return "wanderingmon.txt";
+  }
 }
 
-export class D2RWeapons extends D2RExcelRecord {
-  name: unknown;
-  type: unknown;
-  type2: unknown;
-  code: unknown;
-  alternategfx: unknown;
-  namestr: unknown;
-  version: unknown;
-  compactsave: unknown;
-  rarity: unknown;
-  spawnable: unknown;
-  transmogrify: unknown;
-  tmogtype: unknown;
-  tmogmin: unknown;
-  tmogmax: unknown;
-  mindam: unknown;
-  maxdam: unknown;
-  "1or2handed": unknown;
-  "2handed": unknown;
-  "2handmindam": unknown;
-  "2handmaxdam": unknown;
-  minmisdam: unknown;
-  maxmisdam: unknown;
-  rangeadder: unknown;
-  speed: unknown;
-  strbonus: unknown;
-  dexbonus: unknown;
-  reqstr: unknown;
-  reqdex: unknown;
-  durability: unknown;
-  nodurability: unknown;
-  level: unknown;
-  levelreq: unknown;
-  cost: unknown;
-  "gamble cost": unknown;
-  "magic lvl": unknown;
-  "auto prefix": unknown;
-  normcode: unknown;
-  ubercode: unknown;
-  ultracode: unknown;
-  wclass: unknown;
-  "2handedwclass": unknown;
-  component: unknown;
-  "hit class": unknown;
-  invwidth: unknown;
-  invheight: unknown;
-  stackable: unknown;
-  minstack: unknown;
-  maxstack: unknown;
-  spawnstack: unknown;
-  flippyfile: unknown;
-  invfile: unknown;
-  uniqueinvfile: unknown;
-  setinvfile: unknown;
-  hasinv: unknown;
-  gemsockets: unknown;
-  gemapplytype: unknown;
-  useable: unknown;
-  dropsound: unknown;
-  dropsfxframe: unknown;
-  usesound: unknown;
-  unique: unknown;
-  transparent: unknown;
-  transtbl: unknown;
-  lightradius: unknown;
-  belt: unknown;
-  quest: unknown;
-  questdiffcheck: unknown;
-  missiletype: unknown;
-  durwarning: unknown;
-  qntwarning: unknown;
-  gemoffset: unknown;
-  bitfield1: unknown;
-  charsimin: unknown;
-  charsimax: unknown;
-  charsimagicmin: unknown;
-  charsimagicmax: unknown;
-  charsimagiclvl: unknown;
-  gheedmin: unknown;
-  gheedmax: unknown;
-  gheedmagicmin: unknown;
-  gheedmagicmax: unknown;
-  gheedmagiclvl: unknown;
-  akaramin: unknown;
-  akaramax: unknown;
-  akaramagicmin: unknown;
-  akaramagicmax: unknown;
-  akaramagiclvl: unknown;
-  faramin: unknown;
-  faramax: unknown;
-  faramagicmin: unknown;
-  faramagicmax: unknown;
-  faramagiclvl: unknown;
-  lysandermin: unknown;
-  lysandermax: unknown;
-  lysandermagicmin: unknown;
-  lysandermagicmax: unknown;
-  lysandermagiclvl: unknown;
-  drognanmin: unknown;
-  drognanmax: unknown;
-  drognanmagicmin: unknown;
-  drognanmagicmax: unknown;
-  drognanmagiclvl: unknown;
-  hratlimin: unknown;
-  hratlimax: unknown;
-  hratlimagicmin: unknown;
-  hratlimagicmax: unknown;
-  hratlimagiclvl: unknown;
-  alkormin: unknown;
-  alkormax: unknown;
-  alkormagicmin: unknown;
-  alkormagicmax: unknown;
-  alkormagiclvl: unknown;
-  ormusmin: unknown;
-  ormusmax: unknown;
-  ormusmagicmin: unknown;
-  ormusmagicmax: unknown;
-  ormusmagiclvl: unknown;
-  elzixmin: unknown;
-  elzixmax: unknown;
-  elzixmagicmin: unknown;
-  elzixmagicmax: unknown;
-  elzixmagiclvl: unknown;
-  ashearamin: unknown;
-  ashearamax: unknown;
-  ashearamagicmin: unknown;
-  ashearamagicmax: unknown;
-  ashearamagiclvl: unknown;
-  cainmin: unknown;
-  cainmax: unknown;
-  cainmagicmin: unknown;
-  cainmagicmax: unknown;
-  cainmagiclvl: unknown;
-  halbumin: unknown;
-  halbumax: unknown;
-  halbumagicmin: unknown;
-  halbumagicmax: unknown;
-  halbumagiclvl: unknown;
-  jamellamin: unknown;
-  jamellamax: unknown;
-  jamellamagicmin: unknown;
-  jamellamagicmax: unknown;
-  jamellamagiclvl: unknown;
-  larzukmin: unknown;
-  larzukmax: unknown;
-  larzukmagicmin: unknown;
-  larzukmagicmax: unknown;
-  larzukmagiclvl: unknown;
-  anyamin: unknown;
-  anyamax: unknown;
-  anyamagicmin: unknown;
-  anyamagicmax: unknown;
-  anyamagiclvl: unknown;
-  malahmin: unknown;
-  malahmax: unknown;
-  malahmagicmin: unknown;
-  malahmagicmax: unknown;
-  malahmagiclvl: unknown;
-  transform: unknown;
-  invtrans: unknown;
-  skipname: unknown;
-  nightmareupgrade: unknown;
-  hellupgrade: unknown;
-  nameable: unknown;
-  permstoreitem: unknown;
-  worldevent: unknown;
-  // new in retail release
-  showlevel: unknown;
+export interface D2RStringTable {
+  id: number;
+  Key: string;
+  enUS: string;
+  zhTW: string;
+  deDE: string;
+  esES: string;
+  frFR: string;
+  itIT: string;
+  koKR: string;
+  plPL: string;
+  esMX: string;
+  jaJP: string;
+  ptBR: string;
+  ruRU: string;
+  zhCN: string;
 }
 
 /**
@@ -3796,6 +3954,43 @@ export interface Workspace {
   uniqueSuffix?: D2RUniqueSuffix[];
   wanderingMon?: D2RWanderingMon[];
   weapons?: D2RWeapons[];
+
+  strings?: D2RStringTable[];
+}
+
+/**
+ * Returns true if the specified object is an array of D2RExcelRecords.
+ * @param r - the item to check
+ * @returns {r is D2RExcelRecord[]}
+ */
+export function isExcelRecordSet(r: unknown): r is D2RExcelRecord[] {
+  if (r === undefined || r === null || !Array.isArray(r) || r.length <= 0) {
+    return false;
+  }
+  const first = r[0];
+  if (typeof first !== "object" || first === null || first === undefined) {
+    return false;
+  }
+  const keys = Object.keys(first);
+  return keys.includes("GetFileName");
+}
+
+/**
+ * Gets all Excel record sets from the workspace.
+ * @param workspace - the workspace to get
+ * @returns the set of Excel records
+ */
+export function GetAllWorkspaceExcelFiles(
+  workspace: Workspace,
+): (D2RExcelRecord[] | undefined)[] {
+  const keys = Object.keys(workspace) as (keyof Workspace)[];
+  return keys.map((key) => {
+    const field = workspace[key];
+    if (field === undefined || !isExcelRecordSet(field)) {
+      return undefined;
+    }
+    return field;
+  });
 }
 
 /**
@@ -3829,10 +4024,11 @@ function FindExcel(location: string, file: string): string | undefined {
  */
 function ParseExcel<T extends D2RExcelRecord = D2RExcelRecord>(
   location: string,
-  file: string,
   type: { new (): T },
 ): T[] | undefined {
-  const fileText = FindExcel(location, file);
+  const generic = new type();
+  const file = generic.GetFileName();
+  const fileText = FindExcel(location, generic.GetFileName());
   if (fileText === undefined) {
     console.log(
       `WARNING: ${file} couldn't be found, data will be incomplete or incorrect!`,
@@ -3851,24 +4047,8 @@ function ParseExcel<T extends D2RExcelRecord = D2RExcelRecord>(
   const headerFields = lines[0].split("\t").map((field, idx) => {
     return { field: field.toLocaleLowerCase(), idx };
   }).filter((field) => !field.field.startsWith("*"));
-  const generic: T = new type();
-  const keys = Object.keys(generic);
-
-  // warn if there are fields not in keys
-  headerFields.forEach((field) => {
-    if (!keys.includes(field.field)) {
-      console.log(
-        `${file} WARNING: non-standard column '${field.field}' found`,
-      );
-    }
-  });
-
-  // warn if there are keys not in fields
-  keys.forEach((key) => {
-    if (headerFields.find((field) => field.field === key) === undefined) {
-      console.log(`${file} WARNING: missing column '${key}'`);
-    }
-  });
+  const rule = new ExcelColumns();
+  rule.Check(headerFields, generic);
 
   // kind of a mess below, but basically what this does is:
   // - remove the first line
@@ -3896,106 +4076,102 @@ function ParseExcel<T extends D2RExcelRecord = D2RExcelRecord>(
  */
 export function LoadWorkspace(location: string): Workspace {
   return {
-    actInfo: ParseExcel(location, "actInfo.txt", D2RActInfo),
-    armor: ParseExcel(location, "armor.txt", D2RArmor),
-    armType: ParseExcel(location, "armType.txt", D2RArmType),
-    autoMagic: ParseExcel(location, "autoMagic.txt", D2RAutomagic),
-    autoMap: ParseExcel(location, "autoMap.txt", D2RAutomap),
-    belts: ParseExcel(location, "belts.txt", D2RBelts),
-    bodyLocs: ParseExcel(location, "bodyLocs.txt", D2RBodyLocs),
-    books: ParseExcel(location, "books.txt", D2RBooks),
-    charStats: ParseExcel(location, "charStats.txt", D2RCharStats),
-    colors: ParseExcel(location, "colors.txt", D2RColors),
-    compCode: ParseExcel(location, "compCode.txt", D2RCompCode),
-    composit: ParseExcel(location, "composit.txt", D2RComposit),
-    cubemain: ParseExcel(location, "cubemain.txt", D2RCubemain),
-    cubemod: ParseExcel(location, "cubemod.txt", D2RCubemod),
+    actInfo: ParseExcel(location, D2RActInfo),
+    armor: ParseExcel(location, D2RArmor),
+    armType: ParseExcel(location, D2RArmType),
+    autoMagic: ParseExcel(location, D2RAutomagic),
+    autoMap: ParseExcel(location, D2RAutomap),
+    belts: ParseExcel(location, D2RBelts),
+    bodyLocs: ParseExcel(location, D2RBodyLocs),
+    books: ParseExcel(location, D2RBooks),
+    charStats: ParseExcel(location, D2RCharStats),
+    colors: ParseExcel(location, D2RColors),
+    compCode: ParseExcel(location, D2RCompCode),
+    composit: ParseExcel(location, D2RComposit),
+    cubemain: ParseExcel(location, D2RCubemain),
+    cubemod: ParseExcel(location, D2RCubemod),
     difficultyLevels: ParseExcel(
       location,
-      "difficultyLevels.txt",
       D2RDifficultyLevels,
     ),
-    elemTypes: ParseExcel(location, "elemTypes.txt", D2RElemTypes),
-    events: ParseExcel(location, "events.txt", D2REvents),
-    experience: ParseExcel(location, "experience.txt", D2RExperience),
-    gamble: ParseExcel(location, "gamble.txt", D2RGamble),
-    gems: ParseExcel(location, "gems.txt", D2RGems),
-    hireling: ParseExcel(location, "hireling.txt", D2RHireling),
-    hitclass: ParseExcel(location, "hitclass.txt", D2RHitclass),
-    inventory: ParseExcel(location, "inventory.txt", D2RInventory),
-    itemRatio: ParseExcel(location, "itemRatio.txt", D2RItemRatio),
-    itemStatCost: ParseExcel(location, "itemStatCost.txt", D2RItemStatCost),
-    itemTypes: ParseExcel(location, "itemTypes.txt", D2RItemTypes),
-    levels: ParseExcel(location, "levels.txt", D2RLevels),
+    elemTypes: ParseExcel(location, D2RElemTypes),
+    events: ParseExcel(location, D2REvents),
+    experience: ParseExcel(location, D2RExperience),
+    gamble: ParseExcel(location, D2RGamble),
+    gems: ParseExcel(location, D2RGems),
+    hireling: ParseExcel(location, D2RHireling),
+    hitclass: ParseExcel(location, D2RHitclass),
+    inventory: ParseExcel(location, D2RInventory),
+    itemRatio: ParseExcel(location, D2RItemRatio),
+    itemStatCost: ParseExcel(location, D2RItemStatCost),
+    itemTypes: ParseExcel(location, D2RItemTypes),
+    levels: ParseExcel(location, D2RLevels),
     lowQualityItems: ParseExcel(
       location,
-      "lowQualityItems.txt",
       D2RLowQualityItems,
     ),
-    lvlMaze: ParseExcel(location, "lvlMaze.txt", D2RLvlMaze),
-    lvlPrest: ParseExcel(location, "lvlPrest.txt", D2RLvlPrest),
-    lvlSub: ParseExcel(location, "lvlSub.txt", D2RLvlSub),
-    lvlTypes: ParseExcel(location, "lvlTypes.txt", D2RLvlTypes),
-    lvlWarp: ParseExcel(location, "lvlWarp.txt", D2RLvlWarp),
-    magicPrefix: ParseExcel(location, "magicPrefix.txt", D2RMagicPrefix),
-    magicSuffix: ParseExcel(location, "magicSuffix.txt", D2RMagicSuffix),
-    misc: ParseExcel(location, "misc.txt", D2RMisc),
-    missCalc: ParseExcel(location, "missCalc.txt", D2RMissCalc),
-    missiles: ParseExcel(location, "missiles.txt", D2RMissiles),
-    monAi: ParseExcel(location, "monAi.txt", D2RMonAi),
-    monEquip: ParseExcel(location, "monEquip.txt", D2RMonEquip),
-    monLvl: ParseExcel(location, "monLvl.txt", D2RMonLvl),
-    monMode: ParseExcel(location, "monMode.txt", D2RMonMode),
-    monPlace: ParseExcel(location, "monPlace.txt", D2RMonPlace),
-    monPreset: ParseExcel(location, "monPreset.txt", D2RMonPreset),
-    monProp: ParseExcel(location, "monProp.txt", D2RMonProp),
-    monSeq: ParseExcel(location, "monSeq.txt", D2RMonSeq),
-    monSounds: ParseExcel(location, "monSounds.txt", D2RMonSounds),
-    monStats: ParseExcel(location, "monStats.txt", D2RMonStats),
-    monStats2: ParseExcel(location, "monStats2.txt", D2RMonStats2),
-    monType: ParseExcel(location, "monType.txt", D2RMonType),
-    monUMod: ParseExcel(location, "monUMod.txt", D2RMonUMod),
-    npc: ParseExcel(location, "npc.txt", D2RNPC),
-    objects: ParseExcel(location, "objects.txt", D2RObjects),
-    objGroup: ParseExcel(location, "objGroup.txt", D2RObjGroup),
-    objMode: ParseExcel(location, "objMode.txt", D2RObjMode),
-    objPreset: ParseExcel(location, "objPreset.txt", D2RObjPreset),
-    objType: ParseExcel(location, "objType.txt", D2RObjType),
-    overlay: ParseExcel(location, "overlay.txt", D2ROverlay),
-    petType: ParseExcel(location, "petType.txt", D2RPetType),
-    playerClass: ParseExcel(location, "playerClass.txt", D2RPlayerClass),
-    plrMode: ParseExcel(location, "plrMode.txt", D2RPlrMode),
-    plrType: ParseExcel(location, "plrType.txt", D2RPlrType),
-    properties: ParseExcel(location, "properties.txt", D2RProperties),
-    qualityItems: ParseExcel(location, "qualityItems.txt", D2RQualityItems),
-    rarePrefix: ParseExcel(location, "rarePrefix.txt", D2RRarePrefix),
-    rareSuffix: ParseExcel(location, "rareSuffix.txt", D2RRareSuffix),
-    runes: ParseExcel(location, "runes.txt", D2RRunes),
-    setItems: ParseExcel(location, "setItems.txt", D2RSetItems),
-    sets: ParseExcel(location, "sets.txt", D2RSets),
-    shrines: ParseExcel(location, "shrines.txt", D2RShrines),
-    skillCalc: ParseExcel(location, "skillCalc.txt", D2RSkillCalc),
-    skillDesc: ParseExcel(location, "skillDesc.txt", D2RSkillDesc),
-    skills: ParseExcel(location, "skills.txt", D2RSkills),
-    soundEnviron: ParseExcel(location, "soundEnviron.txt", D2RSoundEnviron),
-    sounds: ParseExcel(location, "sounds.txt", D2RSounds),
-    states: ParseExcel(location, "states.txt", D2RStates),
-    storePage: ParseExcel(location, "storePage.txt", D2RStorePage),
-    superUniques: ParseExcel(location, "superUniques.txt", D2RSuperUniques),
+    lvlMaze: ParseExcel(location, D2RLvlMaze),
+    lvlPrest: ParseExcel(location, D2RLvlPrest),
+    lvlSub: ParseExcel(location, D2RLvlSub),
+    lvlTypes: ParseExcel(location, D2RLvlTypes),
+    lvlWarp: ParseExcel(location, D2RLvlWarp),
+    magicPrefix: ParseExcel(location, D2RMagicPrefix),
+    magicSuffix: ParseExcel(location, D2RMagicSuffix),
+    misc: ParseExcel(location, D2RMisc),
+    missCalc: ParseExcel(location, D2RMissCalc),
+    missiles: ParseExcel(location, D2RMissiles),
+    monAi: ParseExcel(location, D2RMonAi),
+    monEquip: ParseExcel(location, D2RMonEquip),
+    monLvl: ParseExcel(location, D2RMonLvl),
+    monMode: ParseExcel(location, D2RMonMode),
+    monPlace: ParseExcel(location, D2RMonPlace),
+    monPreset: ParseExcel(location, D2RMonPreset),
+    monProp: ParseExcel(location, D2RMonProp),
+    monSeq: ParseExcel(location, D2RMonSeq),
+    monSounds: ParseExcel(location, D2RMonSounds),
+    monStats: ParseExcel(location, D2RMonStats),
+    monStats2: ParseExcel(location, D2RMonStats2),
+    monType: ParseExcel(location, D2RMonType),
+    monUMod: ParseExcel(location, D2RMonUMod),
+    npc: ParseExcel(location, D2RNPC),
+    objects: ParseExcel(location, D2RObjects),
+    objGroup: ParseExcel(location, D2RObjGroup),
+    objMode: ParseExcel(location, D2RObjMode),
+    objPreset: ParseExcel(location, D2RObjPreset),
+    objType: ParseExcel(location, D2RObjType),
+    overlay: ParseExcel(location, D2ROverlay),
+    petType: ParseExcel(location, D2RPetType),
+    playerClass: ParseExcel(location, D2RPlayerClass),
+    plrMode: ParseExcel(location, D2RPlrMode),
+    plrType: ParseExcel(location, D2RPlrType),
+    properties: ParseExcel(location, D2RProperties),
+    qualityItems: ParseExcel(location, D2RQualityItems),
+    rarePrefix: ParseExcel(location, D2RRarePrefix),
+    rareSuffix: ParseExcel(location, D2RRareSuffix),
+    runes: ParseExcel(location, D2RRunes),
+    setItems: ParseExcel(location, D2RSetItems),
+    sets: ParseExcel(location, D2RSets),
+    shrines: ParseExcel(location, D2RShrines),
+    skillCalc: ParseExcel(location, D2RSkillCalc),
+    skillDesc: ParseExcel(location, D2RSkillDesc),
+    skills: ParseExcel(location, D2RSkills),
+    soundEnviron: ParseExcel(location, D2RSoundEnviron),
+    sounds: ParseExcel(location, D2RSounds),
+    states: ParseExcel(location, D2RStates),
+    storePage: ParseExcel(location, D2RStorePage),
+    superUniques: ParseExcel(location, D2RSuperUniques),
     treasureClassEx: ParseExcel(
       location,
-      "treasureClassEx.txt",
       D2RTreasureClassEx,
     ),
     uniqueApellation: ParseExcel(
       location,
-      "uniqueAppellation.txt",
       D2RUniqueAppellation,
     ),
-    uniqueItems: ParseExcel(location, "uniqueItems.txt", D2RUniqueItems),
-    uniquePrefix: ParseExcel(location, "uniquePrefix.txt", D2RUniquePrefix),
-    uniqueSuffix: ParseExcel(location, "uniqueSuffix.txt", D2RUniqueSuffix),
-    wanderingMon: ParseExcel(location, "wanderingMon.txt", D2RWanderingMon),
-    weapons: ParseExcel(location, "weapons.txt", D2RWeapons),
+    uniqueItems: ParseExcel(location, D2RUniqueItems),
+    uniquePrefix: ParseExcel(location, D2RUniquePrefix),
+    uniqueSuffix: ParseExcel(location, D2RUniqueSuffix),
+    wanderingMon: ParseExcel(location, D2RWanderingMon),
+    weapons: ParseExcel(location, D2RWeapons),
   };
 }
