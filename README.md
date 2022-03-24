@@ -50,9 +50,25 @@ still under development.
 
 ### List of Rules
 
-- `Levels/ValidMonsters`: Fields within `mon1-mon25`, `umon1-25` and `nmon1-25`
-  (in Levels.txt) are checked against `id` in MonStats.txt. Any missing will
-  trigger a warning/error.
+- `Basic/NoDuplicates`: Fields that should not be duplicated will present a
+  warning. For example, using the same `code` field in any two rows within
+  either misc.txt, armor.txt, or weapons.txt will throw a warning.
+- `Basic/ExcelColumns`: Columns that aren't optional and are missing will throw
+  a warning. Likewise, columns that aren't supposed to be there will throw a
+  warning. (Columns that start with an asterisk (*) are not parsed, and are
+  ignored.)
+- `Basic/LinkedExcel`: Ensures that all inter-file linkage is accurate, with a
+  few exceptions. Examples include things like checking for missing strings,
+  checking for invalid item codes and so on. This won't check Treasure Class or
+  Cube linkage, this is handled by other rules.
+- `String/NoUntranslated`: Ensures that all languages for all strings are
+  translated, and no fields are excluded unnecessarily. **This is ignored by
+  default.** This triggers a lot of errors and can slow down the program
+  considerably and is only really meant for advanced usage.
+
+Note that the files that ship with the original game will trigger some of these
+rules. **This is normal.** There are genuine errors in their own files, and this
+is to be expected.
 
 ## For developers
 
@@ -66,7 +82,7 @@ In order to compile the program, use the following (assuming `deno` is available
 in your `PATH`):
 
 ```
-deno compile --allow-read --allow-write src/main.ts
+deno compile --allow-read --allow-write --allow-env src/main.ts
 ```
 
 This will produce a `src.exe` or `src` executable (depending on your platform).

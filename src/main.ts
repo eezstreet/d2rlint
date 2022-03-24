@@ -8,7 +8,9 @@ import { LoadWorkspace } from "./lib/workspace.ts";
 
 // Import all rules here so that they get loaded.
 import "./rules/basic.ts";
+import "./rules/cube.ts";
 import "./rules/string.ts";
+import "./rules/treasure.ts";
 /////////////////////////////////////////////////
 
 // Load workspace, iterate through rules, passing workspace into rule
@@ -26,6 +28,6 @@ allRules.forEach((rule) => {
   }
 });
 
-console.log(`Checking complete. Press any key to continue...`);
+console.log(`Checking complete. Press enter to continue...`);
 Deno.stdin.readSync(new Uint8Array(32));
 Deno.exit(0);

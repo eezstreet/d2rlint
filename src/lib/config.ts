@@ -75,10 +75,10 @@ function LoadConfigFirstTime(): SavedConfiguration {
       "Please edit the configuration file (config.json) to set your workspace location.",
     );
     console.log("By default, this will look in the current working directory.");
-    console.log("Press any key to continue.");
+    console.log("Press enter to continue.");
 
     Deno.stdin.readSync(new Uint8Array(32));
-    Deno.exit(0);
+    return LoadConfigFirstTime();
   }
 
   // Read the config file. If any fields are missing from it that exists in the default, go ahead and re-write.

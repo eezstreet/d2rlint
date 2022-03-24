@@ -6,7 +6,9 @@ import {
   D2RHireling,
   D2RItemTypes,
   D2RLevels,
+  D2RMagicBase,
   D2RMonEquip,
+  D2RMonSounds,
   D2RMonStats,
   D2RMonType,
   D2RMonUMod,
@@ -18,6 +20,7 @@ import {
   D2RSkillDesc,
   D2RSkills,
   D2RStates,
+  D2RUniqueItems,
   FindMatchingStringIndex,
   Workspace,
 } from "../lib/workspace.ts";
@@ -33,7 +36,6 @@ export class NoDuplicates extends Rule {
 
   Evaluate(workspace: Workspace) {
     const anyDuplicates = <T extends D2RExcelRecord>(
-      fileName: string,
       records: T[] | undefined,
       field: keyof T,
     ) => {
@@ -46,52 +48,54 @@ export class NoDuplicates extends Rule {
         for (let j = i + 1; j < records.length; j++) {
           if (
             thisField === records[j][field] &&
-            thisField as unknown as string !== ""
+            thisField as unknown as string !== "" &&
+            thisField as unknown as string !== "Expansion" // HACK
           ) {
             this.Warn(
-              `${fileName} - duplicate detected on lines ${i + 1} and ${
-                j + 1
-              } for field '${field}' (${thisField})`,
+              `${records[i].GetFileName()} - duplicate detected on lines ${
+                i + 2
+              } and ${j + 1} for field '${field}' (${thisField})`,
             );
           }
         }
       }
     };
 
-    anyDuplicates("itemstatcost.txt", workspace.itemStatCost, "stat");
-    anyDuplicates("itemtypes.txt", workspace.itemTypes, "code");
-    anyDuplicates("levels.txt", workspace.levels, "id");
-    anyDuplicates("lvlprest.txt", workspace.lvlPrest, "def");
-    anyDuplicates("lvlsub.txt", workspace.lvlSub, "name");
-    anyDuplicates("lvltypes.txt", workspace.lvlTypes, "name");
-    anyDuplicates("lvlwarp.txt", workspace.lvlWarp, "name");
-    anyDuplicates("missiles.txt", workspace.missiles, "missile");
-    anyDuplicates("monai.txt", workspace.monAi, "ai");
-    anyDuplicates("monmode.txt", workspace.monMode, "code");
-    anyDuplicates("monmode.txt", workspace.monMode, "name");
-    //anyDuplicates("monmode.txt", workspace.monMode, "token");
-    anyDuplicates("monplace.txt", workspace.monPlace, "code");
-    anyDuplicates("monsounds.txt", workspace.monSounds, "id");
-    anyDuplicates("monstats.txt", workspace.monStats, "id");
-    anyDuplicates("monstats2.txt", workspace.monStats2, "id");
-    anyDuplicates("monumod.txt", workspace.monUMod, "uniquemod");
-    anyDuplicates("monumod.txt", workspace.monUMod, "id");
-    anyDuplicates("npc.txt", workspace.npc, "npc");
-    anyDuplicates("objects.txt", workspace.objects, "class");
-    //anyDuplicates("objgroup.txt", workspace.objGroup, "groupname");
-    //anyDuplicates("objpreset.txt", workspace.objPreset, "index");
-    anyDuplicates("overlay.txt", workspace.overlay, "overlay");
-    anyDuplicates("pettype.txt", workspace.petType, "pet type");
-    anyDuplicates("properties.txt", workspace.properties, "code");
-    anyDuplicates("shrines.txt", workspace.shrines, "name");
-    anyDuplicates("skills.txt", workspace.skills, "skill");
-    anyDuplicates("states.txt", workspace.states, "state");
-    anyDuplicates("superuniques.txt", workspace.superUniques, "superunique");
-    anyDuplicates(
-      "treasureclassex.txt",
-      workspace.treasureClassEx,
-      "treasure class",
-    );
+    const { armor, misc, weapons } = workspace;
+    if (armor !== undefined && misc !== undefined && weapons !== undefined) {
+      anyDuplicates([...armor, ...misc, ...weapons], "name");
+      anyDuplicates([...armor, ...misc, ...weapons], "code");
+    }
+    anyDuplicates(workspace.itemStatCost, "stat");
+    anyDuplicates(workspace.itemTypes, "code");
+    anyDuplicates(workspace.levels, "id");
+    anyDuplicates(workspace.lvlPrest, "def");
+    anyDuplicates(workspace.lvlSub, "name");
+    anyDuplicates(workspace.lvlTypes, "name");
+    anyDuplicates(workspace.lvlWarp, "name");
+    anyDuplicates(workspace.missiles, "missile");
+    anyDuplicates(workspace.monAi, "ai");
+    anyDuplicates(workspace.monMode, "code");
+    anyDuplicates(workspace.monMode, "name");
+    //anyDuplicates(workspace.monMode, "token");
+    anyDuplicates(workspace.monPlace, "code");
+    anyDuplicates(workspace.monSounds, "id");
+    anyDuplicates(workspace.monStats, "id");
+    anyDuplicates(workspace.monStats2, "id");
+    anyDuplicates(workspace.monUMod, "uniquemod");
+    anyDuplicates(workspace.monUMod, "id");
+    anyDuplicates(workspace.npc, "npc");
+    anyDuplicates(workspace.objects, "class");
+    //anyDuplicates(workspace.objGroup, "groupname");
+    //anyDuplicates(workspace.objPreset, "index");
+    anyDuplicates(workspace.overlay, "overlay");
+    anyDuplicates(workspace.petType, "pet type");
+    anyDuplicates(workspace.properties, "code");
+    anyDuplicates(workspace.shrines, "name");
+    anyDuplicates(workspace.skills, "skill");
+    anyDuplicates(workspace.states, "state");
+    anyDuplicates(workspace.superUniques, "superunique");
+    anyDuplicates(workspace.treasureClassEx, "treasure class");
   }
 }
 
@@ -173,10 +177,10 @@ export class LinkedExcel extends Rule {
         options = {
           caseSensitive: true,
           allowNull: false,
-          nullChecker: (s: string) => s === "",
+          nullChecker: (s: string) => s === "" || s === undefined,
         };
       } else if (options.nullChecker === undefined) {
-        options.nullChecker = (s: string) => s === "";
+        options.nullChecker = (s: string) => s === "" || s === undefined;
       }
 
       const { caseSensitive, allowNull, nullChecker } = options;
@@ -203,7 +207,7 @@ export class LinkedExcel extends Rule {
           ) {
             this.Warn(
               `${item.GetFileName()}, line ${
-                i + 1
+                i + 2
               }: ${al} '${val}' not found for '${key}'`,
             );
           } else if (
@@ -214,7 +218,7 @@ export class LinkedExcel extends Rule {
           ) {
             this.Warn(
               `${item.GetFileName()}, line ${
-                i + 1
+                i + 2
               }: ${al} '${val}' not found for '${key}'`,
             );
           }
@@ -224,6 +228,7 @@ export class LinkedExcel extends Rule {
 
     const {
       armor,
+      autoMagic,
       bodyLocs,
       charStats,
       colors,
@@ -231,6 +236,7 @@ export class LinkedExcel extends Rule {
       gamble,
       gems,
       hireling,
+      hitclass,
       itemTypes,
       itemStatCost,
       levels,
@@ -239,6 +245,7 @@ export class LinkedExcel extends Rule {
       magicSuffix,
       misc,
       missiles,
+      monAi,
       monEquip,
       monProp,
       monSounds,
@@ -248,8 +255,11 @@ export class LinkedExcel extends Rule {
       monUMod,
       npc,
       objects,
+      objGroup,
+      objPreset,
       overlay,
       petType,
+      playerClass,
       properties,
       qualityItems,
       rarePrefix,
@@ -261,13 +271,16 @@ export class LinkedExcel extends Rule {
       skills,
       skillDesc,
       sounds,
+      soundEnviron,
       states,
+      storePage,
       superUniques,
       treasureClassEx,
       uniqueApellation,
       uniquePrefix,
       uniqueItems,
       uniqueSuffix,
+      wanderingMon,
       weapons,
     } = workspace;
 
@@ -310,6 +323,21 @@ export class LinkedExcel extends Rule {
         allowNull: true,
         nullChecker: itemCheckerXXX,
       });
+      // ensure autoprefix points to valid entries in automagic.txt
+      mustExist(
+        itemFile,
+        "auto prefix",
+        "code",
+        autoMagic,
+        "group",
+        isOptional,
+      );
+      // ensure stat1-3 points to valid entries in itemstatcost.txt
+      mustExist(itemFile, "stat1", "code", itemStatCost, "stat", isOptional);
+      mustExist(itemFile, "stat2", "code", itemStatCost, "stat", isOptional);
+      mustExist(itemFile, "stat3", "code", itemStatCost, "stat", isOptional);
+      // ensure hitclass points to valid entries in hitclass.txt
+      mustExist(itemFile, "hit class", "code", hitclass, "code", isOptional);
     });
 
     // ensure item1-10 in charstats.txt point to valid "code" in armor/misc/weapons
@@ -357,6 +385,20 @@ export class LinkedExcel extends Rule {
       })
     );
 
+    // ensure maxstat in itemstatcost.txt points to valid entry
+    mustExist(
+      itemStatCost,
+      "maxstat",
+      "stat",
+      itemStatCost,
+      "stat",
+      isOptional,
+    );
+
+    // ensure itemeventx in itemstatcost.txt is a valid event
+    mustExist(itemStatCost, "itemevent1", "stat", events, "event", isOptional);
+    mustExist(itemStatCost, "itemevent2", "stat", events, "event", isOptional);
+
     // ensure equiv1 and equiv2 point to valid "code" in itemtypes.txt
     const itequivFields = multifield1<D2RItemTypes>("equiv", 2);
     itequivFields.forEach((field) =>
@@ -365,16 +407,50 @@ export class LinkedExcel extends Rule {
       })
     );
 
+    // ensure bodyloc1/bodyloc2 in itemtypes.txt point to valid bodylocs
+    mustExist(itemTypes, "bodyloc1", "code", bodyLocs, "code", isOptional);
+    mustExist(itemTypes, "bodyloc2", "code", bodyLocs, "code", isOptional);
+
+    // ensure staffmods and class in itemtypes.txt is a valid playerclass
+    mustExist(itemTypes, "staffmods", "code", playerClass, "code", isOptional);
+    mustExist(itemTypes, "class", "code", playerClass, "code", isOptional);
+
+    // ensure storepage in itemtypes.txt is a valid storepage
+    mustExist(itemTypes, "storepage", "code", storePage, "code", isOptional);
+
     // ensure mon1-25, umon1-25 and nmon1-25 in levels.txt point to valid entries in monstats.txt
     const monstersFields = multifield1<D2RLevels>("mon", 25);
     const umonFields = multifield1<D2RLevels>("umon", 25);
     const nmonFields = multifield1<D2RLevels>("nmon", 25);
+    const cmonFields = multifield1<D2RLevels>("cmon", 4);
 
-    [monstersFields, umonFields, nmonFields].forEach((fieldSet) =>
+    [monstersFields, umonFields, nmonFields, cmonFields].forEach((fieldSet) =>
       fieldSet.forEach((field) => {
         mustExist(levels, field, "name", monStats, "id", { allowNull: true });
       })
     );
+
+    // ensure soundenv in levels.txt points to valid soundenviron.txt fields
+    mustExist(levels, "soundenv", "name", soundEnviron, "index", isOptional);
+
+    // ensure mod1code-mod3code in magicprefix/magicsuffix are valid
+    // ensure itype1-7 and etype1-5 in magicprefix/magicsuffix are valid
+    // ensure transformcolor in magicprefix/magicsuffix are valid
+    [magicPrefix, magicSuffix].forEach((file) => {
+      const modcodes = multifield2<D2RMagicBase>("mod", "code", 3);
+      const icodes = [
+        ...multifield1<D2RMagicBase>("itype", 7),
+        ...multifield1<D2RMagicBase>("etype", 5),
+      ];
+
+      modcodes.forEach((field) =>
+        mustExist(file, field, "name", properties, "code", isOptional)
+      );
+      icodes.forEach((field) =>
+        mustExist(file, field, "name", itemTypes, "code", isOptional)
+      );
+      mustExist(file, "transformcolor", "name", colors, "code", isOptional);
+    });
 
     // ensure "monster" in monequip.txt point to valid entries in monstats.txt
     mustExist(monEquip, "monster", "monster", monStats, "id");
@@ -427,6 +503,13 @@ export class LinkedExcel extends Rule {
       )
     );
 
+    // ensure that AI in monstats.txt is valid
+    mustExist(monStats, "ai", "id", monAi, "ai");
+
+    // ensure that minion1/minion2 in monstats.txt is valid
+    mustExist(monStats, "minion1", "id", monStats, "id", isOptional);
+    mustExist(monStats, "minion2", "id", monStats, "id", isOptional);
+
     // ensure ...these fields, are valid entries in missiles.txt
     ([
       "missa1",
@@ -440,6 +523,34 @@ export class LinkedExcel extends Rule {
       "misssq",
     ] as (keyof D2RMonStats)[]).forEach((field) =>
       mustExist(monStats, field, "code", missiles, "missile", isOptional)
+    );
+
+    // ensure these fields in monsounds point to valid sounds.txt entries:
+    const msSoundFields: (keyof D2RMonSounds)[] = [
+      "attack1",
+      "attack2",
+      "weapon1",
+      "weapon2",
+      "hitsound",
+      "deathsound",
+      "skill1",
+      "skill2",
+      "skill3",
+      "skill4",
+      "footstep",
+      "footsteplayer",
+      "neutral",
+      "init",
+      "taunt",
+      "flee",
+    ];
+    msSoundFields.forEach((field) =>
+      mustExist(monSounds, field, "id", sounds, "sound", isOptional)
+    );
+
+    // ensure these fields exist in skills.txt:
+    multifield1<D2RMonSounds>("cvtsk", 3).forEach((field) =>
+      mustExist(monSounds, field, "id", skills, "skill", isOptional)
     );
 
     // ensure equiv1-3 in montypes.txt is either null or valid entry in montypes.txt
@@ -457,7 +568,17 @@ export class LinkedExcel extends Rule {
     // ensure npc is valid id in monstats.txt
     mustExist(npc, "npc", "npc", monStats, "id");
 
-    // ensure modXcode is null or valid entry in properties.txt
+    // ensure objectclass in objpreset matches a class in object.txt
+    mustExist(objPreset, "objectclass", "index", objects, "class", {
+      caseSensitive: false,
+    });
+
+    // ensure mclassx in pettype.txt matches a monster in monstats.txt
+    /*multifield1<D2RPetType>("mclass", 4).forEach((field) => {
+      mustExist(petType, field, "pet type", monStats, "id", isOptional);
+    });*/
+
+    // ensure modXcode is null or valid entry in qualityitems.txt
     const qiModFields = multifield2<D2RQualityItems>("mod", "code", 2);
     qiModFields.forEach((field) =>
       mustExist(qualityItems, field, "mod1code", properties, "code")
@@ -530,6 +651,9 @@ export class LinkedExcel extends Rule {
 
     // ensure skilldesc in skills.txt point to SkillDesc.txt
     mustExist(skills, "skilldesc", "skill", skillDesc, "skilldesc", isOptional);
+
+    // ensure class in skills.txt points to valid player class
+    mustExist(skills, "charclass", "skill", playerClass, "code", isOptional);
 
     // ensure srvmissile, srvmissilea/b/c point to missiles.txt
     const skMissileCheck: (keyof D2RSkills)[] = [
@@ -736,6 +860,14 @@ export class LinkedExcel extends Rule {
     mustExist(uniqueItems, "chrtransform", "index", colors, "code", isOptional);
     mustExist(uniqueItems, "invtransform", "index", colors, "code", isOptional);
 
+    // ensure props are valid properties.txt entries
+    multifield1<D2RUniqueItems>("prop", 12).forEach((field) =>
+      mustExist(uniqueItems, field, "index", properties, "code", isOptional)
+    );
+
+    // ensure class in wanderingmon is a valid id in monstats.txt
+    mustExist(wanderingMon, "class", "class", monStats, "id");
+
     // Check strings!
     const lookForString = <
       T extends D2RExcelRecord,
@@ -767,7 +899,7 @@ export class LinkedExcel extends Rule {
             return;
           }
           this.Warn(
-            `${record.GetFileName()}, line ${i + 1}: ${column} for '${
+            `${record.GetFileName()}, line ${i + 2}: ${column} for '${
               record[indexColumn]
             }' is blank but required`,
           );
@@ -786,7 +918,7 @@ export class LinkedExcel extends Rule {
           ) === undefined
         ) {
           this.Warn(
-            `${record.GetFileName()}, line ${i + 1}: couldn't find string '${
+            `${record.GetFileName()}, line ${i + 2}: couldn't find string '${
               record[column]
             }' for ${column} for '${record[indexColumn]}'`,
           );
@@ -819,6 +951,7 @@ export class LinkedExcel extends Rule {
     lookForString(magicSuffix, "name", "name", false);
     lookForString(monStats, "namestr", "id", false);
     lookForString(monStats, "descstr", "id", true);
+    lookForString(monType, "strplur", "type", true);
     lookForString(objects, "name", "class", false);
     lookForString(petType, "name", "pet type", true);
     lookForString(rarePrefix, "name", "name", false);

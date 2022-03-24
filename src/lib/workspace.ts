@@ -1537,7 +1537,7 @@ export class D2RLvlWarp extends D2RExcelRecord {
   }
 }
 
-export class D2RMagicPrefix extends D2RExcelRecord {
+export abstract class D2RMagicBase extends D2RExcelRecord {
   name: unknown;
   version: unknown;
   spawnable: unknown;
@@ -1577,53 +1577,15 @@ export class D2RMagicPrefix extends D2RExcelRecord {
   etype5: unknown;
   multiply: unknown;
   add: unknown;
+}
 
+export class D2RMagicPrefix extends D2RMagicBase {
   GetFileName(): string {
     return "magicprefix.txt";
   }
 }
 
-export class D2RMagicSuffix extends D2RExcelRecord {
-  name: unknown;
-  version: unknown;
-  spawnable: unknown;
-  rare: unknown;
-  level: unknown;
-  maxlevel: unknown;
-  levelreq: unknown;
-  classspecific: unknown;
-  class: unknown;
-  classlevelreq: unknown;
-  frequency: unknown;
-  group: unknown;
-  mod1code: unknown;
-  mod1param: unknown;
-  mod1min: unknown;
-  mod1max: unknown;
-  mod2code: unknown;
-  mod2param: unknown;
-  mod2min: unknown;
-  mod2max: unknown;
-  mod3code: unknown;
-  mod3param: unknown;
-  mod3min: unknown;
-  mod3max: unknown;
-  transformcolor: unknown;
-  itype1: unknown;
-  itype2: unknown;
-  itype3: unknown;
-  itype4: unknown;
-  itype5: unknown;
-  itype6: unknown;
-  itype7: unknown;
-  etype1: unknown;
-  etype2: unknown;
-  etype3: unknown;
-  etype4: unknown;
-  etype5: unknown;
-  multiply: unknown;
-  add: unknown;
-
+export class D2RMagicSuffix extends D2RMagicBase {
   GetFileName(): string {
     return "magicsuffix.txt";
   }
