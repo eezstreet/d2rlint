@@ -4,7 +4,6 @@ import {
   D2RCharStats,
   D2RExcelRecord,
   D2RHireling,
-  D2RItemExcelRecord,
   D2RItemTypes,
   D2RLevels,
   D2RMonEquip,
@@ -19,6 +18,7 @@ import {
   D2RSkillDesc,
   D2RSkills,
   D2RStates,
+  FindMatchingStringIndex,
   Workspace,
 } from "../lib/workspace.ts";
 
@@ -234,6 +234,9 @@ export class LinkedExcel extends Rule {
       itemTypes,
       itemStatCost,
       levels,
+      lowQualityItems,
+      magicPrefix,
+      magicSuffix,
       misc,
       missiles,
       monEquip,
@@ -244,6 +247,7 @@ export class LinkedExcel extends Rule {
       monType,
       monUMod,
       npc,
+      objects,
       overlay,
       petType,
       properties,
@@ -253,13 +257,17 @@ export class LinkedExcel extends Rule {
       runes,
       setItems,
       sets,
+      shrines,
       skills,
       skillDesc,
       sounds,
       states,
       superUniques,
       treasureClassEx,
+      uniqueApellation,
+      uniquePrefix,
       uniqueItems,
+      uniqueSuffix,
       weapons,
     } = workspace;
 
@@ -727,5 +735,120 @@ export class LinkedExcel extends Rule {
     // ensure chrtransform and invtransform point to valid colors
     mustExist(uniqueItems, "chrtransform", "index", colors, "code", isOptional);
     mustExist(uniqueItems, "invtransform", "index", colors, "code", isOptional);
+
+    // Check strings!
+    const lookForString = <
+      T extends D2RExcelRecord,
+      U extends keyof T = keyof T,
+    >(
+      records: T[] | undefined,
+      column: U,
+      indexColumn: keyof T,
+      optional: boolean,
+    ) => {
+      if (records === undefined) {
+        return;
+      }
+
+      records.forEach((record, i) => {
+        if (
+          record[indexColumn] as unknown as string === "Expansion" ||
+          record[indexColumn] as unknown as string === "Null" ||
+          record[indexColumn] as unknown as string === "" ||
+          record[indexColumn] as unknown as string === "Elite Uniques"
+        ) {
+          return;
+        }
+        if (
+          record[column] === undefined ||
+          record[column] as unknown as string === ""
+        ) {
+          if (optional) {
+            return;
+          }
+          this.Warn(
+            `${record.GetFileName()}, line ${i + 1}: ${column} for '${
+              record[indexColumn]
+            }' is blank but required`,
+          );
+          return;
+        }
+
+        // see if there's a matching string
+        if (workspace.strings === undefined) {
+          return;
+        }
+
+        if (
+          FindMatchingStringIndex(
+            workspace,
+            record[column] as unknown as string,
+          ) === undefined
+        ) {
+          this.Warn(
+            `${record.GetFileName()}, line ${i + 1}: couldn't find string '${
+              record[column]
+            }' for ${column} for '${record[indexColumn]}'`,
+          );
+        }
+      });
+    };
+
+    lookForString(armor, "namestr", "name", false);
+    lookForString(misc, "namestr", "name", false);
+    lookForString(weapons, "namestr", "name", false);
+
+    const csStr: (keyof D2RCharStats)[] = [
+      "strskilltab1",
+      "strskilltab2",
+      "strskilltab3",
+      "strclassonly",
+      "strallskills",
+    ];
+    csStr.forEach((field) => lookForString(charStats, field, "class", false));
+
+    const lsStr: (keyof D2RLevels)[] = [
+      "levelname",
+      "levelwarp",
+      "levelentry",
+    ];
+    lsStr.forEach((field) => lookForString(levels, field, "name", false));
+
+    lookForString(lowQualityItems, "name", "name", false);
+    lookForString(magicPrefix, "name", "name", false);
+    lookForString(magicSuffix, "name", "name", false);
+    lookForString(monStats, "namestr", "id", false);
+    lookForString(monStats, "descstr", "id", true);
+    lookForString(objects, "name", "class", false);
+    lookForString(petType, "name", "pet type", true);
+    lookForString(rarePrefix, "name", "name", false);
+    lookForString(rareSuffix, "name", "name", false);
+    lookForString(runes, "name", "name", false);
+    lookForString(setItems, "index", "index", false);
+    lookForString(sets, "name", "index", false);
+    lookForString(shrines, "stringname", "name", false);
+    lookForString(shrines, "stringphrase", "name", false);
+
+    const sdStr: (keyof D2RSkillDesc)[] = [
+      "str alt",
+      "str long",
+      "str name",
+      "str short",
+      ...multifield1<D2RSkillDesc>("desctexta", 6),
+      ...multifield1<D2RSkillDesc>("desctextb", 6),
+      ...multifield1<D2RSkillDesc>("dsc2texta", 5),
+      ...multifield1<D2RSkillDesc>("dsc2textb", 5),
+      ...multifield1<D2RSkillDesc>("dsc3texta", 7),
+      ...multifield1<D2RSkillDesc>("dsc3textb", 7),
+    ];
+    sdStr.forEach((field) =>
+      lookForString(skillDesc, field, "skilldesc", true)
+    );
+
+    lookForString(superUniques, "name", "superunique", false);
+    lookForString(uniqueApellation, "name", "name", false);
+    lookForString(uniquePrefix, "name", "name", false);
+    lookForString(uniqueSuffix, "name", "name", false);
+    lookForString(uniqueItems, "index", "index", false);
   }
 }

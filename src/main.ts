@@ -7,8 +7,8 @@ import { GetAllRules } from "./lib/rule.ts";
 import { LoadWorkspace } from "./lib/workspace.ts";
 
 // Import all rules here so that they get loaded.
-import "./rules/levels.ts";
 import "./rules/basic.ts";
+import "./rules/string.ts";
 /////////////////////////////////////////////////
 
 // Load workspace, iterate through rules, passing workspace into rule

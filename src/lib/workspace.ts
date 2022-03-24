@@ -1,4 +1,5 @@
 import * as fs from "https://deno.land/std@0.130.0/fs/mod.ts";
+import * as path from "https://deno.land/std/path/mod.ts";
 import { ExcelColumns } from "../rules/basic.ts";
 
 /**
@@ -3955,7 +3956,7 @@ export interface Workspace {
   wanderingMon?: D2RWanderingMon[];
   weapons?: D2RWeapons[];
 
-  strings?: D2RStringTable[];
+  strings?: { [key: string]: D2RStringTable[] | undefined };
 }
 
 /**
@@ -4071,6 +4072,78 @@ function ParseExcel<T extends D2RExcelRecord = D2RExcelRecord>(
 }
 
 /**
+ * Tries to parse a string file.
+ * @param filePath - the path to the file to parse
+ * @returns {D2RStringTable[]} if the file was found and is valid
+ * @returns {undefined} if the file is invalid
+ */
+function ParseStringFile(filePath: string): D2RStringTable[] | undefined {
+  try {
+    const fileText = Deno.readTextFileSync(filePath);
+    return JSON.parse(fileText);
+  } catch (e) {
+    console.log(`Couldn't parse ${filePath}: ${e.message}`);
+  }
+}
+
+/**
+ * Loads all of the string files.
+ * @param location - the place to look for string files
+ * @returns {undefined} if no string files found
+ * @returns { {[key]: string }: D2RStringTable[] | undefined } as the listing of keys
+ */
+function LoadStrings(
+  location: string,
+): { [key: string]: D2RStringTable[] | undefined } | undefined {
+  // walk until we find the "strings" folder
+  const entries: { [key: string]: D2RStringTable[] | undefined } = {};
+  for (const entry of fs.walkSync(location)) {
+    if (entry.isDirectory && entry.name.toLocaleLowerCase() === "strings") {
+      for (const fileEntry of fs.walkSync(entry.path, { maxDepth: 1 })) {
+        if (fileEntry.isFile && fileEntry.name.match(/\.json$/gi) !== null) {
+          const fileName = fileEntry.name.replace(/(.*)\.json$/gi, "$1");
+          entries[fileName] = ParseStringFile(fileEntry.path);
+        }
+      }
+    }
+  }
+  if (Object.keys(entries).length > 0) {
+    return entries;
+  }
+  return undefined;
+}
+
+/**
+ * Attempts to find a string that matches the index.
+ * @param workspace - the workspace to check
+ * @param index - the matching string index
+ * @returns {undefined} if the string wasn't found
+ * @returns {D2RStringTable} if the string was found
+ */
+export function FindMatchingStringIndex(
+  workspace: Workspace,
+  index: string,
+): D2RStringTable | undefined {
+  const { strings } = workspace;
+  if (strings === undefined) {
+    return undefined;
+  }
+
+  const stringFiles = Object.keys(strings);
+  return stringFiles.reduce((stringFile, val) => {
+    const current = strings[val];
+    if (current === undefined || current.find === undefined) {
+      return stringFile;
+    }
+    const found = current.find((ls) => ls.Key === index);
+    if (found !== undefined) {
+      return found;
+    }
+    return stringFile;
+  }, undefined as D2RStringTable | undefined);
+}
+
+/**
  * Loads a Workspace.
  * @param location - the location of the workspace
  */
@@ -4173,5 +4246,7 @@ export function LoadWorkspace(location: string): Workspace {
     uniqueSuffix: ParseExcel(location, D2RUniqueSuffix),
     wanderingMon: ParseExcel(location, D2RWanderingMon),
     weapons: ParseExcel(location, D2RWeapons),
+
+    strings: LoadStrings(location),
   };
 }
