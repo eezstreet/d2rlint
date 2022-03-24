@@ -463,3 +463,74 @@ export class ValidOutputs extends Rule {
     });
   }
 }
+
+/**
+ * Check for valid opcodes and op data.
+ */
+@lintrule
+export class ValidOp extends Rule {
+  GetRuleName(): string {
+    return "Cube/ValidOp";
+  }
+
+  Evaluate(workspace: Workspace) {
+    const { itemStatCost, cubemain } = workspace;
+
+    if (itemStatCost === undefined || cubemain === undefined) {
+      return; // skip
+    }
+
+    cubemain.forEach((recipe, line) => {
+      if (recipe.op === "" || recipe.op === "0" || recipe.op === "28") {
+        return; // skip this recipe, it's fine
+      }
+
+      let op = 0;
+      try {
+        op = parseInt(recipe.op as unknown as string);
+        if (op < 0 || op > 28) {
+          throw null;
+        }
+      } catch {
+        this.Warn(
+          `${recipe.GetFileName()}, line ${
+            line + 2
+          }: invalid opcode for '${recipe.description}'`,
+        );
+        return;
+      }
+
+      if (op !== 27 && op !== 2) {
+        // these explicitly require a param
+        if (recipe.param === "") {
+          this.Warn(
+            `${recipe.GetFileName()}, line ${
+              line + 2
+            }: opcode '${op}' for recipe '${recipe.description}' requires a param, but none set`,
+          );
+        } else {
+          try {
+            const param = parseInt(recipe.param as unknown as string);
+            if (param < 0 || param >= itemStatCost.length) {
+              throw null;
+            }
+          } catch {
+            this.Warn(
+              `${recipe.GetFileName()}, line ${
+                line + 2
+              }: invalid param for recipe '${recipe.description}'`,
+            );
+          }
+        }
+      }
+
+      if (recipe.value === "") {
+        this.Warn(
+          `${recipe.GetFileName()}, line ${
+            line + 2
+          }: opcode '${op}' for recipe '${recipe.description}' requires a value, but none set`,
+        );
+      }
+    });
+  }
+}
