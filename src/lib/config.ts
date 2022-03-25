@@ -20,6 +20,7 @@ type AllRuleConfig = { [ruleName: string]: RuleConfig };
 
 export interface SavedConfiguration {
   workspace: string;
+  fallback: string;
   log: string;
   rules: { [ruleName: string]: RuleConfig };
 }
@@ -46,6 +47,7 @@ function CreateDefaultConfig(): SavedConfiguration {
 
   return {
     workspace: "",
+    fallback: "",
     log: "output.txt",
     rules,
   };
@@ -83,11 +85,17 @@ function LoadConfigFirstTime(): SavedConfiguration {
 
   // Read the config file. If any fields are missing from it that exists in the default, go ahead and re-write.
   const config = Deno.readTextFileSync("config.json");
-  const parsed = JSON.parse(config) as SavedConfiguration;
-  const defaultConfig = CreateDefaultConfig();
-  const newConfig = deepMerge(defaultConfig, parsed);
-  SaveConfig(newConfig, "config.json");
-  return newConfig;
+  try {
+    const parsed = JSON.parse(config) as SavedConfiguration;
+    const defaultConfig = CreateDefaultConfig();
+    const newConfig = deepMerge(defaultConfig, parsed);
+    SaveConfig(newConfig, "config.json");
+    return newConfig;
+  } catch {
+    const defaultConfig = CreateDefaultConfig();
+    SaveConfig(defaultConfig, "config.json");
+    return defaultConfig;
+  }
 }
 
 /**

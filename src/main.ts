@@ -15,8 +15,8 @@ import "./rules/treasure.ts";
 
 // Load workspace, iterate through rules, passing workspace into rule
 const config = GetConfig();
-const { workspace, rules } = config;
-const ws = LoadWorkspace(workspace);
+const { workspace, fallback, rules } = config;
+const ws = LoadWorkspace(workspace, fallback);
 const allRules = GetAllRules();
 
 allRules.forEach((rule) => {

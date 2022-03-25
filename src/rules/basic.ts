@@ -3,11 +3,13 @@ import { lintrule, Rule } from "../lib/rule.ts";
 import {
   D2RCharStats,
   D2RExcelRecord,
+  D2RGems,
   D2RHireling,
   D2RItemTypes,
   D2RLevels,
   D2RMagicBase,
   D2RMonEquip,
+  D2RMonProp,
   D2RMonSounds,
   D2RMonStats,
   D2RMonType,
@@ -54,7 +56,7 @@ export class NoDuplicates extends Rule {
             this.Warn(
               `${records[i].GetFileName()} - duplicate detected on lines ${
                 i + 2
-              } and ${j + 1} for field '${field}' (${thisField})`,
+              } and ${j + 2} for field '${field}' (${thisField})`,
             );
           }
         }
@@ -467,6 +469,14 @@ export class LinkedExcel extends Rule {
       mustExist(monEquip, field, "monster", bodyLocs, "code")
     );
 
+    [
+      ...multifield1<D2RMonProp>("prop", 6),
+      ...multifield2<D2RMonProp>("prop", " (n)", 6),
+      ...multifield2<D2RMonProp>("prop", " (h)", 6),
+    ].forEach((field) =>
+      mustExist(monProp, field, "id", properties, "code", isOptional)
+    );
+
     // ensure baseid in monstats.txt is a valid entry in monstats.txt
     mustExist(monStats, "baseid", "id", monStats, "id");
 
@@ -499,7 +509,14 @@ export class LinkedExcel extends Rule {
 
     [ntcFields, ntcNFields, ntcHFields].forEach((fieldSet) =>
       fieldSet.forEach((field) =>
-        mustExist(monStats, field, "id", treasureClassEx, "treasure class")
+        mustExist(
+          monStats,
+          field,
+          "id",
+          treasureClassEx,
+          "treasure class",
+          isOptional,
+        )
       )
     );
 
@@ -983,5 +1000,419 @@ export class LinkedExcel extends Rule {
     lookForString(uniquePrefix, "name", "name", false);
     lookForString(uniqueSuffix, "name", "name", false);
     lookForString(uniqueItems, "index", "index", false);
+  }
+}
+
+/**
+ * Check that certain numeric bounds are met
+ */
+@lintrule
+export class NumericBounds extends Rule {
+  GetRuleName(): string {
+    return "Basic/NumericBounds";
+  }
+
+  Evaluate(workspace: Workspace) {
+    const validVersion = <
+      T extends D2RExcelRecord,
+      U extends keyof T = keyof T,
+    >(excel: T[] | undefined, index: U, k: U) => {
+      if (excel === undefined) {
+        return;
+      }
+
+      excel.forEach((record, line) => {
+        const idString = record[index] as unknown as string;
+        const kString = record[k] as unknown as string;
+        if (
+          idString !== "" && idString !== "Expansion" &&
+          idString !== "Armor" && idString !== "Elite Uniques" &&
+          idString !== "Rings" && idString !== "Class Specific" &&
+          kString !== "0" && kString !== "1" && kString !== "100"
+        ) {
+          this.Warn(
+            `${record.GetFileName()}, line ${
+              line + 2
+            }: invalid 'version' (${kString}) for '${idString}'`,
+          );
+        }
+      });
+    };
+
+    const {
+      armor,
+      weapons,
+      misc,
+      charStats,
+      cubemain,
+      gems,
+      hireling,
+      inventory,
+      itemStatCost,
+      levels,
+      lvlTypes,
+      magicPrefix,
+      magicSuffix,
+      monPreset,
+      monSounds,
+      monStats,
+      monUMod,
+      npc,
+      objects,
+      objGroup,
+      objPreset,
+      overlay,
+      petType,
+      rarePrefix,
+      rareSuffix,
+      sets,
+      setItems,
+      shrines,
+      skills,
+      skillDesc,
+      states,
+      superUniques,
+      treasureClassEx,
+      uniqueItems,
+    } = workspace;
+
+    validVersion(armor, "code", "version");
+    validVersion(misc, "code", "version");
+    validVersion(weapons, "code", "version");
+    validVersion(cubemain, "description", "version");
+    validVersion(magicPrefix, "name", "version");
+    validVersion(magicSuffix, "name", "version");
+    validVersion(monUMod, "uniquemod", "version");
+    validVersion(overlay, "overlay", "version");
+    validVersion(rarePrefix, "name", "version");
+    validVersion(rareSuffix, "name", "version");
+    validVersion(sets, "index", "version");
+    validVersion(uniqueItems, "index", "version");
+
+    /**
+     * check numeric amounts
+     */
+    type comparer = (expected: number, actual: number) => boolean;
+    type messager = (
+      expected: number,
+      actual: number,
+      index: string,
+      field: string,
+    ) => string;
+    const makeComparer = (c: comparer, m: messager) =>
+      <T extends D2RExcelRecord, U extends keyof T = keyof T>(
+        records: T[] | undefined,
+        field: U,
+        index: U,
+        num: number,
+        mustExist = false,
+      ) => {
+        if (records === undefined) {
+          return;
+        }
+
+        records.forEach((record, line) => {
+          let numericAmt = 0;
+          const asStr = record[field] as unknown as string;
+          const indexStr = record[index] as unknown as string;
+          const fieldName = field as string;
+          if (indexStr === "Expansion") {
+            // skip
+            return;
+          }
+
+          if (asStr === "") {
+            if (mustExist) {
+              this.Warn(
+                `${record.GetFileName()}, line ${
+                  line + 2
+                }: '${field}' is not filled in for '${indexStr}'`,
+              );
+            }
+            return;
+          }
+
+          try {
+            numericAmt = parseInt(asStr);
+          } catch {
+            this.Warn(
+              `${record.GetFileName()}, line ${
+                line + 2
+              }: '${field}' is not a number for '${indexStr}'`,
+            );
+            return;
+          }
+
+          if (!c(num, numericAmt)) {
+            this.Warn(
+              `${record.GetFileName()}, line ${line + 2}: ${
+                m(num, numericAmt, indexStr, fieldName)
+              }`,
+            );
+          }
+        });
+      };
+
+    const lt = makeComparer(
+      (e, a) => a < e,
+      (e, a, i, f) => `'${f}' is too large (${a}, max is ${e - 1}) for '${i}'`,
+    );
+    const gt = makeComparer(
+      (e, a) => a > e,
+      (e, a, i, f) => `'${f}' is too small (${a}, min is ${e + 1}) for '${i}'`,
+    );
+
+    [armor, misc, weapons].forEach((recordSet) => {
+      gt(recordSet, "cost", "code", -1);
+      gt(recordSet, "gamble cost", "code", -1);
+      gt(recordSet, "invwidth", "code", 0);
+      gt(recordSet, "invheight", "code", 0);
+    });
+
+    gt(charStats, "lightradius", "class", -1);
+
+    gt(inventory, "gridx", "class", -1, true);
+    gt(inventory, "gridy", "class", -1, true);
+    gt(hireling, "resurrectcostdivisor", "hireling", 0);
+    gt(hireling, "resurrectcostmultiplier", "hireling", 0);
+    gt(hireling, "resurrectcostmax", "hireling", 0);
+    gt(hireling, "hiringmaxleveldifference", "hireling", -1);
+    gt(objects, "sizex", "name", -1);
+    gt(objects, "sizey", "name", -1);
+    gt(overlay, "numdirections", "overlay", 0);
+    gt(petType, "basemax", "pet type", -1);
+    lt(treasureClassEx, "picks", "treasure class", 7);
+
+    /**
+     * ensure records are in range
+     */
+
+    const inRng = <T extends D2RExcelRecord, U extends keyof T = keyof T>(
+      records: T[] | undefined,
+      field: U,
+      index: U,
+      min: number,
+      max: number,
+      mustExist = false,
+    ) => {
+      if (records === undefined) {
+        return;
+      }
+
+      records.forEach((record, line) => {
+        let numericAmt = 0;
+        const asStr = record[field] as unknown as string;
+        const indexStr = record[index] as unknown as string;
+        if (indexStr === "Expansion") {
+          return;
+        }
+        if (asStr === "") {
+          if (mustExist) {
+            this.Warn(
+              `${record.GetFileName()}, line ${
+                line + 2
+              }: '${field}' is not filled in for "${indexStr}'`,
+            );
+          }
+          return;
+        }
+
+        try {
+          numericAmt = parseInt(asStr);
+        } catch {
+          this.Warn(
+            `${record.GetFileName()}, line ${
+              line + 2
+            }: '${field}' is not a number for '${indexStr}'`,
+          );
+          return;
+        }
+
+        if (numericAmt < min || numericAmt > max) {
+          this.Warn(
+            `${record.GetFileName()}, line ${
+              line + 2
+            }: '${field}' is out of range for '${indexStr}', expected number between ${min} and ${max} (inclusive), found ${numericAmt}`,
+          );
+        }
+      });
+    };
+
+    inRng(charStats, "walkvelocity", "class", 1, 10);
+    inRng(charStats, "runvelocity", "class", 1, 10);
+    inRng(charStats, "item1count", "class", 0, 10, true);
+    inRng(charStats, "item2count", "class", 0, 10, true);
+    inRng(charStats, "item3count", "class", 0, 10, true);
+    inRng(charStats, "item4count", "class", 0, 10, true);
+    inRng(charStats, "item5count", "class", 0, 10, true);
+    inRng(charStats, "item6count", "class", 0, 10, true);
+    inRng(charStats, "item7count", "class", 0, 10, true);
+    inRng(charStats, "item8count", "class", 0, 10, true);
+    inRng(charStats, "item9count", "class", 0, 10, true);
+    inRng(charStats, "item10count", "class", 0, 10, true);
+    inRng(charStats, "item1quality", "class", 0, 8);
+    inRng(charStats, "item2quality", "class", 0, 8);
+    inRng(charStats, "item3quality", "class", 0, 8);
+    inRng(charStats, "item4quality", "class", 0, 8);
+    inRng(charStats, "item5quality", "class", 0, 8);
+    inRng(charStats, "item6quality", "class", 0, 8);
+    inRng(charStats, "item7quality", "class", 0, 8);
+    inRng(charStats, "item8quality", "class", 0, 8);
+    inRng(charStats, "item9quality", "class", 0, 8);
+    inRng(charStats, "item10quality", "class", 0, 8);
+    inRng(itemStatCost, "advdisplay", "stat", 0, 2);
+    inRng(itemStatCost, "itemeventfunc1", "stat", 0, 33);
+    inRng(itemStatCost, "itemeventfunc2", "stat", 0, 33);
+    inRng(levels, "act", "name", 0, 4, true);
+    inRng(lvlTypes, "act", "name", 0, 5, true);
+    inRng(monPreset, "act", "place", 1, 5, true);
+    inRng(monSounds, "att1prb", "id", 0, 100);
+    inRng(monSounds, "att2prb", "id", 0, 100);
+    inRng(monSounds, "fsprb", "id", 0, 100);
+    inRng(monStats, "translvl", "id", 0, 7);
+    inRng(monStats, "sparsepopulate", "id", 0, 100);
+    inRng(monStats, "velocity", "id", 0, 20);
+    inRng(monStats, "run", "id", 0, 20);
+    //inRng(monStats, "level", "id", 0, 99);     FIXME
+    //inRng(monStats, "level(n)", "id", 0, 99);  FIXME
+    //inRng(monStats, "level(h)", "id", 0, 99);  PLEEZ
+    inRng(monUMod, "fpick", "id", 0, 3);
+    inRng(npc, "buy mult", "npc", 0, 2048);
+    inRng(npc, "sell mult", "npc", 0, 2048);
+    inRng(npc, "questflag a", "npc", 0, 41);
+    inRng(npc, "questflag b", "npc", 0, 41);
+    inRng(npc, "questflag c", "npc", 0, 41);
+    inRng(npc, "questbuymult a", "npc", 0, 2048);
+    inRng(npc, "questbuymult b", "npc", 0, 2048);
+    inRng(npc, "questbuymult c", "npc", 0, 2048);
+    inRng(npc, "questsellmult a", "npc", 0, 2048);
+    inRng(npc, "questsellmult b", "npc", 0, 2048);
+    inRng(npc, "questsellmult c", "npc", 0, 2048);
+    inRng(npc, "questrepmult a", "npc", 0, 2048);
+    inRng(npc, "questrepmult b", "npc", 0, 2048);
+    inRng(npc, "questrepmult c", "npc", 0, 2048);
+    inRng(objects, "selectable0", "name", 0, 1);
+    inRng(objects, "selectable1", "name", 0, 1);
+    inRng(objects, "selectable2", "name", 0, 1);
+    inRng(objects, "selectable3", "name", 0, 1);
+    inRng(objects, "selectable4", "name", 0, 1);
+    inRng(objects, "selectable5", "name", 0, 1);
+    inRng(objects, "selectable6", "name", 0, 1);
+    inRng(objects, "selectable7", "name", 0, 1);
+    inRng(objects, "isattackable0", "name", 0, 1);
+    inRng(objects, "enveffect", "name", 0, 1);
+    inRng(objects, "isdoor", "name", 0, 1);
+    inRng(objects, "blocksvis", "name", 0, 1);
+    inRng(objects, "orientation", "name", 0, 3);
+    inRng(objects, "orderflag0", "name", 0, 2);
+    inRng(objects, "orderflag1", "name", 0, 2);
+    inRng(objects, "orderflag2", "name", 0, 2);
+    inRng(objects, "orderflag3", "name", 0, 2);
+    inRng(objects, "orderflag4", "name", 0, 2);
+    inRng(objects, "orderflag5", "name", 0, 2);
+    inRng(objects, "orderflag6", "name", 0, 2);
+    inRng(objects, "orderflag7", "name", 0, 2);
+    inRng(objects, "monsterok", "name", 0, 1);
+    inRng(objects, "restore", "name", 0, 1);
+    inRng(objGroup, "density0", "groupname", 0, 128);
+    inRng(objGroup, "density1", "groupname", 0, 128);
+    inRng(objGroup, "density2", "groupname", 0, 128);
+    inRng(objGroup, "density3", "groupname", 0, 128);
+    inRng(objGroup, "density4", "groupname", 0, 128);
+    inRng(objGroup, "density5", "groupname", 0, 128);
+    inRng(objGroup, "density6", "groupname", 0, 128);
+    inRng(objGroup, "density7", "groupname", 0, 128);
+    inRng(objGroup, "prob0", "groupname", 0, 100);
+    inRng(objGroup, "prob1", "groupname", 0, 100);
+    inRng(objGroup, "prob2", "groupname", 0, 100);
+    inRng(objGroup, "prob3", "groupname", 0, 100);
+    inRng(objGroup, "prob4", "groupname", 0, 100);
+    inRng(objGroup, "prob5", "groupname", 0, 100);
+    inRng(objGroup, "prob6", "groupname", 0, 100);
+    inRng(objGroup, "prob7", "groupname", 0, 100);
+    inRng(objPreset, "act", "index", 1, 5);
+    inRng(overlay, "trans", "overlay", 0, 8);
+    inRng(overlay, "initradius", "overlay", 0, 18);
+    inRng(overlay, "radius", "overlay", 0, 18);
+    inRng(overlay, "red", "overlay", 0, 255);
+    inRng(overlay, "green", "overlay", 0, 255);
+    inRng(overlay, "blue", "overlay", 0, 255);
+    inRng(overlay, "localblood", "overlay", 0, 2);
+    inRng(petType, "warp", "pet type", 0, 1);
+    inRng(petType, "range", "pet type", 0, 1);
+    inRng(petType, "partysend", "pet type", 0, 1);
+    inRng(petType, "automap", "pet type", 0, 1);
+    inRng(petType, "drawhp", "pet type", 0, 1);
+    inRng(petType, "icontype", "pet type", 0, 3);
+    inRng(setItems, "lvl", "index", 0, 125);
+    inRng(setItems, "lvl req", "index", 0, 99);
+    inRng(setItems, "add func", "index", 0, 2);
+    inRng(shrines, "code", "name", 0, 22);
+    inRng(skills, "passivereqweaponcount", "skill", 0, 2);
+    inRng(skills, "stsuccessonly", "skill", 0, 1);
+    inRng(skills, "stsounddelay", "skill", 0, 1);
+    inRng(skills, "weaponsnd", "skill", 0, 1);
+    inRng(skills, "warp", "skill", 0, 1);
+    inRng(skills, "immediate", "skill", 0, 1);
+    inRng(skills, "enhanceable", "skill", 0, 1);
+    inRng(skills, "attackrank", "skill", 0, 12);
+    inRng(skills, "noammo", "skill", 0, 1);
+    inRng(skills, "weapsel", "skill", 0, 4);
+    inRng(skills, "lineofsight", "skill", 0, 5);
+    // reqlevel/maxlevel ?
+    inRng(skills, "restrict", "skill", 0, 3);
+    inRng(skills, "aura", "skill", 0, 1);
+    inRng(skills, "periodic", "skill", 0, 1);
+    inRng(skills, "passive", "skill", 0, 1);
+    inRng(skills, "aitype", "skill", 0, 13);
+    inRng(skills, "cost mult", "skill", 0, 1024);
+    inRng(skillDesc, "skillpage", "skilldesc", 0, 3);
+    inRng(skillDesc, "skillrow", "skilldesc", 0, 6);
+    inRng(skillDesc, "skillcolumn", "skilldesc", 0, 3);
+    inRng(skillDesc, "listrow", "skilldesc", -1, 4);
+    inRng(skillDesc, "descdam", "skilldesc", 0, 24);
+    inRng(skillDesc, "descatt", "skilldesc", 0, 5);
+    inRng(states, "setfunc", "state", 0, 19);
+    inRng(states, "remfunc", "state", 0, 12);
+    //inRng(states, "gfxclass", "state", 0, 6);  FIXME
+    inRng(superUniques, "utrans", "name", 0, 40);
+    inRng(superUniques, "utrans(n)", "name", 0, 40);
+    inRng(superUniques, "utrans(h)", "name", 0, 40);
+    inRng(treasureClassEx, "level", "treasure class", 0, 125);
+    //inRng(treasureClassEx, "nodrop", "treasure class", 0, 100);
+    inRng(treasureClassEx, "unique", "treasure class", 0, 1024);
+    inRng(treasureClassEx, "set", "treasure class", 0, 1024);
+    inRng(treasureClassEx, "rare", "treasure class", 0, 1024);
+    inRng(treasureClassEx, "magic", "treasure class", 0, 1024);
+    inRng(uniqueItems, "lvl", "index", 0, 126);
+    inRng(uniqueItems, "lvl req", "index", 0, 99);
+
+    // in gems.txt, we have to make sure that modxmin and modxmax are the same
+    // otherwise, we get flickering in-game
+    /*if (gems !== undefined) {
+      gems.forEach((gem, line) => {
+        const recordPairs: [keyof D2RGems, keyof D2RGems][] = [
+          ["helmmod1min", "helmmod1max"],
+          ["helmmod2min", "helmmod2max"],
+          ["helmmod3min", "helmmod3max"],
+          ["shieldmod1min", "shieldmod1max"],
+          ["shieldmod2min", "shieldmod2max"],
+          ["shieldmod3min", "shieldmod3max"],
+          ["weaponmod1min", "weaponmod1max"],
+          ["weaponmod2min", "weaponmod2max"],
+          ["weaponmod3min", "weaponmod3max"],
+        ];
+
+        recordPairs.forEach((recordPair) => {
+          if (gem[recordPair[0]] !== gem[recordPair[1]]) {
+            this.Warn(
+              `${gem.GetFileName()}, line ${line + 2}: ${recordPair[0]} and ${
+                recordPair[1]
+              } don't match for '${gem.code}', this will cause flickering ingame`,
+            );
+          }
+        });
+      });
+    }*/
   }
 }
