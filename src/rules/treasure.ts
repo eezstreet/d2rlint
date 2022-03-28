@@ -124,3 +124,146 @@ export class ValidTreasure extends Rule {
     });
   }
 }
+
+/**
+ * If 'Picks' is negative, the prop columns must all add to its absolute value.
+ */
+@lintrule
+export class ValidNegativePicks extends Rule {
+  GetRuleName() {
+    return "TC/ValidNegativePicks";
+  }
+
+  Evaluate(workspace: Workspace) {
+    const { treasureClassEx } = workspace;
+
+    if (treasureClassEx === undefined) {
+      return;
+    }
+
+    treasureClassEx.forEach((tc, line) => {
+      let picks = 0;
+      if (tc.picks === "") {
+        return; // skip.
+      }
+
+      try {
+        picks = parseInt(tc.picks as unknown as string);
+      } catch {
+        this.Warn(
+          `${tc.GetFileName()}, line ${
+            line + 2
+          }: 'picks' is not a number for '${tc["treasure class"]}'`,
+        );
+        return;
+      }
+
+      if (picks >= 0) {
+        return;
+      }
+
+      const picksAbs = Math.abs(picks);
+      const probs: (keyof D2RTreasureClassEx)[] = [
+        "prob1",
+        "prob2",
+        "prob3",
+        "prob4",
+        "prob5",
+        "prob6",
+        "prob7",
+        "prob8",
+        "prob9",
+        "prob10",
+      ];
+
+      const picksReal = probs.reduce((sum, key) => {
+        let val = 0;
+        try {
+          val = parseInt(tc[key] as unknown as string);
+        } catch {
+          this.Warn(
+            `${tc.GetFileName()}, line ${
+              line + 2
+            }: '${key}' is not a number for '${tc["treasure class"]}'`,
+          );
+        }
+        return sum + val;
+      }, 0);
+
+      if (picksReal !== picksAbs) {
+        this.Warn(
+          `${tc.GetFileName()}, line ${
+            line + 2
+          }: 'picks' (${picks}) doesn't match negative sum of probs (${picksReal}) for '${
+            tc["treasure class"]
+          }'`,
+        );
+      }
+    });
+  }
+}
+
+/**
+ * If a value is defined in 'item1'-'item10', it must have a value in 'prob1'-'prob10'
+ */
+@lintrule
+export class ValidProbs extends Rule {
+  GetRuleName() {
+    return "TC/ValidProbs";
+  }
+
+  Evaluate(workspace: Workspace) {
+    const { treasureClassEx } = workspace;
+    if (treasureClassEx === undefined) {
+      return;
+    }
+
+    const matchingFields: [
+      keyof D2RTreasureClassEx,
+      keyof D2RTreasureClassEx,
+    ][] = [
+      ["item1", "prob1"],
+      ["item2", "prob2"],
+      ["item3", "prob3"],
+      ["item4", "prob4"],
+      ["item5", "prob5"],
+      ["item6", "prob6"],
+      ["item7", "prob7"],
+      ["item8", "prob8"],
+      ["item9", "prob9"],
+      ["item10", "prob10"],
+    ];
+
+    treasureClassEx.forEach((tc, line) => {
+      matchingFields.forEach((fieldSet) => {
+        const ikey = fieldSet[0];
+        const pkey = fieldSet[1];
+        const item = tc[ikey];
+        const prob = tc[pkey];
+
+        if (item === "") {
+          return; // skip
+        }
+
+        if (prob === "") {
+          this.Warn(
+            `${tc.GetFileName()}, line ${
+              line + 2
+            }: no '${pkey}' for '${ikey}' in '${tc["treasure class"]}'`,
+          );
+          return;
+        }
+
+        try {
+          parseInt(prob as unknown as string);
+        } catch {
+          this.Warn(
+            `${tc.GetFileName()}, line ${
+              line + 2
+            }: '${pkey}' is not a number in '${tc["treasure class"]}'`,
+          );
+        }
+      });
+    });
+  }
+}
