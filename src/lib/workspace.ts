@@ -3993,7 +3993,7 @@ function ParseExcel<T extends D2RExcelRecord = D2RExcelRecord>(
   const generic = new type();
   const file = generic.GetFileName();
   let fileText = FindExcel(location, generic.GetFileName());
-  if (fileText === undefined) {
+  if (fileText === undefined && fallback !== undefined && fallback.length > 0) {
     fileText = FindExcel(fallback, generic.GetFileName());
   }
 
@@ -4061,9 +4061,26 @@ function ParseStringFile(filePath: string): D2RStringTable[] | undefined {
  */
 function LoadStrings(
   location: string,
+  fallback: string,
 ): { [key: string]: D2RStringTable[] | undefined } | undefined {
   // walk until we find the "strings" folder
   const entries: { [key: string]: D2RStringTable[] | undefined } = {};
+
+  // look in the fallback first, the content will get replaced.
+  if (fallback !== undefined && fallback.length > 0) {
+    for (const entry of fs.walkSync(fallback)) {
+      if (entry.isDirectory && entry.name.toLocaleLowerCase() === "strings") {
+        for (const fileEntry of fs.walkSync(entry.path, { maxDepth: 1 })) {
+          if (fileEntry.isFile && fileEntry.name.match(/\.json$/gi) !== null) {
+            const fileName = fileEntry.name.replace(/(.*)\.json$/gi, "$1");
+            entries[fileName] = ParseStringFile(fileEntry.path);
+          }
+        }
+      }
+    }
+  }
+
+  // look in the real directory next
   for (const entry of fs.walkSync(location)) {
     if (entry.isDirectory && entry.name.toLocaleLowerCase() === "strings") {
       for (const fileEntry of fs.walkSync(entry.path, { maxDepth: 1 })) {
@@ -4218,6 +4235,6 @@ export function LoadWorkspace(location: string, fallback: string): Workspace {
     wanderingMon: ParseExcel(location, fallback, D2RWanderingMon),
     weapons: ParseExcel(location, fallback, D2RWeapons),
 
-    strings: LoadStrings(location),
+    strings: LoadStrings(location, fallback),
   };
 }

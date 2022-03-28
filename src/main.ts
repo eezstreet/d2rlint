@@ -9,6 +9,7 @@ import { LoadWorkspace } from "./lib/workspace.ts";
 // Import all rules here so that they get loaded.
 import "./rules/basic.ts";
 import "./rules/cube.ts";
+import "./rules/levels.ts";
 import "./rules/string.ts";
 import "./rules/treasure.ts";
 /////////////////////////////////////////////////

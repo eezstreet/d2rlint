@@ -23,8 +23,37 @@ You will find that it has produced a `config.json` file:
 ```json
 {
   "workspace": "",
+  "fallback": "",
+  "log": "output.txt",
   "rules": {
-    "Levels/ValidMonsters": {
+    "Basic/NoDuplicateExcel": {
+      "action": "warn"
+    },
+    "Basic/LinkedExcel": {
+      "action": "warn"
+    },
+    "Basic/NumericBounds": {
+      "action": "warn"
+    },
+    "Cube/ValidInputs": {
+      "action": "warn"
+    },
+    "Cube/ValidOutputs": {
+      "action": "warn"
+    },
+    "Cube/ValidOp": {
+      "action": "warn"
+    },
+    "Level/ValidWarp": {
+      "action": "warn"
+    },
+    "Level/ValidWPs": {
+      "action": "warn"
+    },
+    "String/NoUntranslated": {
+      "action": "ignore"
+    },
+    "TC/ValidTreasure": {
       "action": "warn"
     }
   }
@@ -35,6 +64,9 @@ Please type the location where any .txt files can be found in the "workspace"
 folder. This is recursive; for example, you can type
 `C:/Program Files (x86)/Diablo II/MyMod` and it will search for everything. Or
 you can type `C:/` for all it cares.
+
+If you want, you can also add a fallback directory. If files aren't found in the
+"workspace" folder, it'll also try to look in the "fallback" folder.
 
 You can adjust the level of concern for each individual rule within the
 `"rules"` section. There are three "action levels":
@@ -61,10 +93,23 @@ still under development.
   few exceptions. Examples include things like checking for missing strings,
   checking for invalid item codes and so on. This won't check Treasure Class or
   Cube linkage, this is handled by other rules.
+- `Basic/NumericBounds`: Ensures that no fields go out of bounds. For example, a
+  number greater than 6 for 'Picks' in TreasureClassEx.txt would be considered
+  invalid for a TC.
+- `Cube/ValidInputs`: Ensures that both the number of inputs and the inputs
+  themselves to cube recipes are valid.
+- `Cube/ValidOutputs`: Ensures that the outputs to cube recipes are valid.
+- `Cube/ValidOp`: Ensures that valid parameters and values are passed to
+  opcodes.
+- `Level/ValidWarp`: Ensures that levels are linked together with valid vis/warp
+  values.
+- `Level/ValidWPs`: Ensures that no two levels share the same waypoint index.
 - `String/NoUntranslated`: Ensures that all languages for all strings are
   translated, and no fields are excluded unnecessarily. **This is ignored by
   default.** This triggers a lot of errors and can slow down the program
   considerably and is only really meant for advanced usage.
+- `TC/ValidTreasure`: Ensures that Treasure Classes are linked together
+  properly.
 
 Note that the files that ship with the original game will trigger some of these
 rules. **This is normal.** There are genuine errors in their own files, and this

@@ -80,7 +80,7 @@ function LoadConfigFirstTime(): SavedConfiguration {
     console.log("Press enter to continue.");
 
     Deno.stdin.readSync(new Uint8Array(32));
-    return LoadConfigFirstTime();
+    Deno.exit(0);
   }
 
   // Read the config file. If any fields are missing from it that exists in the default, go ahead and re-write.
