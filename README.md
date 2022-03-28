@@ -167,8 +167,5 @@ This project is licensed under the GNU GPLv3 license.
 
 - Backwards compatibility with Diablo II (un-resurrected). It works fine, but it
   will warn about missing column headers.
-- Make column checking into a Rule.
-- Auto-fix config file when it is missing data about new rules.
 - Auto-fix problems (similar to ESLint)
-- Improve the look of the display (using chalk)
 - More rules!
