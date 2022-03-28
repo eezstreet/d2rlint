@@ -11,6 +11,7 @@ import "./rules/basic.ts";
 import "./rules/cube.ts";
 import "./rules/items.ts";
 import "./rules/levels.ts";
+import "./rules/skills.ts";
 import "./rules/string.ts";
 import "./rules/treasure.ts";
 /////////////////////////////////////////////////
