@@ -22,6 +22,7 @@ export interface SavedConfiguration {
   workspace: string;
   fallback: string;
   log: string;
+  logAppend: boolean;
   rules: { [ruleName: string]: RuleConfig };
 }
 
@@ -48,6 +49,7 @@ function CreateDefaultConfig(): SavedConfiguration {
   return {
     workspace: "",
     fallback: "",
+    logAppend: false,
     log: "output.txt",
     rules,
   };

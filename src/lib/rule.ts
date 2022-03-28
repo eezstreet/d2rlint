@@ -6,6 +6,7 @@
 // @deno-types="https://deno.land/x/chalk_deno@v4.1.1-deno/index.d.ts"
 import chalk from "https://deno.land/x/chalk_deno@v4.1.1-deno/source/index.js";
 import { GetConfig, RuleAction } from "./config.ts";
+import { GetLogfile } from "./log.ts";
 import { Workspace } from "./workspace.ts";
 
 export type Constructor<T extends unknown = unknown> = {
@@ -72,8 +73,8 @@ export abstract class Rule {
    */
   Log(msg: string): void {
     const config = GetConfig();
-    const { log } = config;
-    Deno.writeTextFileSync(log, `${msg}\r\n`, { append: true });
+    const log = GetLogfile(config);
+    log.WriteLine(msg);
   }
 
   /**
