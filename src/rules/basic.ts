@@ -1,6 +1,7 @@
 import { seq } from "../lib/misc.ts";
 import { lintrule, Rule } from "../lib/rule.ts";
 import {
+  D2RActInfo,
   D2RCharStats,
   D2RExcelRecord,
   D2RGems,
@@ -151,7 +152,8 @@ export class LinkedExcel extends Rule {
   }
 
   Evaluate(workspace: Workspace) {
-    // mustExist(misc, 'type', 'code', itemtypes, 'code', true) = "if 'code' is not null for some entry in misc and 'type' doesn't link to a 'code' in itemtypes.txt, warn."
+    // mustExist(misc, 'type', 'code', itemtypes, 'code', options) = "if 'code' is not null for some entry in misc and 'type' doesn't link to a 'code' in itemtypes.txt, warn."
+    // we can put in an "isOptional" in the options to mark that the field is wholly optional
     type ExistOptions = {
       caseSensitive?: boolean;
       allowNull?: boolean;
@@ -229,6 +231,7 @@ export class LinkedExcel extends Rule {
     };
 
     const {
+      actInfo,
       armor,
       autoMagic,
       bodyLocs,
@@ -341,6 +344,18 @@ export class LinkedExcel extends Rule {
       // ensure hitclass points to valid entries in hitclass.txt
       mustExist(itemFile, "hit class", "code", hitclass, "code", isOptional);
     });
+
+    // ensure all entries in actinfo.txt are correct
+    const actInfoFields: (keyof D2RActInfo)[] = [
+      "town",
+      "start",
+      "classlevelrangestart",
+      "classlevelrangeend",
+      ...multifield1<D2RActInfo>("waypoint", 9),
+    ];
+    actInfoFields.forEach((field) =>
+      mustExist(actInfo, field, "act", levels, "name")
+    );
 
     // ensure item1-10 in charstats.txt point to valid "code" in armor/misc/weapons
     const csitemFields = multifield1<D2RCharStats>("item", 10);
@@ -1171,8 +1186,8 @@ export class NumericBounds extends Rule {
 
     gt(charStats, "lightradius", "class", -1);
 
-    gt(inventory, "gridx", "class", -1, true);
-    gt(inventory, "gridy", "class", -1, true);
+    gt(inventory, "gridx", "class", -2, true);
+    gt(inventory, "gridy", "class", -2, true);
     gt(hireling, "resurrectcostdivisor", "hireling", 0);
     gt(hireling, "resurrectcostmultiplier", "hireling", 0);
     gt(hireling, "resurrectcostmax", "hireling", 0);
@@ -1237,6 +1252,13 @@ export class NumericBounds extends Rule {
         }
       });
     };
+
+    inRng(armor, "hasinv", "name", 0, 1);
+    inRng(misc, "hasinv", "name", 0, 1);
+    inRng(weapons, "hasinv", "name", 0, 1);
+    inRng(armor, "stackable", "name", 0, 1);
+    inRng(misc, "stackable", "name", 0, 1);
+    inRng(weapons, "stackable", "name", 0, 1);
 
     inRng(charStats, "walkvelocity", "class", 1, 10);
     inRng(charStats, "runvelocity", "class", 1, 10);
