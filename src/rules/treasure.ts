@@ -178,6 +178,9 @@ export class ValidNegativePicks extends Rule {
 
       const picksReal = probs.reduce((sum, key) => {
         let val = 0;
+        if (tc[key] === "") {
+          return sum;
+        }
         try {
           val = parseInt(tc[key] as unknown as string);
         } catch {
@@ -194,7 +197,7 @@ export class ValidNegativePicks extends Rule {
         this.Warn(
           `${tc.GetFileName()}, line ${
             line + 2
-          }: 'picks' (${picks}) doesn't match negative sum of probs (${picksReal}) for '${
+          }: 'picks' (${picks}) doesn't match negative sum of probs (${-picksReal}) for '${
             tc["treasure class"]
           }'`,
         );

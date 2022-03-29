@@ -2,6 +2,7 @@ import { seq } from "../lib/misc.ts";
 import { lintrule, Rule } from "../lib/rule.ts";
 import {
   D2RActInfo,
+  D2RAutomagic,
   D2RCharStats,
   D2RExcelRecord,
   D2RGems,
@@ -9,6 +10,7 @@ import {
   D2RItemTypes,
   D2RLevels,
   D2RMagicBase,
+  D2RMissiles,
   D2RMonEquip,
   D2RMonProp,
   D2RMonSounds,
@@ -235,8 +237,11 @@ export class LinkedExcel extends Rule {
       armor,
       autoMagic,
       bodyLocs,
+      books,
       charStats,
       colors,
+      cubemain,
+      elemTypes,
       events,
       gamble,
       gems,
@@ -252,7 +257,9 @@ export class LinkedExcel extends Rule {
       missiles,
       monAi,
       monEquip,
+      monMode,
       monProp,
+      monSeq,
       monSounds,
       monStats,
       monStats2,
@@ -265,6 +272,7 @@ export class LinkedExcel extends Rule {
       overlay,
       petType,
       playerClass,
+      plrMode,
       properties,
       qualityItems,
       rarePrefix,
@@ -354,8 +362,40 @@ export class LinkedExcel extends Rule {
       ...multifield1<D2RActInfo>("waypoint", 9),
     ];
     actInfoFields.forEach((field) =>
-      mustExist(actInfo, field, "act", levels, "name")
+      mustExist(actInfo, field, "act", levels, "name", isOptional)
     );
+
+    // ensure classspecific/class in automagic.txt is valid
+    mustExist(
+      autoMagic,
+      "classspecific",
+      "name",
+      playerClass,
+      "code",
+      isOptional,
+    );
+    mustExist(autoMagic, "class", "name", playerClass, "code", isOptional);
+
+    // ensure transformcolor in automagic is accurate
+    mustExist(autoMagic, "transformcolor", "name", colors, "code", isOptional);
+
+    // ensure mod1code-mod3code in automagic point to valid properties
+    mustExist(autoMagic, "mod1code", "name", properties, "code", isOptional);
+    mustExist(autoMagic, "mod2code", "name", properties, "code", isOptional);
+    mustExist(autoMagic, "mod3code", "name", properties, "code", isOptional);
+
+    // ensure these fields point to valid item types
+    const amITypes: (keyof D2RAutomagic)[] = [
+      ...multifield1<D2RAutomagic>("itype", 7),
+      ...multifield1<D2RAutomagic>("etype", 5),
+    ];
+    amITypes.forEach((field) =>
+      mustExist(autoMagic, field, "name", itemTypes, "code", isOptional)
+    );
+
+    // ensure "scrollskill" and "bookskill" in books.txt point to valid skills
+    mustExist(books, "bookskill", "name", skills, "skill", isOptional);
+    mustExist(books, "scrollskill", "name", skills, "skill", isOptional);
 
     // ensure item1-10 in charstats.txt point to valid "code" in armor/misc/weapons
     const csitemFields = multifield1<D2RCharStats>("item", 10);
@@ -388,6 +428,16 @@ export class LinkedExcel extends Rule {
       caseSensitive: false,
     });
 
+    // ensure "class" in cubemain.txt points to a valid character class
+    mustExist(
+      cubemain,
+      "class",
+      "description",
+      playerClass,
+      "code",
+      isOptional,
+    );
+
     // ensure "code" in gamble.txt matches one in armor/misc/weapons
     mustExist(gamble, "code", "code", allItems, "code");
 
@@ -401,6 +451,12 @@ export class LinkedExcel extends Rule {
         allowNull: true,
       })
     );
+
+    // ensure Mode1-6 in hireling.txt points to valid modmode.txt entry
+    /*const hlModeFields = multifield1<D2RHireling>("mode", 6);
+    hlModeFields.forEach((field) =>
+      mustExist(hireling, field, "hireling", monMode, "code", isOptional)
+    );*/
 
     // ensure maxstat in itemstatcost.txt points to valid entry
     mustExist(
@@ -416,12 +472,15 @@ export class LinkedExcel extends Rule {
     mustExist(itemStatCost, "itemevent1", "stat", events, "event", isOptional);
     mustExist(itemStatCost, "itemevent2", "stat", events, "event", isOptional);
 
-    // ensure equiv1 and equiv2 point to valid "code" in itemtypes.txt
-    const itequivFields = multifield1<D2RItemTypes>("equiv", 2);
-    itequivFields.forEach((field) =>
-      mustExist(itemTypes, field, "code", itemTypes, "code", {
-        allowNull: true,
-      })
+    // ensure shoots, quiver, equiv1 and equiv2 point to valid "code" in itemtypes.txt
+    const itInternalFields: (keyof D2RItemTypes)[] = [
+      "equiv1",
+      "equiv2",
+      "shoots",
+      "quiver",
+    ];
+    itInternalFields.forEach((field) =>
+      mustExist(itemTypes, field, "code", itemTypes, "code", isOptional)
     );
 
     // ensure bodyloc1/bodyloc2 in itemtypes.txt point to valid bodylocs
@@ -431,6 +490,7 @@ export class LinkedExcel extends Rule {
     // ensure staffmods and class in itemtypes.txt is a valid playerclass
     mustExist(itemTypes, "staffmods", "code", playerClass, "code", isOptional);
     mustExist(itemTypes, "class", "code", playerClass, "code", isOptional);
+    // FIXME: add new dualwieldclass1-7
 
     // ensure storepage in itemtypes.txt is a valid storepage
     mustExist(itemTypes, "storepage", "code", storePage, "code", isOptional);
@@ -453,6 +513,7 @@ export class LinkedExcel extends Rule {
     // ensure mod1code-mod3code in magicprefix/magicsuffix are valid
     // ensure itype1-7 and etype1-5 in magicprefix/magicsuffix are valid
     // ensure transformcolor in magicprefix/magicsuffix are valid
+    // ensure classspecific and class in magicprefix/magicsuffix are valid
     [magicPrefix, magicSuffix].forEach((file) => {
       const modcodes = multifield2<D2RMagicBase>("mod", "code", 3);
       const icodes = [
@@ -467,7 +528,11 @@ export class LinkedExcel extends Rule {
         mustExist(file, field, "name", itemTypes, "code", isOptional)
       );
       mustExist(file, "transformcolor", "name", colors, "code", isOptional);
+      mustExist(file, "classspecific", "name", playerClass, "code", isOptional);
+      mustExist(file, "class", "name", playerClass, "code", isOptional);
     });
+
+    // ensure
 
     // ensure "monster" in monequip.txt point to valid entries in monstats.txt
     mustExist(monEquip, "monster", "monster", monStats, "id");
@@ -554,8 +619,117 @@ export class LinkedExcel extends Rule {
       "misss4",
       "misssq",
     ] as (keyof D2RMonStats)[]).forEach((field) =>
-      mustExist(monStats, field, "code", missiles, "missile", isOptional)
+      mustExist(monStats, field, "id", missiles, "missile", isOptional)
     );
+
+    // ensure "Skill" in missiles.txt points to a valid skill.txt entry
+    mustExist(missiles, "skill", "missile", skills, "skill", isOptional);
+
+    // ensure "etype" in missiles.txt points to a valid elemtype.txt entry
+    mustExist(missiles, "etype", "missile", elemTypes, "code", isOptional);
+
+    // ensure "travelsound", "hitsound" and "progsound" in missiles.txt points to a valid sounds.txt entry
+    mustExist(missiles, "travelsound", "missile", sounds, "sound", isOptional);
+    mustExist(missiles, "hitsound", "missile", sounds, "sound", isOptional);
+    mustExist(missiles, "progsound", "missile", sounds, "sound", isOptional);
+
+    // ensure "progoverlay" in missiles.txt points to a valid overlay entry
+    mustExist(
+      missiles,
+      "progoverlay",
+      "missile",
+      overlay,
+      "overlay",
+      isOptional,
+    );
+
+    // ensure these missile fields in missiles.txt point to valid entries
+    const missSubEntries: (keyof D2RMissiles)[] = [
+      "explosionmissile",
+      "submissile1",
+      "submissile2",
+      "submissile3",
+      "hitsubmissile1",
+      "hitsubmissile2",
+      "hitsubmissile3",
+      "hitsubmissile4",
+      "clthitsubmissile1",
+      "clthitsubmissile2",
+      "clthitsubmissile3",
+      "clthitsubmissile4",
+      "cltsubmissile1",
+      "cltsubmissile2",
+      "cltsubmissile3",
+    ];
+    missSubEntries.forEach((field) =>
+      mustExist(missiles, field, "missile", missiles, "missile", isOptional)
+    );
+
+    // ensure the following are valid entries in monmode.txt:
+    const mstModeFields: (keyof D2RMonStats)[] = [
+      "spawnmode",
+      "el1mode",
+      "el2mode",
+      "el3mode",
+    ];
+    mstModeFields.forEach((field) =>
+      mustExist(monStats, field, "id", monMode, "code", {
+        allowNull: true,
+        nullChecker: (s) => s === "xx" || s === "XX" || s === "",
+      })
+    );
+
+    // ensure the following are valid entries in elemtypes.txt:
+    const mstElemFields: (keyof D2RMonStats)[] = [
+      "el1type",
+      "el2type",
+      "el3type",
+    ];
+    mstElemFields.forEach((field) =>
+      mustExist(monStats, field, "id", elemTypes, "code", isOptional)
+    );
+
+    // ensure skxmode is valid monmode.txt or monseq.txt entry
+    const msSeqEntries: [keyof D2RMonStats, keyof D2RMonStats][] = [
+      ["skill1", "sk1mode"],
+      ["skill2", "sk2mode"],
+      ["skill3", "sk3mode"],
+      ["skill4", "sk4mode"],
+      ["skill5", "sk5mode"],
+      ["skill6", "sk6mode"],
+      ["skill7", "sk7mode"],
+      ["skill8", "sk8mode"],
+    ];
+    if (
+      monStats !== undefined && monMode !== undefined && monSeq !== undefined
+    ) {
+      msSeqEntries.forEach((seqEntry) => {
+        monStats.forEach((mon, line) => {
+          const skill = seqEntry[0];
+          const mode = seqEntry[1];
+
+          if (mon[skill] === "") {
+            return; // blank skill, just ignore
+          }
+
+          const modeEntry = mon[mode];
+          // see if it's a valid mode in monMode.txt
+          if (monMode.some((record) => record.code === modeEntry)) {
+            return;
+          }
+          // see if it's a valid seq in monSeq.txt
+          if (monSeq.some((record) => record.sequence === modeEntry)) {
+            return;
+          }
+
+          this.Warn(
+            `${mon.GetFileName()}, line ${
+              line + 2
+            }: could not find mode '${modeEntry}' for '${mode}'`,
+          );
+        });
+      });
+    }
 
     // ensure these fields in monsounds point to valid sounds.txt entries:
     const msSoundFields: (keyof D2RMonSounds)[] = [
@@ -578,6 +752,19 @@ export class LinkedExcel extends Rule {
     ];
     msSoundFields.forEach((field) =>
       mustExist(monSounds, field, "id", sounds, "sound", isOptional)
+    );
+
+    // ensure cvtmox and cvttgtx are valid entries in monmode.txt
+    const msModeFields: (keyof D2RMonSounds)[] = [
+      "cvtmo1",
+      "cvtmo2",
+      "cvtmo3",
+      "cvttgt1",
+      "cvttgt2",
+      "cvttgt3",
+    ];
+    msModeFields.forEach((field) =>
+      mustExist(monSounds, field, "id", monMode, "code", isOptional)
     );
 
     // ensure these fields exist in skills.txt:
@@ -702,6 +889,70 @@ export class LinkedExcel extends Rule {
     skMissileCheck.forEach((field) =>
       mustExist(skills, field, "skill", missiles, "missile", isOptional)
     );
+
+    // ensure summonmode is valid (if summon != null)
+    if (
+      skills !== undefined && monMode !== undefined && plrMode !== undefined
+    ) {
+      skills.forEach((skill, line) => {
+        if (skill.summon !== undefined && skill.summon !== "") {
+          if (
+            monMode.find((mode) => mode.code === skill.summode) === undefined
+          ) {
+            this.Warn(
+              `${skill.GetFileName()}, line ${
+                line + 2
+              }: invalid summode '${skill.summode}' for '${skill.skill}'`,
+            );
+          }
+        }
+
+        // ensure monanim is valid (or is xx)
+        if (
+          skill.skill !== "" && skill.skill !== "Expansion" &&
+          skill.monanim !== "XX" && skill.monanim !== ""
+        ) {
+          if (
+            monMode.find((mode) => mode.code === skill.monanim) === undefined
+          ) {
+            this.Warn(
+              `${skill.GetFileName()}, line ${
+                line + 2
+              }: invalid monanim '${skill.monanim}' for '${skill.skill}'`,
+            );
+          }
+        }
+
+        // ensure anim and seqtrans are valid
+        if (
+          skill.skill !== "" && skill.skill !== "Expansion" &&
+          skill.anim !== "XX" && skill.anim !== ""
+        ) {
+          if (plrMode.find((mode) => mode.code === skill.anim) === undefined) {
+            this.Warn(
+              `${skill.GetFileName()}, line ${
+                line + 2
+              }: invalid anim '${skill.anim}' for '${skill.skill}'`,
+            );
+          }
+        }
+
+        if (
+          skill.skill !== "" && skill.skill !== "Expansion" &&
+          skill.seqtrans !== "XX" && skill.seqtrans !== ""
+        ) {
+          if (
+            plrMode.find((mode) => mode.code === skill.seqtrans) === undefined
+          ) {
+            this.Warn(
+              `${skill.GetFileName()}, line ${
+                line + 2
+              }: invalid seqtrans '${skill.seqtrans}' for '${skill.seqtrans}'`,
+            );
+          }
+        }
+      });
+    }
 
     // ensure srvoverlay, cltoverlaya/b point to overlay.txt
     const skOverlayCheck: (keyof D2RSkills)[] = [
@@ -1058,16 +1309,23 @@ export class NumericBounds extends Rule {
       armor,
       weapons,
       misc,
+      autoMagic,
+      books,
       charStats,
       cubemain,
       gems,
       hireling,
       inventory,
+      itemRatio,
       itemStatCost,
+      itemTypes,
       levels,
+      lvlMaze,
+      lvlPrest,
       lvlTypes,
       magicPrefix,
       magicSuffix,
+      missiles,
       monPreset,
       monSounds,
       monStats,
@@ -1103,6 +1361,7 @@ export class NumericBounds extends Rule {
     validVersion(rareSuffix, "name", "version");
     validVersion(sets, "index", "version");
     validVersion(uniqueItems, "index", "version");
+    validVersion(itemRatio, "function", "version");
 
     /**
      * check numeric amounts
@@ -1188,6 +1447,16 @@ export class NumericBounds extends Rule {
 
     gt(inventory, "gridx", "class", -2, true);
     gt(inventory, "gridy", "class", -2, true);
+    gt(itemRatio, "uniquedivisor", "function", 0, true);
+    gt(itemRatio, "uniquemin", "function", 0, true);
+    gt(itemRatio, "setdivisor", "function", 0, true);
+    gt(itemRatio, "setmin", "function", 0, true);
+    gt(itemRatio, "raredivisor", "function", 0, true);
+    gt(itemRatio, "raremin", "function", 0, true);
+    gt(itemRatio, "magicdivisor", "function", 0, true);
+    gt(itemRatio, "magicmin", "function", 0, true);
+    gt(itemRatio, "hiqualitydivisor", "function", 0, true);
+    gt(itemRatio, "normaldivisor", "function", 0, true);
     gt(hireling, "resurrectcostdivisor", "hireling", 0);
     gt(hireling, "resurrectcostmultiplier", "hireling", 0);
     gt(hireling, "resurrectcostmax", "hireling", 0);
@@ -1253,12 +1522,51 @@ export class NumericBounds extends Rule {
       });
     };
 
-    inRng(armor, "hasinv", "name", 0, 1);
-    inRng(misc, "hasinv", "name", 0, 1);
-    inRng(weapons, "hasinv", "name", 0, 1);
-    inRng(armor, "stackable", "name", 0, 1);
-    inRng(misc, "stackable", "name", 0, 1);
-    inRng(weapons, "stackable", "name", 0, 1);
+    [armor, misc, weapons].forEach((itemFile) => {
+      inRng(itemFile, "compactsave", "name", 0, 1);
+      inRng(itemFile, "spawnable", "name", 0, 1);
+      inRng(itemFile, "nodurability", "name", 0, 1);
+      inRng(itemFile, "showlevel", "name", 0, 1);
+      inRng(itemFile, "useable", "name", 0, 1);
+      inRng(itemFile, "stackable", "name", 0, 1);
+      inRng(itemFile, "transmogrify", "name", 0, 1);
+      inRng(itemFile, "unique", "name", 0, 1);
+      inRng(itemFile, "transparent", "name", 0, 1);
+      inRng(itemFile, "hasinv", "name", 0, 1);
+      inRng(itemFile, "stackable", "name", 0, 1);
+      inRng(itemFile, "component", "name", 0, 16);
+      inRng(itemFile, "transtbl", "name", 0, 8);
+      inRng(itemFile, "quest", "name", 0, 37);
+      inRng(itemFile, "questdiffcheck", "name", 0, 1);
+
+      if (gems !== undefined) {
+        inRng(itemFile, "gemoffset", "name", 0, gems.length - 1);
+      }
+
+      if (missiles !== undefined) {
+        inRng(itemFile, "missiletype", "name", 0, missiles.length - 1);
+      }
+
+      inRng(itemFile, "invtrans", "name", 0, 8);
+      inRng(itemFile, "skipname", "name", 0, 1);
+      inRng(itemFile, "nameable", "name", 0, 1);
+      inRng(itemFile, "permstoreitem", "name", 0, 1);
+      inRng(itemFile, "worldevent", "name", 0, 1);
+      inRng(itemFile, "block", "name", 0, 75);
+      inRng(itemFile, "rarm", "name", 0, 2);
+      inRng(itemFile, "larm", "name", 0, 2);
+      inRng(itemFile, "torso", "name", 0, 2);
+      inRng(itemFile, "legs", "name", 0, 2);
+      inRng(itemFile, "rspad", "name", 0, 2);
+      inRng(itemFile, "lspad", "name", 0, 2);
+      inRng(itemFile, "pspell", "name", -1, 14); // 2 pspells are undocumented
+      inRng(itemFile, "spelldesc", "name", 0, 4);
+      inRng(itemFile, "spelldesccolor", "name", 0, 12);
+    });
+
+    inRng(autoMagic, "spawnable", "name", 0, 1);
+    inRng(autoMagic, "rare", "name", 0, 1);
+    inRng(books, "pspell", "name", -1, 14); // 2 pspells are undocumented
 
     inRng(charStats, "walkvelocity", "class", 1, 10);
     inRng(charStats, "runvelocity", "class", 1, 10);
@@ -1272,21 +1580,136 @@ export class NumericBounds extends Rule {
     inRng(charStats, "item8count", "class", 0, 10, true);
     inRng(charStats, "item9count", "class", 0, 10, true);
     inRng(charStats, "item10count", "class", 0, 10, true);
-    inRng(charStats, "item1quality", "class", 0, 8);
-    inRng(charStats, "item2quality", "class", 0, 8);
-    inRng(charStats, "item3quality", "class", 0, 8);
-    inRng(charStats, "item4quality", "class", 0, 8);
-    inRng(charStats, "item5quality", "class", 0, 8);
-    inRng(charStats, "item6quality", "class", 0, 8);
-    inRng(charStats, "item7quality", "class", 0, 8);
-    inRng(charStats, "item8quality", "class", 0, 8);
-    inRng(charStats, "item9quality", "class", 0, 8);
-    inRng(charStats, "item10quality", "class", 0, 8);
+    inRng(charStats, "item1quality", "class", 0, 9);
+    inRng(charStats, "item2quality", "class", 0, 9);
+    inRng(charStats, "item3quality", "class", 0, 9);
+    inRng(charStats, "item4quality", "class", 0, 9);
+    inRng(charStats, "item5quality", "class", 0, 9);
+    inRng(charStats, "item6quality", "class", 0, 9);
+    inRng(charStats, "item7quality", "class", 0, 9);
+    inRng(charStats, "item8quality", "class", 0, 9);
+    inRng(charStats, "item9quality", "class", 0, 9);
+    inRng(charStats, "item10quality", "class", 0, 9);
+    inRng(gems, "transform", "name", 0, 20);
+    inRng(itemRatio, "uber", "function", 0, 1);
+    inRng(itemRatio, "class specific", "function", 0, 1);
     inRng(itemStatCost, "advdisplay", "stat", 0, 2);
     inRng(itemStatCost, "itemeventfunc1", "stat", 0, 33);
     inRng(itemStatCost, "itemeventfunc2", "stat", 0, 33);
+    inRng(itemStatCost, "send other", "stat", 0, 1);
+    inRng(itemStatCost, "signed", "stat", 0, 1);
+    inRng(itemStatCost, "send bits", "stat", 0, 32);
+    inRng(itemStatCost, "send param bits", "stat", 0, 32);
+    inRng(itemStatCost, "updateanimrate", "stat", 0, 1);
+    inRng(itemStatCost, "saved", "stat", 0, 1);
+    inRng(itemStatCost, "csvsigned", "stat", 0, 1);
+    inRng(itemStatCost, "csvbits", "stat", 0, 32);
+    inRng(itemStatCost, "csvparam", "stat", 0, 32);
+    inRng(itemStatCost, "fcallback", "stat", 0, 1);
+    inRng(itemStatCost, "fmin", "stat", 0, 1);
+    inRng(itemStatCost, "encode", "stat", 0, 4);
+    inRng(itemStatCost, "keepzero", "stat", 0, 1);
+    inRng(itemStatCost, "op", "stat", 0, 13);
+    inRng(itemStatCost, "direct", "stat", 0, 1);
+    inRng(itemStatCost, "damagerelated", "stat", 0, 1);
+    inRng(itemStatCost, "descfunc", "stat", 0, 28);
+    inRng(itemStatCost, "descval", "stat", 0, 2);
+    inRng(itemStatCost, "stuff", "stat", 1, 8);
+    inRng(itemTypes, "throwable", "code", 0, 1);
+    inRng(itemTypes, "reload", "code", 0, 1);
+    inRng(itemTypes, "reequip", "code", 0, 1);
+    inRng(itemTypes, "autostack", "code", 0, 1);
+    inRng(itemTypes, "magic", "code", 0, 1);
+    inRng(itemTypes, "rare", "code", 0, 1);
+    inRng(itemTypes, "normal", "code", 0, 1);
+    inRng(itemTypes, "beltable", "code", 0, 1);
+    inRng(itemTypes, "treasureclass", "code", 0, 1);
     inRng(levels, "act", "name", 0, 4, true);
+    inRng(levels, "questflag", "name", 0, 41);
+    inRng(levels, "questflagex", "name", 0, 41);
+    inRng(levels, "teleport", "name", 0, 2);
+    inRng(levels, "rain", "name", 0, 1);
+    inRng(levels, "mud", "name", 0, 1);
+    inRng(levels, "noper", "name", 0, 1);
+    inRng(levels, "losdraw", "name", 0, 1);
+    inRng(levels, "floorfilter", "name", 0, 1);
+    inRng(levels, "blankscreen", "name", 0, 1);
+    inRng(levels, "drawedges", "name", 0, 1);
+    inRng(levels, "drlgtype", "name", 0, 3);
+    inRng(levels, "subtype", "name", -1, 13);
+    inRng(levels, "subtheme", "name", -1, 4);
+    inRng(levels, "intensity", "name", 0, 128);
+    inRng(levels, "red", "name", 0, 255);
+    inRng(levels, "green", "name", 0, 255);
+    inRng(levels, "blue", "name", 0, 255);
+    inRng(levels, "portal", "name", 0, 1);
+    inRng(levels, "position", "name", 0, 1);
+    inRng(levels, "savemonsters", "name", 0, 1);
+    inRng(levels, "quest", "name", 0, 41);
+    inRng(levels, "monwndr", "name", 0, 1);
+    inRng(levels, "nummon", "name", 0, 13);
+    inRng(levels, "rangedspawn", "name", 0, 1);
+    inRng(levels, "cpct1", "name", 0, 100);
+    inRng(levels, "cpct2", "name", 0, 100);
+    inRng(levels, "cpct3", "name", 0, 100);
+    inRng(levels, "cpct4", "name", 0, 100);
+    inRng(levels, "objprb0", "name", 0, 100);
+    inRng(levels, "objprb1", "name", 0, 100);
+    inRng(levels, "objprb2", "name", 0, 100);
+    inRng(levels, "objprb3", "name", 0, 100);
+    inRng(levels, "objprb4", "name", 0, 100);
+    inRng(levels, "objprb5", "name", 0, 100);
+    inRng(levels, "objprb6", "name", 0, 100);
+    inRng(levels, "objprb7", "name", 0, 100);
+    inRng(lvlMaze, "merge", "name", 0, 1000);
+    inRng(lvlPrest, "populate", "name", 0, 1);
+    inRng(lvlPrest, "logicals", "name", 0, 1);
+    inRng(lvlPrest, "outdoors", "name", 0, 1);
+    inRng(lvlPrest, "animate", "name", 0, 1);
+    inRng(lvlPrest, "killedge", "name", 0, 1);
+    inRng(lvlPrest, "fillblanks", "name", 0, 1);
+    inRng(lvlPrest, "automap", "name", 0, 1);
+    inRng(lvlPrest, "scan", "name", 0, 1);
     inRng(lvlTypes, "act", "name", 0, 5, true);
+    inRng(missiles, "pcltdofunc", "missile", 0, 69); // 69th function = undocumented (Corpse Explosion)
+    inRng(missiles, "pclthitfunc", "missile", 0, 64);
+    inRng(missiles, "psrvdofunc", "missile", 0, 37);
+    inRng(missiles, "psrvhitfunc", "missile", 0, 59);
+    inRng(missiles, "psrvdmgfunc", "missile", 0, 15);
+    inRng(missiles, "red", "missile", 0, 255);
+    inRng(missiles, "green", "missile", 0, 255);
+    inRng(missiles, "blue", "missile", 0, 255);
+    inRng(missiles, "loopanim", "missile", 0, 2); // pretty sure 2 = loop only once but this is undocumented
+    inRng(missiles, "subloop", "missile", 0, 1);
+    inRng(missiles, "collidetype", "missile", 0, 8);
+    inRng(missiles, "collidekill", "missile", 0, 1);
+    inRng(missiles, "collidefriend", "missile", 0, 1);
+    inRng(missiles, "lastcollide", "missile", 0, 1);
+    inRng(missiles, "collision", "missile", 0, 1);
+    inRng(missiles, "clientcol", "missile", 0, 1);
+    inRng(missiles, "clientsend", "missile", 0, 1);
+    inRng(missiles, "nexthit", "missile", 0, 1);
+    inRng(missiles, "srctown", "missile", 0, 1);
+    inRng(missiles, "candestroy", "missile", 0, 1);
+    inRng(missiles, "tohit", "missile", 0, 1);
+    inRng(missiles, "alwaysexplode", "missile", 0, 1);
+    inRng(missiles, "explosion", "missile", 0, 2); // 2 is used for Fire Enchanted death missile. not documented.
+    inRng(missiles, "town", "missile", 0, 1);
+    inRng(missiles, "nouniquemod", "missile", 0, 1);
+    inRng(missiles, "nomultishot", "missile", 0, 2); // 2 is used for Fire Enchanted death missile. not documented.
+    inRng(missiles, "holy", "missile", 0, 4);
+    inRng(missiles, "canslow", "missile", 0, 1);
+    inRng(missiles, "returnfire", "missile", 0, 1);
+    inRng(missiles, "gethit", "missile", 0, 1);
+    inRng(missiles, "softhit", "missile", 0, 1);
+    inRng(missiles, "knockback", "missile", 0, 100);
+    inRng(missiles, "trans", "missile", 0, 2);
+    inRng(missiles, "pierce", "missile", 0, 1);
+    inRng(missiles, "missileskill", "missile", 0, 1);
+    inRng(missiles, "hitshift", "missile", 0, 8);
+    inRng(missiles, "applymastery", "missile", 0, 1);
+    inRng(missiles, "half2hsrc", "missile", 0, 1);
+    inRng(missiles, "localblood", "missile", 0, 1);
     inRng(monPreset, "act", "place", 1, 5, true);
     inRng(monSounds, "att1prb", "id", 0, 100);
     inRng(monSounds, "att2prb", "id", 0, 100);
