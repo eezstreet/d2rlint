@@ -82,7 +82,7 @@ still under development.
 
 ### List of Rules
 
-- `Basic/NoDuplicates`: Fields that should not be duplicated will present a
+- `Basic/NoDuplicateExcel`: Fields that should not be duplicated will present a
   warning. For example, using the same `code` field in any two rows within
   either misc.txt, armor.txt, or weapons.txt will throw a warning.
 - `Basic/ExcelColumns`: Columns that aren't optional and are missing will throw
@@ -101,13 +101,20 @@ still under development.
 - `Cube/ValidOutputs`: Ensures that the outputs to cube recipes are valid.
 - `Cube/ValidOp`: Ensures that valid parameters and values are passed to
   opcodes.
+- `Items/NoIllegalGambling`: Ensures that charms cannot be gambled.
+- `Items/ValidSockets`: Ensures that all items have valid numbers of sockets.
 - `Level/ValidWarp`: Ensures that levels are linked together with valid vis/warp
   values.
 - `Level/ValidWPs`: Ensures that no two levels share the same waypoint index.
+- `Monsters/ValidChains`: Ensures that baseId/NextInClass chain is correct.
+- `Skills/EqualSkills`: Ensures that all classes have the same number of skills.
 - `String/NoUntranslated`: Ensures that all languages for all strings are
   translated, and no fields are excluded unnecessarily. **This is ignored by
   default.** This triggers a lot of errors and can slow down the program
   considerably and is only really meant for advanced usage.
+- `TC/ValidProbs`: Ensures that Treasure Classes with negative `Picks` values
+  have their probs values equal the negative absolute value of the `Picks`
+  column.
 - `TC/ValidTreasure`: Ensures that Treasure Classes are linked together
   properly.
 
