@@ -4046,10 +4046,18 @@ function ParseExcel<T extends D2RExcelRecord = D2RExcelRecord>(
  */
 function ParseStringFile(filePath: string): D2RStringTable[] | undefined {
   try {
-    const fileText = Deno.readTextFileSync(filePath);
-    return JSON.parse(fileText);
+    const fileText = Deno.readTextFileSync(filePath).replaceAll(
+      /(?:\/\/(?:\\\n|[^\n])*\n)|(?:\/\*[\s\S]*?\*\/)|((?:R"([^(\\\s]{0,16})\([^)]*\)\2")|(?:@"[^"]*?")|(?:"(?:\?\?'|\\\\|\\"|\\\n|[^"])*?")|(?:'(?:\\\\|\\'|\\\n|[^'])*?'))/g,
+      "$1",
+    );
+
+    try {
+      return JSON.parse(fileText);
+    } catch (e) {
+      console.log(`Couldn't parse ${filePath}: ${e.message}`);
+    }
   } catch (e) {
-    console.log(`Couldn't parse ${filePath}: ${e.message}`);
+    console.log(`Couldn't load ${filePath}: ${e.message}`);
   }
 }
 
