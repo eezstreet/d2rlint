@@ -72,7 +72,7 @@ export class ValidWarp extends Rule {
           warn(`id is not a number`);
         }
 
-        if (vis <= 0) {
+        if (vis <= 0 || isNaN(vis)) {
           return; // don't actually care
         }
 
@@ -106,7 +106,9 @@ export class ValidWarp extends Rule {
 
         const visLevel = levels[vis];
         // ensure that the level has one vis pointing back at us
-        if (
+        if (visLevel === undefined) {
+          warn(`invalid level '${vis}'`);
+        } else if (
           visFields.find((vfx) => visLevel[vfx] === `${line}`) === undefined
         ) {
           warn(

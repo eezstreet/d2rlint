@@ -1,3 +1,4 @@
+import { GetConfig } from "../lib/config.ts";
 import { seq } from "../lib/misc.ts";
 import { lintrule, Rule } from "../lib/rule.ts";
 import {
@@ -66,9 +67,10 @@ export class NoDuplicates extends Rule {
       }
     };
 
+    const config = GetConfig();
     const { armor, misc, weapons } = workspace;
     if (armor !== undefined && misc !== undefined && weapons !== undefined) {
-      anyDuplicates([...armor, ...misc, ...weapons], "name");
+      //anyDuplicates([...armor, ...misc, ...weapons], "name");
       anyDuplicates([...armor, ...misc, ...weapons], "code");
     }
     anyDuplicates(workspace.itemStatCost, "stat");
@@ -90,13 +92,17 @@ export class NoDuplicates extends Rule {
     anyDuplicates(workspace.monUMod, "uniquemod");
     anyDuplicates(workspace.monUMod, "id");
     anyDuplicates(workspace.npc, "npc");
-    anyDuplicates(workspace.objects, "class");
+    if (!config.legacy) {
+      anyDuplicates(workspace.objects, "class");
+    }
     //anyDuplicates(workspace.objGroup, "groupname");
     //anyDuplicates(workspace.objPreset, "index");
     anyDuplicates(workspace.overlay, "overlay");
     anyDuplicates(workspace.petType, "pet type");
     anyDuplicates(workspace.properties, "code");
-    anyDuplicates(workspace.shrines, "name");
+    if (!config.legacy) {
+      anyDuplicates(workspace.shrines, "name");
+    }
     anyDuplicates(workspace.skills, "skill");
     anyDuplicates(workspace.states, "state");
     anyDuplicates(workspace.superUniques, "superunique");
@@ -296,6 +302,8 @@ export class LinkedExcel extends Rule {
       wanderingMon,
       weapons,
     } = workspace;
+
+    const config = GetConfig();
 
     const allItems =
       armor !== undefined && misc !== undefined && weapons !== undefined
@@ -1225,7 +1233,7 @@ export class LinkedExcel extends Rule {
     const lsStr: (keyof D2RLevels)[] = [
       "levelname",
       "levelwarp",
-      "levelentry",
+      //"levelentry",
     ];
     lsStr.forEach((field) => lookForString(levels, field, "name", false));
 
@@ -1242,8 +1250,10 @@ export class LinkedExcel extends Rule {
     lookForString(runes, "name", "name", false);
     lookForString(setItems, "index", "index", false);
     lookForString(sets, "name", "index", false);
-    lookForString(shrines, "stringname", "name", false);
-    lookForString(shrines, "stringphrase", "name", false);
+    if (!config.legacy) {
+      lookForString(shrines, "stringname", "name", false);
+      lookForString(shrines, "stringphrase", "name", false);
+    }
 
     const sdStr: (keyof D2RSkillDesc)[] = [
       "str alt",
@@ -1349,9 +1359,11 @@ export class NumericBounds extends Rule {
       uniqueItems,
     } = workspace;
 
-    validVersion(armor, "code", "version");
-    validVersion(misc, "code", "version");
-    validVersion(weapons, "code", "version");
+    const config = GetConfig();
+
+    validVersion(armor, "name", "version");
+    validVersion(misc, "name", "version");
+    validVersion(weapons, "name", "version");
     validVersion(cubemain, "description", "version");
     validVersion(magicPrefix, "name", "version");
     validVersion(magicSuffix, "name", "version");
@@ -1443,7 +1455,9 @@ export class NumericBounds extends Rule {
       gt(recordSet, "invheight", "code", 0);
     });
 
-    gt(charStats, "lightradius", "class", -1);
+    if (!config.legacy) {
+      gt(charStats, "lightradius", "class", -1);
+    }
 
     gt(inventory, "gridx", "class", -2, true);
     gt(inventory, "gridy", "class", -2, true);
@@ -1457,10 +1471,13 @@ export class NumericBounds extends Rule {
     gt(itemRatio, "magicmin", "function", 0, true);
     gt(itemRatio, "hiqualitydivisor", "function", 0, true);
     gt(itemRatio, "normaldivisor", "function", 0, true);
-    gt(hireling, "resurrectcostdivisor", "hireling", 0);
-    gt(hireling, "resurrectcostmultiplier", "hireling", 0);
-    gt(hireling, "resurrectcostmax", "hireling", 0);
-    gt(hireling, "hiringmaxleveldifference", "hireling", -1);
+    if (!config.legacy) {
+      gt(hireling, "resurrectcostdivisor", "hireling", 0);
+      gt(hireling, "resurrectcostmultiplier", "hireling", 0);
+      gt(hireling, "resurrectcostmax", "hireling", 0);
+      gt(hireling, "hiringmaxleveldifference", "hireling", -1);
+    }
+
     gt(objects, "sizex", "name", -1);
     gt(objects, "sizey", "name", -1);
     gt(overlay, "numdirections", "overlay", 0);
@@ -1624,7 +1641,9 @@ export class NumericBounds extends Rule {
     inRng(itemTypes, "normal", "code", 0, 1);
     inRng(itemTypes, "beltable", "code", 0, 1);
     inRng(itemTypes, "treasureclass", "code", 0, 1);
-    inRng(levels, "act", "name", 0, 4, true);
+    if (!config.legacy) {
+      inRng(levels, "act", "name", 0, 4, true);
+    }
     inRng(levels, "questflag", "name", 0, 41);
     inRng(levels, "questflagex", "name", 0, 41);
     inRng(levels, "teleport", "name", 0, 2);

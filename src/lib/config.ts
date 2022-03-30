@@ -19,6 +19,7 @@ export interface RuleConfig {
 type AllRuleConfig = { [ruleName: string]: RuleConfig };
 
 export interface SavedConfiguration {
+  legacy: boolean;
   workspace: string;
   fallback: string;
   log: string;
@@ -48,6 +49,7 @@ function CreateDefaultConfig(): SavedConfiguration {
 
   return {
     workspace: "",
+    legacy: false,
     fallback: "",
     logAppend: false,
     log: "output.txt",
