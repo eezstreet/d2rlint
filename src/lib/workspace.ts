@@ -4139,9 +4139,13 @@ export function FindMatchingStringIndex(
  * Loads a Workspace.
  * @param location - the location of the workspace
  */
-export function LoadWorkspace(location: string, fallback: string): Workspace {
+export function LoadWorkspace(
+  location: string,
+  fallback: string,
+  legacy: boolean,
+): Workspace {
   return {
-    actInfo: ParseExcel(location, fallback, D2RActInfo),
+    actInfo: legacy ? undefined : ParseExcel(location, fallback, D2RActInfo),
     armor: ParseExcel(location, fallback, D2RArmor),
     armType: ParseExcel(location, fallback, D2RArmType),
     autoMagic: ParseExcel(location, fallback, D2RAutomagic),
@@ -4204,7 +4208,9 @@ export function LoadWorkspace(location: string, fallback: string): Workspace {
     objects: ParseExcel(location, fallback, D2RObjects),
     objGroup: ParseExcel(location, fallback, D2RObjGroup),
     objMode: ParseExcel(location, fallback, D2RObjMode),
-    objPreset: ParseExcel(location, fallback, D2RObjPreset),
+    objPreset: legacy
+      ? undefined
+      : ParseExcel(location, fallback, D2RObjPreset),
     objType: ParseExcel(location, fallback, D2RObjType),
     overlay: ParseExcel(location, fallback, D2ROverlay),
     petType: ParseExcel(location, fallback, D2RPetType),
@@ -4240,7 +4246,8 @@ export function LoadWorkspace(location: string, fallback: string): Workspace {
     uniqueItems: ParseExcel(location, fallback, D2RUniqueItems),
     uniquePrefix: ParseExcel(location, fallback, D2RUniquePrefix),
     uniqueSuffix: ParseExcel(location, fallback, D2RUniqueSuffix),
-    wanderingMon: ParseExcel(location, fallback, D2RWanderingMon),
+    wanderingMon: legacy ? undefined
+    : ParseExcel(location, fallback, D2RWanderingMon),
     weapons: ParseExcel(location, fallback, D2RWeapons),
 
     strings: LoadStrings(location, fallback),
