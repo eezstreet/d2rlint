@@ -4,6 +4,8 @@ Taking cues from projects such as [eslint](https://eslint.org/), D2RLint will
 examine the tab-delimited spreadsheet ("Excel") files and JSON string tables for
 Diablo II: Resurrected, and make note of any errors.
 
+It is partially backwards compatible with Legacy. See below.
+
 This is designed to be the direct successor of Paul Siramy's D2TxtAnalyzer.
 
 ## For users
@@ -25,6 +27,7 @@ You will find that it has produced a `config.json` file:
   "workspace": "",
   "fallback": "",
   "log": "output.txt",
+  "legacy": false,
   "rules": {
     "Basic/NoDuplicateExcel": {
       "action": "warn"
@@ -121,6 +124,19 @@ still under development.
 Note that the files that ship with the original game will trigger some of these
 rules. **This is normal.** There are genuine errors in their own files, and this
 is to be expected.
+
+### Legacy Mode
+
+By changing `legacy: false` to `legacy: true` in the config.json, your workspace
+will be treated as a Diablo II: Legacy workspace instead of a Diablo II:
+Resurrected one. The support for Legacy is not quite there yet. Mainly, it has a
+few issues:
+
+- TBL files aren't parsed yet, so it can't check if strings are unfound or
+  untranslated. (`String/NoUntranslated` does not work _at all_ in legacy mode
+  currently.)
+- A few of the column changes from Legacy to Resurrected aren't fully reflected
+  yet.
 
 ## For developers
 
