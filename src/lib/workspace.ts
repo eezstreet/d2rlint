@@ -510,6 +510,15 @@ export class D2RBelts extends D2RExcelRecord {
   box16right: unknown;
   box16top: unknown;
   box16bottom: unknown;
+  // added in Diablo II: Resurrected 2.4
+  defaultitemtypecol1: unknown;
+  defaultitemcodecol1: unknown;
+  defaultitemtypecol2: unknown;
+  defaultitemcodecol2: unknown;
+  defaultitemtypecol3: unknown;
+  defaultitemcodecol3: unknown;
+  defaultitemtypecol4: unknown;
+  defaultitemcodecol4: unknown;
 
   GetFileName(): string {
     return "belts.txt";
@@ -809,6 +818,10 @@ export class D2RDifficultyLevels extends D2RExcelRecord {
   gambleunique: unknown;
   gambleuber: unknown;
   gambleultra: unknown;
+  // added in Diablo II: Resurrected 2.4
+  playerhitreactbuffervsplayer: unknown;
+  playerhitreactbuffervsmonster: unknown;
+  monsterfireenchantexplosiondamagepercent: unknown;
 
   GetFileName(): string {
     return "difficultylevels.txt";
@@ -980,6 +993,8 @@ export class D2RHireling extends D2RExcelRecord {
   resurrectcostmultiplier: unknown;
   resurrectcostdivisor: unknown;
   resurrectcostmax: unknown;
+  // Added in Diablo II: Resurrected 2.4
+  equivalentcharclass: unknown;
 
   GetFileName(): string {
     return "hireling.txt";
@@ -2254,6 +2269,10 @@ export class D2RMonStats extends D2RExcelRecord {
   splgetmodechart: unknown;
   splendgeneric: unknown;
   splclientend: unknown;
+  // Added in Diablo II: Resurrected 2.4
+  rightarmitemtype: unknown;
+  leftarmitemtype: unknown;
+  cannotusetwohandeditems: unknown;
 
   GetFileName(): string {
     return "monstats.txt";
@@ -3462,6 +3481,15 @@ export class D2RSkills extends D2RExcelRecord {
   srvstopfunc: unknown;
   useservermissilesonremoteclients: unknown;
   cltstopfunc: unknown;
+  // added in Diablo II: Resurrected 2.4
+  passivestat6: unknown;
+  passivecalc6: unknown;
+  calc5: unknown;
+  calc6: unknown;
+  param9: unknown;
+  param10: unknown;
+  param11: unknown;
+  param12: unknown;
 
   GetFileName(): string {
     return "skills.txt";

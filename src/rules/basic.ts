@@ -1020,7 +1020,7 @@ export class LinkedExcel extends Rule {
     // ensure passivestat, aurastat point to entries in itemstatcost.txt
     const skStatFields: (keyof D2RSkills)[] = [
       ...multifield1<D2RSkills>("aurastat", 6),
-      ...multifield1<D2RSkills>("passivestat", 5),
+      ...multifield1<D2RSkills>("passivestat", 6 /* 5 prior to 2.4 */),
     ];
     skStatFields.forEach((field) =>
       mustExist(skills, field, "skill", itemStatCost, "stat", isOptional)
