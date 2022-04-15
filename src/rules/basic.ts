@@ -8,6 +8,7 @@ import {
   D2RExcelRecord,
   D2RGems,
   D2RHireling,
+  D2RItemStatCost,
   D2RItemTypes,
   D2RLevels,
   D2RMagicBase,
@@ -1229,6 +1230,14 @@ export class LinkedExcel extends Rule {
       "strallskills",
     ];
     csStr.forEach((field) => lookForString(charStats, field, "class", false));
+
+    const iscStr: (keyof D2RItemStatCost)[] = [
+      "descstrpos",
+      "descstrneg",
+      "dgrpstrneg",
+      "dgrpstrpos",
+    ];
+    iscStr.forEach((field) => lookForString(itemStatCost, field, "stat", true));
 
     const lsStr: (keyof D2RLevels)[] = [
       "levelname",
