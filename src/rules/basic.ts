@@ -1285,6 +1285,126 @@ export class LinkedExcel extends Rule {
     lookForString(uniquePrefix, "name", "name", false);
     lookForString(uniqueSuffix, "name", "name", false);
     lookForString(uniqueItems, "index", "index", false);
+
+    // Check for JSON entries
+    if (!config.legacy) {
+      const jsonKeyConvert = (s: string) =>
+        s.replace(/([a-z])([A-Z0-9])/g, "$1_$2").replace(
+          /[A-Z]/g,
+          (c) => c.toLocaleLowerCase(),
+        ).replace(/[ -]/g, "_").replace(/[^A-Za-z0-9_]/g, "");
+
+      const { json } = workspace;
+      if (json !== undefined) {
+        // check missiles.txt against missiles.json
+        if (json.missiles !== undefined && missiles !== undefined) {
+          const keys = Object.keys(json.missiles);
+          missiles.forEach((missile, line) => {
+            if (missile.missile !== undefined) {
+              const missileStr = jsonKeyConvert(missile.missile as string);
+              if (!keys.includes(missileStr)) {
+                // warn!
+                this.Warn(
+                  `${missile.GetFileName()}, line ${
+                    line + 2
+                  }: '${missileStr}' not found in missiles.json`,
+                );
+              }
+            }
+          });
+        }
+
+        // check armor.txt, misc.txt and weapons.txt against items.json
+        if (
+          json.items !== undefined && armor !== undefined &&
+          misc !== undefined &&
+          weapons !== undefined
+        ) {
+          [armor, misc, weapons].forEach((recordSet) =>
+            recordSet.forEach((record, line) => {
+              if (
+                record.code !== undefined && json.items !== undefined &&
+                record.name !== "Expansion" && record.name !== ""
+              ) {
+                if (
+                  json.items.find((i) =>
+                    Object.keys(i).includes(record.code as string)
+                  ) === undefined
+                ) {
+                  this.Warn(
+                    `${record.GetFileName()}, line ${
+                      line + 2
+                    }: ${record.code} (for '${record.name}') not found in items.json`,
+                  );
+                }
+              }
+            })
+          );
+        }
+
+        // check monstats.txt against monsters.json
+        if (json.monsters !== undefined && monStats !== undefined) {
+          const keys = Object.keys(json.monsters);
+
+          monStats.forEach((monster, line) => {
+            if (
+              monster.id !== undefined && monster.id !== "" &&
+              monster.id !== "Expansion"
+            ) {
+              if (!keys.includes(monster.id as string)) {
+                this.Warn(
+                  `${monster.GetFileName()}, line ${
+                    line + 2
+                  }: '${monster.id}' not found in monsters.json`,
+                );
+              }
+            }
+          });
+        }
+
+        // check setitems.txt against sets.json
+        if (json.sets !== undefined && setItems !== undefined) {
+          setItems.forEach((setItem, line) => {
+            if (setItem.index !== undefined && json.sets !== undefined) {
+              const conv = jsonKeyConvert(setItem.index as string);
+              if (
+                setItem.item !== "" &&
+                json.sets.find((s) => Object.keys(s).includes(conv)) ===
+                  undefined
+              ) {
+                this.Warn(
+                  `${setItem.GetFileName()}, line ${
+                    line + 2
+                  }: '${conv}' not found for '${setItem.index}' in sets.json`,
+                );
+              }
+            }
+          });
+        }
+
+        // check uniqueItems.txt against uniques.json
+        if (json.uniques !== undefined && uniqueItems !== undefined) {
+          uniqueItems.forEach((uniqueItem, line) => {
+            if (
+              uniqueItem.code !== "" && uniqueItem.index !== undefined &&
+              json.uniques !== undefined
+            ) {
+              const conv = jsonKeyConvert(uniqueItem.index as string);
+              if (
+                json.uniques.find((u) => Object.keys(u).includes(conv)) ===
+                  undefined
+              ) {
+                this.Warn(
+                  `${uniqueItem.GetFileName()}, line ${
+                    line + 2
+                  }: '${conv}' not found for '${uniqueItem.index}' in uniques.json`,
+                );
+              }
+            }
+          });
+        }
+      }
+    }
   }
 }
 

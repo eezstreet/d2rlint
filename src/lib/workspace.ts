@@ -3856,6 +3856,22 @@ export interface D2RStringTable {
   zhCN: string;
 }
 
+export interface D2RJsonTables {
+  monsters: { [key: string]: string } | undefined;
+  items: { [key: string]: { asset: string } }[] | undefined;
+  sets:
+    | { [key: string]: { normal: string; uber: string; ultra: string } }[]
+    | undefined;
+  uniques:
+    | { [key: string]: { normal: string; uber: string; ultra: string } }[]
+    | undefined;
+  missiles:
+    | ({
+      dependencies: { [key: string]: unknown[] };
+    } & { [key: string]: string })
+    | undefined;
+}
+
 /**
  * Main workspace entry.
  */
@@ -3947,6 +3963,7 @@ export interface Workspace {
   weapons?: D2RWeapons[];
 
   strings?: { [key: string]: D2RStringTable[] | undefined };
+  json?: D2RJsonTables;
 }
 
 /**
@@ -3998,7 +4015,7 @@ export function GetAllWorkspaceExcelFiles(
  * @returns {undefined} when no file is found
  * @returns {string} with the text of the file
  */
-function FindExcel(location: string, file: string): string | undefined {
+function FindExcelOrJson(location: string, file: string): string | undefined {
   const lowercased = file.toLocaleLowerCase();
   for (const entry of fs.walkSync(location)) {
     if (entry.isFile && entry.name.toLowerCase() === lowercased) {
@@ -4020,9 +4037,9 @@ function ParseExcel<T extends D2RExcelRecord = D2RExcelRecord>(
 ): T[] | undefined {
   const generic = new type();
   const file = generic.GetFileName();
-  let fileText = FindExcel(location, generic.GetFileName());
+  let fileText = FindExcelOrJson(location, generic.GetFileName());
   if (fileText === undefined && fallback !== undefined && fallback.length > 0) {
-    fileText = FindExcel(fallback, generic.GetFileName());
+    fileText = FindExcelOrJson(fallback, generic.GetFileName());
   }
 
   if (fileText === undefined) {
@@ -4067,23 +4084,55 @@ function ParseExcel<T extends D2RExcelRecord = D2RExcelRecord>(
 }
 
 /**
+ * Removes C-style comments (\/* *\/ and //) from a string.
+ * @param str - the JSON string to manipulate
+ * @returns a JSON string without comments
+ */
+function StripComments(str: string): string {
+  return str.replaceAll(
+    /(?:\/\/(?:\\\n|[^\n])*\n)|(?:\/\*[\s\S]*?\*\/)|((?:R"([^(\\\s]{0,16})\([^)]*\)\2")|(?:@"[^"]*?")|(?:"(?:\?\?'|\\\\|\\"|\\\n|[^"])*?")|(?:'(?:\\\\|\\'|\\\n|[^'])*?'))/g,
+    "$1",
+  );
+}
+
+/**
+ * Attempts to parse some JSON text (with C comments)
+ * @param fileText - the text of the file
+ * @param fileName - the name of the file (used for putting out a warning if the file could not be parsed)
+ * @returns {T} if the text is valid
+ * @returns {undefined} if the text is invalid
+ */
+function ParseJsonText<T>(
+  fileText: string | undefined,
+  fileName: string,
+): T | undefined {
+  if (fileText === undefined) {
+    return undefined;
+  }
+
+  const stripped = StripComments(fileText);
+
+  try {
+    return JSON.parse(stripped);
+  } catch (e) {
+    console.log(`Couldn't parse ${fileName}: ${e.message}`);
+  }
+}
+
+/**
  * Tries to parse a string file.
  * @param filePath - the path to the file to parse
  * @returns {D2RStringTable[]} if the file was found and is valid
  * @returns {undefined} if the file is invalid
  */
-function ParseStringFile(filePath: string): D2RStringTable[] | undefined {
-  try {
-    const fileText = Deno.readTextFileSync(filePath).replaceAll(
-      /(?:\/\/(?:\\\n|[^\n])*\n)|(?:\/\*[\s\S]*?\*\/)|((?:R"([^(\\\s]{0,16})\([^)]*\)\2")|(?:@"[^"]*?")|(?:"(?:\?\?'|\\\\|\\"|\\\n|[^"])*?")|(?:'(?:\\\\|\\'|\\\n|[^'])*?'))/g,
-      "$1",
-    );
+function ParseJsonFile<T>(filePath: string | undefined): T | undefined {
+  if (filePath === undefined) {
+    return undefined;
+  }
 
-    try {
-      return JSON.parse(fileText);
-    } catch (e) {
-      console.log(`Couldn't parse ${filePath}: ${e.message}`);
-    }
+  try {
+    const fileText = Deno.readTextFileSync(filePath);
+    return ParseJsonText<T>(fileText, filePath);
   } catch (e) {
     console.log(`Couldn't load ${filePath}: ${e.message}`);
   }
@@ -4109,7 +4158,7 @@ function LoadStrings(
         for (const fileEntry of fs.walkSync(entry.path, { maxDepth: 1 })) {
           if (fileEntry.isFile && fileEntry.name.match(/\.json$/gi) !== null) {
             const fileName = fileEntry.name.replace(/(.*)\.json$/gi, "$1");
-            entries[fileName] = ParseStringFile(fileEntry.path);
+            entries[fileName] = ParseJsonFile<D2RStringTable[]>(fileEntry.path);
           }
         }
       }
@@ -4122,7 +4171,7 @@ function LoadStrings(
       for (const fileEntry of fs.walkSync(entry.path, { maxDepth: 1 })) {
         if (fileEntry.isFile && fileEntry.name.match(/\.json$/gi) !== null) {
           const fileName = fileEntry.name.replace(/(.*)\.json$/gi, "$1");
-          entries[fileName] = ParseStringFile(fileEntry.path);
+          entries[fileName] = ParseJsonFile<D2RStringTable[]>(fileEntry.path);
         }
       }
     }
@@ -4161,6 +4210,38 @@ export function FindMatchingStringIndex(
     }
     return stringFile;
   }, undefined as D2RStringTable | undefined);
+}
+
+/**
+ * Attempts to load 'monsters.json', 'items.json', 'sets.json', 'uniques.json', and 'missiles.json'.
+ * @param location - the first location to look for JSON files in
+ * @param fallback - the fallback location to look for JSON files in
+ */
+function LoadJsonFiles(
+  location: string,
+  fallback: string,
+): D2RJsonTables {
+  const find = (file: string) => {
+    const ret = FindExcelOrJson(location, file);
+    if (ret === undefined && fallback !== undefined && fallback.length > 0) {
+      return FindExcelOrJson(fallback, file);
+    }
+    return ret;
+  };
+
+  const monsters = find("monsters.json");
+  const items = find("items.json");
+  const sets = find("sets.json");
+  const uniques = find("uniques.json");
+  const missiles = find("missiles.json");
+
+  return {
+    monsters: ParseJsonText(monsters, "monsters.json"),
+    items: ParseJsonText(items, "items.json"),
+    sets: ParseJsonText(sets, "sets.json"),
+    uniques: ParseJsonText(uniques, "uniques.json"),
+    missiles: ParseJsonText(missiles, "missiles.json"),
+  };
 }
 
 /**
@@ -4279,5 +4360,6 @@ export function LoadWorkspace(
     weapons: ParseExcel(location, fallback, D2RWeapons),
 
     strings: LoadStrings(location, fallback),
+    json: LoadJsonFiles(location, fallback),
   };
 }
