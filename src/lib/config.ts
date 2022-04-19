@@ -25,6 +25,10 @@ export interface SavedConfiguration {
   log: string;
   logAppend: boolean;
   rules: { [ruleName: string]: RuleConfig };
+  generateDocs: boolean;
+  docOptions: {
+    title: string;
+  };
 }
 
 /**
@@ -54,6 +58,10 @@ function CreateDefaultConfig(): SavedConfiguration {
     logAppend: false,
     log: "output.txt",
     rules,
+    generateDocs: false,
+    docOptions: {
+      title: "My Mod Documentation",
+    },
   };
 }
 
