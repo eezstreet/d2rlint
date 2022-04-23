@@ -1,4 +1,10 @@
-import { D2RCharStats, D2RStringTable, Workspace } from "../lib/workspace.ts";
+import {
+  D2RCharStats,
+  D2RItemExcelRecord,
+  D2RItemTypes,
+  D2RStringTable,
+  Workspace,
+} from "../lib/workspace.ts";
 
 /**
  * Finds a string (for a language)
@@ -105,9 +111,13 @@ export function SkillClassOnly(
   }
 
   // find skill within skills.txt
-  const theSkill = skills.find((sk) =>
-    (sk.skill as string).toLocaleLowerCase() === skill.toLocaleLowerCase()
-  );
+  const asNum = Number.parseInt(skill);
+
+  const theSkill = !Number.isNaN(asNum)
+    ? skills[asNum]
+    : skills.find((sk) =>
+      (sk.skill as string).toLocaleLowerCase() === skill.toLocaleLowerCase()
+    );
   if (theSkill === undefined) {
     return `<'some class only'>`;
   }
@@ -302,8 +312,134 @@ export function GetClassSkillString(
       continue;
     }
     str = charStats[line].strallskills as string;
+    line++;
     param--;
-  } while (param > 0);
+  } while (param >= 0);
 
   return StringForIndex(ws, str, lang);
+}
+
+/**
+ * Gets all item types that match the given strings
+ * @param ws - the workspace to work off of
+ * @param itemTypes - the item types to look for (codes)
+ */
+export function GetItemTypes(
+  ws: Workspace,
+  ...theItemTypes: string[]
+): D2RItemTypes[] {
+  const { itemTypes } = ws;
+  if (itemTypes === undefined) {
+    return [];
+  }
+
+  const noBlanks = theItemTypes.filter((f) => f !== "");
+  return itemTypes.filter((it) => noBlanks.includes(it.code as string));
+}
+
+/**
+ * Gets all item records that satisfy the given inclusion and exclusion criteria.
+ * @param ws - the workspace to use
+ * @param includeTypes - the item types to include
+ * @param excludeTypes - the item types to exclude
+ */
+export function GetItemsWithTypes(
+  ws: Workspace,
+  includeTypes: D2RItemTypes[],
+  excludeTypes: D2RItemTypes[],
+): D2RItemExcelRecord[] {
+  const { misc, armor, weapons, itemTypes } = ws;
+  if (
+    misc === undefined || armor === undefined || weapons === undefined ||
+    itemTypes === undefined
+  ) {
+    return [];
+  }
+
+  return [...misc, ...armor, ...weapons].filter((item) => {
+    const { type, type2 } = item;
+
+    // Ancient's Pledge is a good example here. It uses 'shld' as the sole item type included.
+    // Shield items use only shie (equiv1 = 'shld'), ashd (equiv1 = 'shld'), etc
+
+    const matchesCriteria = (x: string, types: D2RItemTypes[]): boolean => {
+      if (x === "") {
+        return false;
+      }
+
+      if (types.find((it) => it.code === x)) {
+        return true; // one of the included types includes this code directly
+      }
+
+      const type = GetItemTypes(ws, x);
+      if (type.length === 0) {
+        return false;
+      }
+
+      const subtypes = GetItemTypes(
+        ws,
+        type[0].equiv1 as string,
+        type[0].equiv2 as string,
+      );
+      return subtypes.some((st) => matchesCriteria(st.code as string, types));
+    };
+
+    if (
+      matchesCriteria(type as string, excludeTypes) ||
+      matchesCriteria(type2 as string, excludeTypes)
+    ) {
+      return false;
+    }
+
+    return matchesCriteria(type as string, includeTypes) ||
+      matchesCriteria(type2 as string, includeTypes);
+  });
+}
+
+/**
+ * Converts an array of item types into their respective names
+ * @param types - the item types to get
+ * @returns {string} a comma-joined list of item type names
+ */
+export function GetItemTypeNames(types: D2RItemTypes[]): string {
+  return types.map((t) => t.itemtype as string).join(", ");
+}
+
+/**
+ * Gets all item records that match the given code.
+ * @param ws - the workspace to use
+ * @param items - the item codes to find
+ * @returns {D2RItemExcelRecord[]} - the found item records
+ */
+export function GetItemsWithCode(
+  ws: Workspace,
+  ...items: string[]
+): D2RItemExcelRecord[] {
+  const { misc, armor, weapons } = ws;
+  if (misc === undefined || armor === undefined || weapons === undefined) {
+    return [];
+  }
+
+  const allItems = [...misc, ...armor, ...weapons];
+
+  return items.filter((i) => i !== "").map((i) =>
+    allItems.find((it) => it.code === i)
+  ).filter((i) => i !== undefined) as D2RItemExcelRecord[];
+}
+
+/**
+ * Gets the maximum value of the 'levelreq' field for the given items.
+ * @param items - the items to look through
+ * @returns {number} - the maximum required level of each specified item
+ */
+export function GetMaxRequiredLevelOfItems(
+  items: D2RItemExcelRecord[],
+): number {
+  return items.reduce((val, it) => {
+    const parsed = Number.parseInt(it.levelreq as string);
+    if (Number.isNaN(parsed) || parsed <= val) {
+      return val;
+    }
+    return parsed;
+  }, 0);
 }

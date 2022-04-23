@@ -1,9 +1,13 @@
 import {
   D2RArmor,
   D2RExcelRecord,
+  D2RGems,
   D2RItemStatCost,
+  D2RItemTypes,
+  D2RMagicBase,
   D2RMisc,
   D2RProperties,
+  D2RRunes,
   D2RUniqueItems,
   D2RWeapons,
   Workspace,
@@ -11,7 +15,12 @@ import {
 import {
   GetClassSkillString,
   GetItemDaylightFormatter,
+  GetItemsWithCode,
+  GetItemsWithTypes,
+  GetItemTypeNames,
+  GetItemTypes,
   GetMaxExperienceLevel,
+  GetMaxRequiredLevelOfItems,
   MonsterNameIdx,
   MonsterTypeName,
   SkillClassOnly,
@@ -48,7 +57,7 @@ function PropertyListToItemStatList(
   list: PropertyList,
   ws: Workspace,
 ): ItemStatList {
-  const result: ItemStatList = [];
+  const uncombined: ItemStatList = [];
   const { itemStatCost } = ws;
 
   if (itemStatCost === undefined) {
@@ -119,7 +128,7 @@ function PropertyListToItemStatList(
           break;
       }
 
-      result.push({
+      uncombined.push({
         stat: iscEntry,
         min: iscMin,
         max: iscMax,
@@ -130,30 +139,75 @@ function PropertyListToItemStatList(
     });
   });
 
-  return result;
-}
+  // combine any stats that share the same stat and param
+  const result: ItemStatList = [];
+  uncombined.forEach((property) => {
+    // if there's already a combined result here, just stop.
+    const same = uncombined.filter((uc) => {
+      if (property.stat === undefined && uc.stat === undefined && property.func === uc.func) {
+        return true;
+      }
+      if (property.stat === undefined || uc.stat === undefined) {
+        return false;
+      }
+      if (property.param !== uc.param) {
+        return false;
+      }
+      if (property.stat === "ethereal" || uc.stat === "ethereal") {
+        return uc.stat === property.stat;
+      }
+      return property.stat.stat === uc.stat.stat;
+    });
 
-/**
- * Given two ItemStatCost.txt entries (or "ethereal", or undefined), return true if they are the same.
- * @param a - the first item
- * @param b - the second item
- * @returns {true} if both stats are undefined, "ethereal", or share the same "code" from isc.txt
- * @returns {false} otherwise
- */
-function StatsEqual(
-  a: D2RItemStatCost | undefined | "ethereal",
-  b: D2RItemStatCost | undefined | "ethereal",
-): boolean {
-  if (a === undefined && b === undefined) {
-    return true;
-  } else if (a === "ethereal" && b === "ethereal") {
-    return true;
-  } else if (
-    a !== "ethereal" && b !== "ethereal" && a !== undefined && b !== undefined
-  ) {
-    return a.stat === b.stat;
-  }
-  return false;
+    if (same.length === 1) {
+      // only one stat in this list, and it's probably ourselves.
+      result.push(same[0]);
+      return;
+    }
+
+    if (property.stat === "ethereal") {
+      // don't push if the result already contains an ethereal stat
+      if (result.find((r) => r.stat === "ethereal") === undefined) {
+        result.push(property);
+      }
+      return;
+    }
+
+    // if stat.encode is not '', NEVER combine
+    if (property.stat !== undefined && property.stat.encode !== "") {
+      result.push(property);
+      return;
+    }
+
+    // if result already contains this stat, don't push the result
+    if (
+      result.find((r) =>
+        r.stat !== undefined && r.stat !== "ethereal" &&
+        r.stat === property.stat
+      )
+    ) {
+      return;
+    }
+
+    // combine same stats by adding min and max together
+    result.push(same.reduce((v, current) => {
+      const { min, max, ...rest } = v;
+      return {
+        min: min + current.min,
+        max: max + current.max,
+        ...rest,
+      };
+    }, {
+      min: 0,
+      max: 0,
+      param: property.param,
+      stat: property.stat,
+      func: property.func,
+      val: property.val,
+    }));
+  });
+
+  return result;
 }
 
 /**
@@ -179,6 +233,7 @@ function PropertyListToDescString(list: PropertyList, ws: Workspace): string[] {
 
   // creates a string, given descfunc, strpos, strneg and func
   const makeStatStr = (
+    statName: string,
     descfunc: number,
     min: number,
     max: number,
@@ -255,13 +310,13 @@ function PropertyListToDescString(list: PropertyList, ws: Workspace): string[] {
       case 5: // functionally identical
       case 19: // basic
         if (min < 0 && max < 0) {
-          return `${
-            StringForIndex(ws, strneg, "enUS").replace(/%\+?d/, val)
-          } ${descstr2}`;
+          return `${StringForIndex(ws, strneg, "enUS").replace(/%\+?d/, val)} ${
+            descstr2 !== "" ? StringForIndex(ws, descstr2, "enUS") : ""
+          }`;
         }
-        return `${
-          StringForIndex(ws, strpos, "enUS").replace(/%\+?d/, val)
-        } ${descstr2}`;
+        return `${StringForIndex(ws, strpos, "enUS").replace(/%\+?d/, val)} ${
+          descstr2 !== "" ? StringForIndex(ws, descstr2, "enUS") : ""
+        }`;
       case 22: // attack/damage vs arbitrary monster type, unused in vanilla
         if (min < 0 && max < 0) {
           return `${StringForIndex(ws, strneg, "enUS").replace(/%\+?d/, val)} ${
@@ -312,6 +367,29 @@ function PropertyListToDescString(list: PropertyList, ws: Workspace): string[] {
         return StringForIndex(ws, strpos, "enUS").replace(/%\+?d/g, val)
           .replace(/%s/g, SkillName(ws, param, "enUS"));
       default: // default case not handled
+        if (statName === "maxdurability") {
+          return StringForIndex(ws, "improved durability", "enUS"); // hacky.
+        }
+        if (statName === "item_numsockets") {
+          const sockStr = Number.isNaN(min) || Number.isNaN(max)
+            ? param
+            : min !== max
+            ? `${min}-${max}`
+            : `${min}`;
+          return StringForIndex(ws, "Socketable", "enUS").replace(
+            /%i/,
+            sockStr,
+          );
+        }
+        if (statName === "item_extrablood") {
+          // Swordback Hold and Gorefoot have a hidden property that makes enemies 'Extra Bloody' that isn't documented properly ingame.
+          // Probably it means that Open Wounds with this item has extra blood. No idea.
+          // If we don't handle this special case though, we get a gross mess.
+          return StringForIndex(ws, "ModStr5p", "enUS");
+        }
+        if (statName === "coldlength" || statName === "poisonlength") {
+          return ""; // hacky.
+        }
         return `author needs to handle case ${descfunc}`;
     }
   };
@@ -392,19 +470,21 @@ function PropertyListToDescString(list: PropertyList, ws: Workspace): string[] {
           // ...push a stat line!
           statLines.push({
             line: makeStatStr(
-              Number.parseInt(stat.descfunc as string),
+              stat.stat as string,
+              Number.parseInt(stat.dgrpfunc as string),
               min,
               max,
               param,
-              stat.descstrpos as string,
-              stat.descstrpos as string,
+              stat.dgrpstrpos as string,
+              stat.dgrpstrneg as string,
               func,
-              stat.descstr2 as string,
+              stat.dgrpstr2 as string,
               val,
             ),
             group,
             priority,
           });
+          return;
         }
       }
     }
@@ -414,6 +494,7 @@ function PropertyListToDescString(list: PropertyList, ws: Workspace): string[] {
       stat2: string,
       group: number,
       str: string,
+      strSame: string,
       len?: string,
     ) => {
       if (stat === undefined || stat === "ethereal") {
@@ -446,7 +527,7 @@ function PropertyListToDescString(list: PropertyList, ws: Workspace): string[] {
         );
         if (foundLen === undefined) {
           len = "2";
-        } else if (foundLen.param === param) {
+        } else if (foundLen.param === param && param !== "") {
           len = `${Math.round(Number.parseInt(param) / 25)}`;
         } else if (foundLen.min === foundLen.max) {
           len = `${Math.round(foundLen.min / 25)}`;
@@ -474,11 +555,18 @@ function PropertyListToDescString(list: PropertyList, ws: Workspace): string[] {
         maxStr = `[${maxStat.min}-${maxStat.max}]`;
       }
 
-      statLines.push({
-        line: StringForIndex(ws, str, "enUS").replace(/%\+?d/, minStr).replace(
+      const line = minStr === maxStr
+        ? StringForIndex(ws, strSame, "enUS").replace(/%\+?d/, minStr).replace(
+          /%\+?d/,
+          `${len}`,
+        )
+        : StringForIndex(ws, str, "enUS").replace(/%\+?d/, minStr).replace(
           /%\+?d/,
           maxStr,
-        ).replace(/%\+?d/, `${len}`),
+        ).replace(/%\+?d/, `${len}`);
+
+      statLines.push({
+        line,
         priority: Number.parseInt(stat.descpriority as string),
         group,
       });
@@ -493,28 +581,49 @@ function PropertyListToDescString(list: PropertyList, ws: Workspace): string[] {
     // poisonmindam + poisonmaxdam on the same group = strModPoisonDamageRange
     // mindamage + maxdamage on the same group = strModMinDamageRange
     if (
-      mergeRange("firemindam", "firemaxdam", -100, "strModFireDamageRange") ||
+      mergeRange(
+        "firemindam",
+        "firemaxdam",
+        -100,
+        "strModFireDamageRange",
+        "strModFireDamage",
+      ) ||
       mergeRange(
         "lightmindam",
         "lightmaxdam",
         -101,
         "strModLightningDamageRange",
+        "strModLightningDamage",
       ) ||
       mergeRange(
         "magicmindam",
         "magicmaxdam",
         -102,
         "strModMagicDamageRange",
+        "strModMagicDamage",
       ) ||
-      mergeRange("coldmindam", "coldmaxdam", -103, "strModColdDamageRange") ||
+      mergeRange(
+        "coldmindam",
+        "coldmaxdam",
+        -103,
+        "strModColdDamageRange",
+        "strModColdDamage",
+      ) ||
       mergeRange(
         "poisonmindam",
         "poisonmaxdam",
         -104,
         "strModPoisonDamageRange",
-        "poisonlen",
+        "strModPoisonDamage",
+        "poisonlength",
       ) ||
-      mergeRange("mindamage", "maxdamage", -105, "strModMinDamageRange")
+      mergeRange(
+        "mindamage",
+        "maxdamage",
+        -105,
+        "strModMinDamageRange",
+        "strModMinDamage",
+      )
     ) {
       return;
     }
@@ -522,6 +631,7 @@ function PropertyListToDescString(list: PropertyList, ws: Workspace): string[] {
     // nothing has told us that we should stop. so we should add a stat line here
     statLines.push({
       line: makeStatStr(
+        stat.stat as string,
         Number.parseInt(stat.descfunc as string),
         min,
         max,
@@ -537,7 +647,9 @@ function PropertyListToDescString(list: PropertyList, ws: Workspace): string[] {
   });
 
   // sort by priority and return the lines themselves
-  return statLines.sort((a, b) => a.priority - b.priority).map((sl) => sl.line);
+  return statLines.filter((sl) => sl.line !== "").sort((a, b) =>
+    b.priority - a.priority
+  ).map((sl) => sl.line);
 }
 
 /**
@@ -716,7 +828,10 @@ export function DocSets(ws: Workspace): string {
   return "";
 }
 
-type DocumentedMagicAffix = {};
+type DocumentedMagicAffix = {
+  affix: D2RMagicBase;
+  mods: PropertyList;
+};
 
 export function DocMagic(ws: Workspace): string {
   const { magicPrefix, magicSuffix, properties } = ws;
@@ -789,10 +904,91 @@ export function DocGems(ws: Workspace): string {
   return "";
 }
 
-type DocumentedRuneword = {};
+type DocumentedRuneword = {
+  wordMods: PropertyList;
+  letters: string[];
+  gemMods: {
+    gemApplyType: number;
+    mods: PropertyList;
+  }[];
+  runes: D2RRunes;
+  includedItemTypes: D2RItemTypes[];
+  excludedItemTypes: D2RItemTypes[];
+};
+
+function DocumentRuneword(runeword: DocumentedRuneword, ws: Workspace): string {
+  const {
+    wordMods,
+    gemMods,
+    runes,
+    includedItemTypes,
+    excludedItemTypes,
+    letters,
+  } = runeword;
+
+  const rwName = StringForIndex(ws, runes.name as string, "enUS");
+  const includedTypes = GetItemTypeNames(includedItemTypes);
+  const excludedTypes = GetItemTypeNames(excludedItemTypes);
+
+  const runeFields: (keyof D2RRunes)[] = [
+    "rune1",
+    "rune2",
+    "rune3",
+    "rune4",
+    "rune5",
+    "rune6",
+  ];
+
+  const runeItems = GetItemsWithCode(
+    ws,
+    ...runeFields.map((rf) => runes[rf] as string),
+  );
+  const requiredLevel = GetMaxRequiredLevelOfItems(runeItems);
+
+  const gemApplyTypeStrLookup: string[] = ["GemXp3", "GemXp4", "GemXp2"];
+
+  const subsections = gemMods.map((gm) => {
+    const header = gemMods.length > 1
+      ? `<span class="rw-type-header">${
+        StringForIndex(ws, gemApplyTypeStrLookup[gm.gemApplyType], "enUS")
+      }</span>`
+      : "";
+    const mods = PropertyListToDescString([...wordMods, ...gm.mods], ws).map((
+      v,
+    ) => `
+          <span class="stat">${v.replace(/%%/, "%")}</span>`).join("");
+
+    return `<div class="rw-stat-list">
+        ${header}
+        ${mods}
+        </div>`;
+  }).join("\r\n");
+
+  const formula = letters.map((l) => StringForIndex(ws, l, "enUS")).join(" + ");
+  const excludedSpan = excludedItemTypes.length > 0
+    ? `<span class="runeword-ex-types">NOT ${excludedTypes}</span>`
+    : "";
+
+  let reqlvltxt = StringForIndex(ws, "ItemStats1p", "enUS").replace(
+    /%\+?d/,
+    `${requiredLevel}`,
+  );
+  reqlvltxt = `<span class="required-level">${reqlvltxt}</span>`;
+
+  return `
+      <div class="runeword">
+        <span class="runeword-name">${rwName}</span>
+        <span class="runeword-formula">${formula}</span>
+        <span class="runeword-types">${includedTypes}</span>
+        ${excludedSpan}
+        ${reqlvltxt}
+        ${subsections}
+      </div>
+  `;
+}
 
 export function DocRunewords(ws: Workspace): string {
-  const { runes, misc, properties } = ws;
+  const { runes, misc, gems, properties } = ws;
 
   if (runes === undefined || misc === undefined) {
     return '<h1 class="error">runes.txt and/or misc.txt not found</h1>';
@@ -802,6 +998,134 @@ export function DocRunewords(ws: Workspace): string {
     return '<h1 class="error">properties.txt not found</h1>';
   }
 
+  if (gems === undefined) {
+    return '<h1 class="error">gems.txt not found</h1>';
+  }
+
   const documented: DocumentedRuneword[] = [];
-  return "";
+  const rwProps: [
+    keyof D2RRunes,
+    keyof D2RRunes,
+    keyof D2RRunes,
+    keyof D2RRunes,
+  ][] = [
+    ["t1code1", "t1param1", "t1min1", "t1max1"],
+    ["t1code2", "t1param2", "t1min2", "t1max2"],
+    ["t1code3", "t1param3", "t1min3", "t1max3"],
+    ["t1code4", "t1param4", "t1min4", "t1max4"],
+    ["t1code5", "t1param5", "t1min5", "t1max5"],
+    ["t1code6", "t1param6", "t1min6", "t1max6"],
+    ["t1code7", "t1param7", "t1min7", "t1max7"],
+  ];
+
+  const rwInclude: (keyof D2RRunes)[] = [
+    "itype1",
+    "itype2",
+    "itype3",
+    "itype4",
+    "itype5",
+    "itype6",
+  ];
+  const rwExclude: (keyof D2RRunes)[] = ["etype1", "etype2", "etype3"];
+
+  const gemWeaponProps: [
+    keyof D2RGems,
+    keyof D2RGems,
+    keyof D2RGems,
+    keyof D2RGems,
+  ][] = [
+    ["weaponmod1code", "weaponmod1param", "weaponmod1min", "weaponmod1max"],
+    ["weaponmod2code", "weaponmod2param", "weaponmod2min", "weaponmod2max"],
+    ["weaponmod3code", "weaponmod3param", "weaponmod3min", "weaponmod3max"],
+  ];
+
+  const gemHelmProps: [
+    keyof D2RGems,
+    keyof D2RGems,
+    keyof D2RGems,
+    keyof D2RGems,
+  ][] = [
+    ["helmmod1code", "helmmod1param", "helmmod1min", "helmmod1max"],
+    ["helmmod2code", "helmmod2param", "helmmod2min", "helmmod2max"],
+    ["helmmod3code", "helmmod3param", "helmmod3min", "helmmod3max"],
+  ];
+
+  const gemShieldProps: [
+    keyof D2RGems,
+    keyof D2RGems,
+    keyof D2RGems,
+    keyof D2RGems,
+  ][] = [
+    ["shieldmod1code", "shieldmod1param", "shieldmod1min", "shieldmod1max"],
+    ["shieldmod2code", "shieldmod2param", "shieldmod2min", "shieldmod2max"],
+    ["shieldmod3code", "shieldmod3param", "shieldmod3min", "shieldmod3max"],
+  ];
+
+  const gemProps = [gemWeaponProps, gemHelmProps, gemShieldProps];
+
+  const runeFields: (keyof D2RRunes)[] = [
+    "rune1",
+    "rune2",
+    "rune3",
+    "rune4",
+    "rune5",
+    "rune6",
+  ];
+
+  runes.forEach((rw) => {
+    if (rw.complete !== "1") {
+      return; // skip any incomplete runewords
+    }
+
+    const wordMods = MakePropertyList(properties, rw, rwProps);
+    const gemItems = runeFields.filter((rf) => rw[rf] !== "").map((rf) =>
+      misc.find((m) => m.code === rw[rf])
+    ).filter((m) => m !== undefined).map((m) =>
+      gems.find((g) => g.code === m?.code)
+    ).filter((g) => g !== undefined) as D2RGems[];
+
+    // So there's a bit of complexity here.
+    // We must first find all items that the runeword can modify.
+    const includedItemTypes = GetItemTypes(
+      ws,
+      ...(rwInclude.map((ri) => rw[ri]) as string[]),
+    );
+    const excludedItemTypes = GetItemTypes(
+      ws,
+      ...(rwExclude.map((re) => rw[re]) as string[]),
+    );
+
+    const gemmableItems = GetItemsWithTypes(
+      ws,
+      includedItemTypes,
+      excludedItemTypes,
+    );
+
+    // Next, we need to get all of the GemApplyTypes that are covered by this runeword
+    const gemApplyTypes = gemmableItems.map((gi) => gi.gemapplytype).filter((
+      v,
+      i,
+      a,
+    ) => a.indexOf(v) === i).map((gat) => Number.parseInt(gat as string));
+
+    const gemMods = gemApplyTypes.map((gemApplyType) => {
+      return {
+        gemApplyType,
+        mods: gemItems.flatMap((gi) =>
+          MakePropertyList(properties, gi, gemProps[gemApplyType])
+        ),
+      };
+    });
+
+    documented.push({
+      wordMods,
+      gemMods,
+      letters: gemItems.map((gi) => gi.letter as string),
+      runes: rw,
+      includedItemTypes,
+      excludedItemTypes,
+    });
+  });
+
+  return documented.map((doc) => DocumentRuneword(doc, ws)).join("\r\n");
 }
