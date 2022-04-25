@@ -144,7 +144,10 @@ function PropertyListToItemStatList(
   uncombined.forEach((property) => {
     // if there's already a combined result here, just stop.
     const same = uncombined.filter((uc) => {
-      if (property.stat === undefined && uc.stat === undefined && property.func === uc.func) {
+      if (
+        property.stat === undefined && uc.stat === undefined &&
+        property.func === uc.func
+      ) {
         return true;
       }
       if (property.stat === undefined || uc.stat === undefined) {
@@ -742,7 +745,7 @@ function DocumentUniqueItem(item: DocumentedUniqueItem, ws: Workspace): string {
   return `
       <div class="unique-item">
         <span class="unique-name">${uniqueName}</span>
-        <span class="unique-item">${uniqueItem}</span>
+        <span class="item-type">${uniqueItem}</span>
         ${lvltxt}
         ${reqlvltxt}
         ${descStrings.join("\r\n        ")}
@@ -809,7 +812,9 @@ export function DocUniques(ws: Workspace): string {
   return documented.map((doc) => DocumentUniqueItem(doc, ws)).join("\r\n");
 }
 
-type DocumentedSetItem = {};
+type DocumentedSetItem = {
+  base: D2RArmor | D2RWeapons | D2RMisc | undefined;
+};
 
 type DocumentedSet = {};
 
@@ -833,6 +838,83 @@ type DocumentedMagicAffix = {
   mods: PropertyList;
 };
 
+function DocumentMagicAffix(doc: DocumentedMagicAffix, ws: Workspace): string {
+  const { affix, mods } = doc;
+
+  const include: (keyof D2RMagicBase)[] = [
+    "itype1",
+    "itype2",
+    "itype3",
+    "itype4",
+    "itype5",
+    "itype6",
+    "itype7",
+  ];
+  const exclude: (keyof D2RMagicBase)[] = [
+    "etype1",
+    "etype2",
+    "etype3",
+    "etype4",
+    "etype5",
+  ];
+
+  const affixName = StringForIndex(ws, affix.name as string, "enUS");
+  const includedItemTypes = GetItemTypes(
+    ws,
+    ...(include.map((i) => affix[i] as string)),
+  );
+  const excludedItemTypes = GetItemTypes(
+    ws,
+    ...(exclude.map((i) => affix[i] as string)),
+  );
+  const includedStr = GetItemTypeNames(includedItemTypes);
+  const excludedStr = GetItemTypeNames(excludedItemTypes);
+  let lvltxt = "";
+  let reqlvltxt = "";
+
+  if (affix.level !== "") {
+    const lvl = Number.parseInt(affix.level as string);
+    if (!Number.isNaN(lvl)) {
+      lvltxt = StringForIndex(ws, "strChatLevel", "enUS").replace(
+        /%\+?d/,
+        affix.level as string,
+      );
+      lvltxt = `<span class="required-level">${lvltxt}</span>`;
+    }
+  }
+
+  if (affix.levelreq !== "") {
+    const lvl = Number.parseInt(affix.levelreq as string);
+    if (!Number.isNaN(lvl)) {
+      reqlvltxt = StringForIndex(ws, "ItemStats1p", "enUS").replace(
+        /%\+?d/,
+        affix.levelreq as string,
+      );
+      reqlvltxt = `<span class="required-level">${reqlvltxt}</span>`;
+    }
+  }
+
+  const descStrings = PropertyListToDescString(mods, ws).map((v) =>
+    `<span class="stat">${v.replace(/%%/, "%")}</span>`
+  );
+
+  const excludedSpan = excludedItemTypes.length > 0
+    ? `<span class="ex-types">NOT ${excludedStr}</span>`
+    : "";
+  const includedSpan = `<span class="affix-types">${includedStr}</span>`;
+
+  return `
+    <div class="magic-affix">
+      <span class="affix-name">${affixName}</span>
+      ${includedSpan}
+      ${excludedSpan}
+      ${lvltxt}
+      ${reqlvltxt}
+      ${descStrings.join("\r\n        ")}
+    </div>
+  `;
+}
+
 export function DocMagic(ws: Workspace): string {
   const { magicPrefix, magicSuffix, properties } = ws;
 
@@ -844,8 +926,52 @@ export function DocMagic(ws: Workspace): string {
     return '<h1 class="error">properties.txt not found</h1>';
   }
 
-  const documented: DocumentedMagicAffix[] = [];
-  return "";
+  const documentedPrefixes: DocumentedMagicAffix[] = [];
+  const documentedSuffixes: DocumentedMagicAffix[] = [];
+
+  const props: [
+    keyof D2RMagicBase,
+    keyof D2RMagicBase,
+    keyof D2RMagicBase,
+    keyof D2RMagicBase,
+  ][] = [
+    ["mod1code", "mod1param", "mod1min", "mod1max"],
+    ["mod2code", "mod2param", "mod2min", "mod2max"],
+    ["mod3code", "mod3param", "mod3min", "mod3max"],
+  ];
+
+  magicPrefix.forEach((affix) => {
+    if (
+      affix.name === "" || affix.spawnable !== "1" ||
+      (affix.mod1code === "" && affix.mod2code === "" && affix.mod3code === "")
+    ) {
+      return;
+    }
+    documentedPrefixes.push({
+      affix,
+      mods: MakePropertyList(properties, affix, props),
+    });
+  });
+
+  magicSuffix.forEach((affix) => {
+    if (
+      affix.name === "" || affix.spawnable !== "1" ||
+      (affix.mod1code === "" && affix.mod2code === "" && affix.mod3code === "")
+    ) {
+      return;
+    }
+    documentedSuffixes.push({
+      affix,
+      mods: MakePropertyList(properties, affix, props),
+    });
+  });
+
+  return `
+    <h1>Magic Prefixes</h1>
+    ${documentedPrefixes.map((doc) => DocumentMagicAffix(doc, ws)).join("\r\n")}
+    <h1>Magic Suffixes</h1>
+    ${documentedSuffixes.map((doc) => DocumentMagicAffix(doc, ws)).join("\r\n")}
+  `;
 }
 
 type DocumentedArmor = {};
@@ -966,7 +1092,7 @@ function DocumentRuneword(runeword: DocumentedRuneword, ws: Workspace): string {
 
   const formula = letters.map((l) => StringForIndex(ws, l, "enUS")).join(" + ");
   const excludedSpan = excludedItemTypes.length > 0
-    ? `<span class="runeword-ex-types">NOT ${excludedTypes}</span>`
+    ? `<span class="ex-types">NOT ${excludedTypes}</span>`
     : "";
 
   let reqlvltxt = StringForIndex(ws, "ItemStats1p", "enUS").replace(

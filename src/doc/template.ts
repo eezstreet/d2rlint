@@ -7,6 +7,7 @@ function GeneratePage(inner: string): string {
   return `<html>
     <head>
       <title>${config.docOptions.title}</title>
+      <link rel="stylesheet" href="styles.css">
     </head>
     <body>
       <div class="header">
