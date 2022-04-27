@@ -1013,7 +1013,105 @@ export function DocMisc(ws: Workspace): string {
   return "";
 }
 
-type DocumentedGem = {};
+type DocumentedGem = {
+  helmMods: PropertyList;
+  weaponMods: PropertyList;
+  shieldMods: PropertyList;
+  gem: D2RGems;
+};
+
+const gemWeaponProps: [
+  keyof D2RGems,
+  keyof D2RGems,
+  keyof D2RGems,
+  keyof D2RGems,
+][] = [
+  ["weaponmod1code", "weaponmod1param", "weaponmod1min", "weaponmod1max"],
+  ["weaponmod2code", "weaponmod2param", "weaponmod2min", "weaponmod2max"],
+  ["weaponmod3code", "weaponmod3param", "weaponmod3min", "weaponmod3max"],
+];
+
+const gemHelmProps: [
+  keyof D2RGems,
+  keyof D2RGems,
+  keyof D2RGems,
+  keyof D2RGems,
+][] = [
+  ["helmmod1code", "helmmod1param", "helmmod1min", "helmmod1max"],
+  ["helmmod2code", "helmmod2param", "helmmod2min", "helmmod2max"],
+  ["helmmod3code", "helmmod3param", "helmmod3min", "helmmod3max"],
+];
+
+const gemShieldProps: [
+  keyof D2RGems,
+  keyof D2RGems,
+  keyof D2RGems,
+  keyof D2RGems,
+][] = [
+  ["shieldmod1code", "shieldmod1param", "shieldmod1min", "shieldmod1max"],
+  ["shieldmod2code", "shieldmod2param", "shieldmod2min", "shieldmod2max"],
+  ["shieldmod3code", "shieldmod3param", "shieldmod3min", "shieldmod3max"],
+];
+
+const gemApplyTypeStrLookup: string[] = [
+  "GemXp3",
+  "GemXp4",
+  "GemXp2",
+  "GemXp1",
+];
+
+const gemProps = [gemWeaponProps, gemHelmProps, gemShieldProps];
+
+function DocumentGem(theGem: DocumentedGem, ws: Workspace): string {
+  const { gem, helmMods, weaponMods, shieldMods } = theGem;
+  const { armor, misc, weapons } = ws;
+
+  if (armor === undefined || misc === undefined || weapons === undefined) {
+    return "";
+  }
+
+  const item = [...armor, ...misc, ...weapons].find((it) =>
+    it.code === gem.code
+  );
+  if (item === undefined) {
+    return "";
+  }
+
+  const gemName = StringForIndex(ws, item.namestr as string, "enUS");
+  const requiredLevel = Number.parseInt(item.levelreq as string);
+
+  let reqlvltxt = "";
+  if (!Number.isNaN(requiredLevel) && requiredLevel > 1) {
+    reqlvltxt = StringForIndex(ws, "ItemStats1p", "enUS").replace(
+      /%\+?d/,
+      `${requiredLevel}`,
+    );
+    reqlvltxt = `<span class="required-level">${reqlvltxt}</span>`;
+  }
+
+  const mods = [weaponMods, helmMods, shieldMods, helmMods];
+  const subsections = mods.map((gm, i) => {
+    const header = `<span class="gem-type-header">${
+      StringForIndex(ws, gemApplyTypeStrLookup[i], "enUS")
+    }</span>`;
+    const mods = PropertyListToDescString(gm, ws).map((v) =>
+      `<span class="stat">${v.replace(/%%/, "%")}</span>`
+    ).join(", ");
+
+    return `<div class="gem-statlist">
+        ${header}
+        ${mods}
+        </div>`;
+  });
+
+  return `
+      <div class="gem">
+        <span class="gem-name">${gemName}</span>
+        ${reqlvltxt}
+        ${subsections.join("\r\n")}
+      </div>
+  `;
+}
 
 export function DocGems(ws: Workspace): string {
   const { gems, misc, properties } = ws;
@@ -1027,7 +1125,20 @@ export function DocGems(ws: Workspace): string {
   }
 
   const documented: DocumentedGem[] = [];
-  return "";
+  gems.forEach((gem) => {
+    if (gem.code === "") {
+      return;
+    }
+
+    documented.push({
+      gem,
+      weaponMods: MakePropertyList(properties, gem, gemWeaponProps),
+      helmMods: MakePropertyList(properties, gem, gemHelmProps),
+      shieldMods: MakePropertyList(properties, gem, gemShieldProps),
+    });
+  });
+
+  return documented.map((doc) => DocumentGem(doc, ws)).join("\r\n");
 }
 
 type DocumentedRuneword = {
@@ -1070,8 +1181,6 @@ function DocumentRuneword(runeword: DocumentedRuneword, ws: Workspace): string {
     ...runeFields.map((rf) => runes[rf] as string),
   );
   const requiredLevel = GetMaxRequiredLevelOfItems(runeItems);
-
-  const gemApplyTypeStrLookup: string[] = ["GemXp3", "GemXp4", "GemXp2"];
 
   const subsections = gemMods.map((gm) => {
     const header = gemMods.length > 1
@@ -1153,41 +1262,6 @@ export function DocRunewords(ws: Workspace): string {
     "itype6",
   ];
   const rwExclude: (keyof D2RRunes)[] = ["etype1", "etype2", "etype3"];
-
-  const gemWeaponProps: [
-    keyof D2RGems,
-    keyof D2RGems,
-    keyof D2RGems,
-    keyof D2RGems,
-  ][] = [
-    ["weaponmod1code", "weaponmod1param", "weaponmod1min", "weaponmod1max"],
-    ["weaponmod2code", "weaponmod2param", "weaponmod2min", "weaponmod2max"],
-    ["weaponmod3code", "weaponmod3param", "weaponmod3min", "weaponmod3max"],
-  ];
-
-  const gemHelmProps: [
-    keyof D2RGems,
-    keyof D2RGems,
-    keyof D2RGems,
-    keyof D2RGems,
-  ][] = [
-    ["helmmod1code", "helmmod1param", "helmmod1min", "helmmod1max"],
-    ["helmmod2code", "helmmod2param", "helmmod2min", "helmmod2max"],
-    ["helmmod3code", "helmmod3param", "helmmod3min", "helmmod3max"],
-  ];
-
-  const gemShieldProps: [
-    keyof D2RGems,
-    keyof D2RGems,
-    keyof D2RGems,
-    keyof D2RGems,
-  ][] = [
-    ["shieldmod1code", "shieldmod1param", "shieldmod1min", "shieldmod1max"],
-    ["shieldmod2code", "shieldmod2param", "shieldmod2min", "shieldmod2max"],
-    ["shieldmod3code", "shieldmod3param", "shieldmod3min", "shieldmod3max"],
-  ];
-
-  const gemProps = [gemWeaponProps, gemHelmProps, gemShieldProps];
 
   const runeFields: (keyof D2RRunes)[] = [
     "rune1",
