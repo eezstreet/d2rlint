@@ -32,7 +32,9 @@ export function StringForIndex(
       return;
     }
 
-    if (strings[key] !== undefined) {
+    if (
+      strings[key] !== undefined && typeof strings[key]?.find === "function"
+    ) {
       const tblEntry = strings[key]?.find((v) =>
         v.Key.toLocaleLowerCase() === index.toLocaleLowerCase()
       );
@@ -320,6 +322,50 @@ export function GetClassSkillString(
 }
 
 /**
+ * Returns true if the item record belongs to a specific type.
+ * @param ws - the workspace we are dealing with
+ * @param item - the item excel record
+ * @param theType - the type we are matching against
+ * @returns {true} if the item is of the right type
+ * @returns {false} if the item is not of the right type
+ */
+export function ItemIsOfType(
+  ws: Workspace,
+  item: D2RItemExcelRecord,
+  theType: string,
+): boolean {
+  const { itemTypes } = ws;
+  if (itemTypes === undefined) {
+    return false;
+  }
+
+  const { type, type2 } = item;
+  if (type === theType || type2 === theType) {
+    return true;
+  }
+
+  const equivMatches = (xType: string): boolean => {
+    if (xType === "") {
+      return false;
+    }
+
+    const found = itemTypes.find((it) => it.code === xType);
+    if (found === undefined) {
+      return false;
+    }
+    if (found.equiv1 === theType) {
+      return true;
+    } else if (found.equiv2 === theType) {
+      return true;
+    }
+    return equivMatches(found.equiv1 as string) ||
+      equivMatches(found.equiv2 as string);
+  };
+
+  return equivMatches(type as string) || equivMatches(type2 as string);
+}
+
+/**
  * Gets all item types that match the given strings
  * @param ws - the workspace to work off of
  * @param itemTypes - the item types to look for (codes)
@@ -442,4 +488,76 @@ export function GetMaxRequiredLevelOfItems(
     }
     return parsed;
   }, 0);
+}
+
+/**
+ * Gets the kind of staff mods that an item has.
+ * @param ws - the workspace we are working with
+ * @param item - the item that we are looking at
+ * @returns the class string (ama, sor, ...)
+ */
+export function GetStaffMods(ws: Workspace, item: D2RItemExcelRecord): string {
+  const { itemTypes } = ws;
+
+  if (itemTypes === undefined) {
+    return "";
+  }
+
+  const found = itemTypes.find((it) => it.code === item.type);
+  const found2 = itemTypes.find((it) => it.code === item.type2);
+
+  if (
+    found !== undefined && found.staffmods !== "" &&
+    found.staffmods !== undefined
+  ) {
+    return found.staffmods as string;
+  }
+  if (
+    found2 !== undefined && found2.staffmods !== "" &&
+    found2.staffmods !== undefined
+  ) {
+    return found2.staffmods as string;
+  }
+
+  return "";
+}
+
+/**
+ * Returns true if we should show Smite damage instead of 1-handed damage
+ * @param ws - the workspace that we are working with
+ * @param item - the item record
+ * @returns {true} if the item should use a Smite damage display
+ * @returns {false} if the item should not use a Smite damage display
+ */
+export function IsSmiteDamageType(
+  ws: Workspace,
+  item: D2RItemExcelRecord,
+): boolean {
+  const { itemTypes } = ws;
+
+  if (itemTypes === undefined) {
+    return false;
+  }
+
+  return ItemIsOfType(ws, item, "shld");
+}
+
+/**
+ * Returns true if we should show Kick damage instead of 1-handed damage
+ * @param ws - the workspace that we are working with
+ * @param item - the item record
+ * @returns {true} if the item should use a Kick damage display
+ * @returns {false} if the item should not use a Kick damage display
+ */
+export function IsKickDamageType(
+  ws: Workspace,
+  item: D2RItemExcelRecord,
+): boolean {
+  const { itemTypes } = ws;
+
+  if (itemTypes === undefined) {
+    return false;
+  }
+
+  return ItemIsOfType(ws, item, "boot");
 }
