@@ -6,6 +6,7 @@
 import { GetAllRules } from "./rule.ts";
 import * as fs from "https://deno.land/std@0.130.0/fs/mod.ts";
 import { deepMerge } from "./misc.ts";
+import { D2RStringTable } from "./workspace.ts";
 
 /**
  * Types
@@ -28,6 +29,33 @@ export interface SavedConfiguration {
   generateDocs: boolean;
   docOptions: {
     title: string;
+    language: Omit<keyof D2RStringTable, "id" | "Key">;
+    localizedStrings: {
+      pageNames: {
+        main: string;
+        uniques: string;
+        sets: string;
+        magic: string;
+        cube: string;
+        armor: string;
+        weapons: string;
+        misc: string;
+        gems: string;
+        runeword: string;
+      };
+      subPageNames: {
+        magicPrefixes: string;
+        magicSuffixes: string;
+        fullSetBonus: string;
+        partialSetBonus: string;
+        setItems: string;
+      };
+      other: {
+        setNItems: string;
+        setSpecificItem: string;
+        setFull: string;
+      };
+    };
   };
 }
 
@@ -61,6 +89,33 @@ function CreateDefaultConfig(): SavedConfiguration {
     generateDocs: false,
     docOptions: {
       title: "My Mod Documentation",
+      language: "enUS",
+      localizedStrings: {
+        pageNames: {
+          main: "Main",
+          runeword: "Runewords",
+          uniques: "Unique Items",
+          sets: "Set Items",
+          magic: "Magic Prefixes/Suffixes",
+          cube: "Cube Recipes",
+          armor: "Armor",
+          weapons: "Weapons",
+          gems: "Gems",
+          misc: "Misc Items",
+        },
+        subPageNames: {
+          magicPrefixes: "Magic Prefixes",
+          magicSuffixes: "Magic Suffixes",
+          fullSetBonus: "Full Set Bonuses",
+          partialSetBonus: "Partial Set Bonuses",
+          setItems: "Set Items",
+        },
+        other: {
+          setNItems: "(%d items)",
+          setSpecificItem: "(only if %s is equipped)",
+          setFull: "(Full set)",
+        },
+      },
     },
   };
 }

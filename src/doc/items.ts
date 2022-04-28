@@ -1,32 +1,13 @@
 import {
-  D2RArmor,
-  D2RAutomagic,
   D2RExcelRecord,
-  D2RGems,
-  D2RItemExcelRecord,
   D2RItemStatCost,
-  D2RItemTypes,
-  D2RMagicBase,
-  D2RMisc,
   D2RProperties,
-  D2RRunes,
-  D2RUniqueItems,
-  D2RWeapons,
   Workspace,
 } from "../lib/workspace.ts";
 import {
   GetClassSkillString,
   GetItemDaylightFormatter,
-  GetItemsWithCode,
-  GetItemsWithTypes,
-  GetItemTypeNames,
-  GetItemTypes,
   GetMaxExperienceLevel,
-  GetMaxRequiredLevelOfItems,
-  GetStaffMods,
-  IsKickDamageType,
-  IsSmiteDamageType,
-  ItemIsOfType,
   MonsterNameIdx,
   MonsterTypeName,
   SkillClassOnly,
@@ -36,7 +17,7 @@ import {
 } from "./lib.ts";
 
 // A property list is a list of item properties
-type PropertyList = {
+export type PropertyList = {
   stat: D2RProperties | undefined;
   param: string;
   min: number;
@@ -44,7 +25,7 @@ type PropertyList = {
 }[];
 
 // An item stat list is a list of item stats
-type ItemStatList = {
+export type ItemStatList = {
   stat: D2RItemStatCost | undefined | "ethereal"; // xtreme hack
   param: string;
   min: number;
@@ -59,7 +40,7 @@ type ItemStatList = {
  * @param ws - the workspace
  * @returns {ItemStatList} - the list of item stats
  */
-function PropertyListToItemStatList(
+export function PropertyListToItemStatList(
   list: PropertyList,
   ws: Workspace,
 ): ItemStatList {
@@ -223,7 +204,10 @@ function PropertyListToItemStatList(
  * Converts a PropertyList into an array of item modifiers
  * @param list - the PropertyList to convert
  */
-function PropertyListToDescString(list: PropertyList, ws: Workspace): string[] {
+export function PropertyListToDescString(
+  list: PropertyList,
+  ws: Workspace,
+): string[] {
   const { properties, itemStatCost } = ws;
   if (properties === undefined || itemStatCost === undefined) {
     return ["<span>itemStatCost.txt not found</span>"];
@@ -276,108 +260,108 @@ function PropertyListToDescString(list: PropertyList, ws: Workspace): string[] {
           repairSpeed > 100 ? repairSpeed / 100 : 100 / repairSpeed,
         );
         if (repairSpeed > 100) {
-          return StringForIndex(ws, "ModStre9t", "enUS").replace(
+          return StringForIndex(ws, "ModStre9t").replace(
             /%\+?d/,
             `${replacement}`,
           );
         }
-        return StringForIndex(ws, "ModStre9u", "enUS").replace(/%\+?d/, "1")
+        return StringForIndex(ws, "ModStre9u").replace(/%\+?d/, "1")
           .replace(/%\+?d/, `${replacement}`);
       }
       case 12: // basic
         if (min < 0 && max < 0) {
-          return StringForIndex(ws, strneg, "enUS");
+          return StringForIndex(ws, strneg);
         }
-        return StringForIndex(ws, strpos, "enUS");
+        return StringForIndex(ws, strpos);
       case 13: // + to character class skills
-        return GetClassSkillString(ws, propval, "enUS").replace(/%\+?d/, val);
+        return GetClassSkillString(ws, propval).replace(/%\+?d/, val);
       case 14: // skill tab. complex logic aplenty
-        return SkillTabName(ws, Number.parseInt(param), "enUS").replace(
+        return SkillTabName(ws, Number.parseInt(param)).replace(
           /%\+?d/,
           val,
         );
       case 15: // CtC.
-        return StringForIndex(ws, strpos, "enUS").replace(/%\+?d/, `${min}`)
+        return StringForIndex(ws, strpos).replace(/%\+?d/, `${min}`)
           .replace(/%\+?d/, `${max}`).replace(
             /%s/,
-            SkillName(ws, param, "enUS"),
+            SkillName(ws, param),
           );
       case 17: // increases by time
       case 18: // not used in vanilla game because it's bugged
         if (min < 0 && max < 0) {
-          return GetItemDaylightFormatter(ws, Number.parseInt(param), "enUS")
+          return GetItemDaylightFormatter(ws, Number.parseInt(param))
             .replace(
               /%s/,
-              StringForIndex(ws, strneg, "enUS").replace(/%\+?d/, val),
+              StringForIndex(ws, strneg).replace(/%\+?d/, val),
             );
         }
-        return GetItemDaylightFormatter(ws, Number.parseInt(param), "enUS")
+        return GetItemDaylightFormatter(ws, Number.parseInt(param))
           .replace(
             /%s/,
-            StringForIndex(ws, strpos, "enUS").replace(/%\+?d/, val),
+            StringForIndex(ws, strpos).replace(/%\+?d/, val),
           );
       case 5: // functionally identical
       case 19: // basic
         if (min < 0 && max < 0) {
-          return `${StringForIndex(ws, strneg, "enUS").replace(/%\+?d/, val)} ${
-            descstr2 !== "" ? StringForIndex(ws, descstr2, "enUS") : ""
+          return `${StringForIndex(ws, strneg).replace(/%\+?d/, val)} ${
+            descstr2 !== "" ? StringForIndex(ws, descstr2) : ""
           }`;
         }
-        return `${StringForIndex(ws, strpos, "enUS").replace(/%\+?d/, val)} ${
-          descstr2 !== "" ? StringForIndex(ws, descstr2, "enUS") : ""
+        return `${StringForIndex(ws, strpos).replace(/%\+?d/, val)} ${
+          descstr2 !== "" ? StringForIndex(ws, descstr2) : ""
         }`;
       case 22: // attack/damage vs arbitrary monster type, unused in vanilla
         if (min < 0 && max < 0) {
-          return `${StringForIndex(ws, strneg, "enUS").replace(/%\+?d/, val)} ${
-            MonsterTypeName(ws, param, "enUS")
+          return `${StringForIndex(ws, strneg).replace(/%\+?d/, val)} ${
+            MonsterTypeName(ws, param)
           }`;
         }
-        return `${StringForIndex(ws, strpos, "enUS").replace(/%\+?d/, val)} ${
-          MonsterTypeName(ws, param, "enUS")
+        return `${StringForIndex(ws, strpos).replace(/%\+?d/, val)} ${
+          MonsterTypeName(ws, param)
         }`;
       case 23: // reanimate as, %0 = val, %1 = param (monstats idx)
         if (min < 0 && max < 0) {
-          return StringForIndex(ws, strneg, "enUS").replace(/%0/, val).replace(
+          return StringForIndex(ws, strneg).replace(/%0/, val).replace(
             /%1/,
-            MonsterNameIdx(ws, Number.parseInt(param), "enUS"),
+            MonsterNameIdx(ws, Number.parseInt(param)),
           );
         }
-        return StringForIndex(ws, strpos, "enUS").replace(/%0/, val).replace(
+        return StringForIndex(ws, strpos).replace(/%0/, val).replace(
           /%1/,
-          MonsterNameIdx(ws, Number.parseInt(param), "enUS"),
+          MonsterNameIdx(ws, Number.parseInt(param)),
         );
       case 24: // charges
-        return StringForIndex(ws, strpos, "enUS").replace(
+        return StringForIndex(ws, strpos).replace(
           /%[1s]/,
-          SkillName(ws, param, "enUS"),
+          SkillName(ws, param),
         ).replace(/%\+?[0d]/, `${max}`).replace(
           /%\+?[2d]\/%\+?[3d]/g,
           `${min}`,
         );
       case 27: // single tab skill
         if (min < 0 && max < 0) {
-          return StringForIndex(ws, strneg, "enUS").replace(/%\+?d/g, val)
-            .replace(/%s/, SkillName(ws, param, "enUS")).replace(
+          return StringForIndex(ws, strneg).replace(/%\+?d/g, val)
+            .replace(/%s/, SkillName(ws, param)).replace(
               /%s/,
-              SkillClassOnly(ws, param, "enUS"),
+              SkillClassOnly(ws, param),
             );
         }
-        return StringForIndex(ws, strpos, "enUS").replace(/%\+?d/g, val)
-          .replace(/%s/, SkillName(ws, param, "enUS")).replace(
+        return StringForIndex(ws, strpos).replace(/%\+?d/g, val)
+          .replace(/%s/, SkillName(ws, param)).replace(
             /%s/,
-            SkillClassOnly(ws, param, "enUS"),
+            SkillClassOnly(ws, param),
           );
       case 16: // aura (functionally identical)
       case 28: // oskill
         if (min < 0 && max < 0) {
-          return StringForIndex(ws, strneg, "enUS").replace(/%\+?d/g, val)
-            .replace(/%s/g, SkillName(ws, param, "enUS"));
+          return StringForIndex(ws, strneg).replace(/%\+?d/g, val)
+            .replace(/%s/g, SkillName(ws, param));
         }
-        return StringForIndex(ws, strpos, "enUS").replace(/%\+?d/g, val)
-          .replace(/%s/g, SkillName(ws, param, "enUS"));
+        return StringForIndex(ws, strpos).replace(/%\+?d/g, val)
+          .replace(/%s/g, SkillName(ws, param));
       default: // default case not handled
         if (statName === "maxdurability") {
-          return StringForIndex(ws, "improved durability", "enUS"); // hacky.
+          return StringForIndex(ws, "improved durability"); // hacky.
         }
         if (statName === "item_numsockets") {
           const sockStr = Number.isNaN(min) || Number.isNaN(max)
@@ -385,7 +369,7 @@ function PropertyListToDescString(list: PropertyList, ws: Workspace): string[] {
             : min !== max
             ? `${min}-${max}`
             : `${min}`;
-          return StringForIndex(ws, "Socketable", "enUS").replace(
+          return StringForIndex(ws, "Socketable").replace(
             /%i/,
             sockStr,
           );
@@ -394,9 +378,12 @@ function PropertyListToDescString(list: PropertyList, ws: Workspace): string[] {
           // Swordback Hold and Gorefoot have a hidden property that makes enemies 'Extra Bloody' that isn't documented properly ingame.
           // Probably it means that Open Wounds with this item has extra blood. No idea.
           // If we don't handle this special case though, we get a gross mess.
-          return StringForIndex(ws, "ModStr5p", "enUS");
+          return StringForIndex(ws, "ModStr5p");
         }
-        if (statName === "coldlength" || statName === "poisonlength") {
+        if (
+          statName === "coldlength" || statName === "poisonlength" ||
+          statName === "state" || statName === "fade"
+        ) {
           return ""; // hacky.
         }
         return `author needs to handle case ${descfunc}`;
@@ -418,7 +405,7 @@ function PropertyListToDescString(list: PropertyList, ws: Workspace): string[] {
       // dmg%
       const valStr = min === max ? `${min}` : `[${min}-${max}]`;
       statLines.push({
-        line: StringForIndex(ws, "strModEnhancedDamage", "enUS").replace(
+        line: StringForIndex(ws, "strModEnhancedDamage").replace(
           /%\+?d/,
           valStr,
         ),
@@ -434,7 +421,7 @@ function PropertyListToDescString(list: PropertyList, ws: Workspace): string[] {
     if (stat === "ethereal") {
       // is ethereal. push ethereal string to end
       statLines.push({
-        line: StringForIndex(ws, "strethereal", "enUS"),
+        line: StringForIndex(ws, "strethereal"),
         priority: -1,
       });
       return;
@@ -565,11 +552,11 @@ function PropertyListToDescString(list: PropertyList, ws: Workspace): string[] {
       }
 
       const line = minStr === maxStr
-        ? StringForIndex(ws, strSame, "enUS").replace(/%\+?d/, minStr).replace(
+        ? StringForIndex(ws, strSame).replace(/%\+?d/, minStr).replace(
           /%\+?d/,
           `${len}`,
         )
-        : StringForIndex(ws, str, "enUS").replace(/%\+?d/, minStr).replace(
+        : StringForIndex(ws, str).replace(/%\+?d/, minStr).replace(
           /%\+?d/,
           maxStr,
         ).replace(/%\+?d/, `${len}`);
@@ -666,7 +653,7 @@ function PropertyListToDescString(list: PropertyList, ws: Workspace): string[] {
  * @param args - the property lists to merge
  * @returns {PropertyList} a merged PropertyList
  */
-function MergePropertyLists(...args: PropertyList[]): PropertyList {
+export function MergePropertyLists(...args: PropertyList[]): PropertyList {
   return args.reduce((list, item) => list.concat(item), []);
 }
 
@@ -676,7 +663,7 @@ function MergePropertyLists(...args: PropertyList[]): PropertyList {
  * @param record - the record
  * @param props - the properties to create into a PropertyList
  */
-function MakePropertyList<
+export function MakePropertyList<
   T extends D2RExcelRecord,
   U extends keyof T = keyof T,
 >(properties: D2RProperties[], record: T, props: [U, U, U, U][]): PropertyList {
@@ -701,988 +688,4 @@ function MakePropertyList<
   });
 
   return propList;
-}
-
-type DocumentedUniqueItem = {
-  unique: D2RUniqueItems;
-  base: D2RArmor | D2RWeapons | D2RMisc | undefined;
-  mods: PropertyList;
-};
-
-/**
- * Given a unique item, emits the HTML for it.
- * @param item - the item that we are emitting
- * @param ws - the workspace we are working with
- */
-function DocumentUniqueItem(item: DocumentedUniqueItem, ws: Workspace): string {
-  const { base, mods, unique } = item;
-
-  const descStrings = PropertyListToDescString(mods, ws).map((v) =>
-    `<span class="stat">${v.replace(/%%/, "%")}</span>`
-  );
-  const uniqueName = StringForIndex(ws, unique.index as string, "enUS");
-  const uniqueItem = base === undefined
-    ? `<${unique.code}>`
-    : StringForIndex(ws, base.namestr as string, "enUS");
-  let lvltxt = "";
-  let reqlvltxt = "";
-
-  if (unique.lvl !== "") {
-    const lvl = Number.parseInt(unique.lvl as string);
-    if (!Number.isNaN(lvl)) {
-      lvltxt = StringForIndex(ws, "strChatLevel", "enUS").replace(
-        /%\+?d/,
-        unique.lvl as string,
-      );
-      lvltxt = `<span class="required-level">${lvltxt}</span>`;
-    }
-  }
-  if (unique["lvl req"] !== "") {
-    const lvlreq = Number.parseInt(unique["lvl req"] as string);
-    if (!Number.isNaN(lvlreq)) {
-      reqlvltxt = StringForIndex(ws, "ItemStats1p", "enUS").replace(
-        /%\+?d/,
-        unique["lvl req"] as string,
-      );
-      reqlvltxt = `<span class="required-level">${reqlvltxt}</span>`;
-    }
-  }
-
-  return `
-      <div class="unique-item">
-        <span class="unique-name">${uniqueName}</span>
-        <span class="item-type">${uniqueItem}</span>
-        ${lvltxt}
-        ${reqlvltxt}
-        ${descStrings.join("\r\n        ")}
-      </div>
-  `;
-}
-
-/**
- * Creates the HTML for the unique items page.
- * @param ws - the workspace that we are working with
- * @returns {string} HTML page for unique items
- */
-export function DocUniques(ws: Workspace): string {
-  const { uniqueItems, properties, weapons, armor, misc } = ws;
-
-  if (uniqueItems === undefined) {
-    return '<h1 class="error">uniqueitems.txt not found</h1>';
-  }
-
-  if (properties === undefined) {
-    return '<h1 class="error">properties.txt not found</h1>';
-  }
-
-  if (weapons === undefined || armor === undefined || misc === undefined) {
-    return '<h1 class="error">weapons/armor/misc.txt not found</h1>';
-  }
-
-  const allItems = [...weapons, ...armor, ...misc];
-
-  const props: [
-    keyof D2RUniqueItems,
-    keyof D2RUniqueItems,
-    keyof D2RUniqueItems,
-    keyof D2RUniqueItems,
-  ][] = [
-    ["prop1", "par1", "min1", "max1"],
-    ["prop2", "par2", "min2", "max2"],
-    ["prop3", "par3", "min3", "max3"],
-    ["prop4", "par4", "min4", "max4"],
-    ["prop5", "par5", "min5", "max5"],
-    ["prop6", "par6", "min6", "max6"],
-    ["prop7", "par7", "min7", "max7"],
-    ["prop8", "par8", "min8", "max8"],
-    ["prop9", "par9", "min9", "max9"],
-    ["prop10", "par10", "min10", "max10"],
-    ["prop11", "par11", "min11", "max11"],
-    ["prop12", "par12", "min12", "max12"],
-  ];
-
-  const documented: DocumentedUniqueItem[] = [];
-  uniqueItems.forEach((unique) => {
-    if (unique.code === "") {
-      return; // just skip this unique item, it's probably a placeholder
-    }
-
-    const mods = MakePropertyList(properties, unique, props);
-    const base = allItems.find((item) => item.code === unique.code);
-
-    documented.push({ unique, base, mods });
-  });
-
-  // TODO: group the items together somehow?
-
-  return documented.map((doc) => DocumentUniqueItem(doc, ws)).join("\r\n");
-}
-
-type DocumentedSetItem = {
-  base: D2RArmor | D2RWeapons | D2RMisc | undefined;
-};
-
-type DocumentedSet = {};
-
-export function DocSets(ws: Workspace): string {
-  const { sets, setItems, properties } = ws;
-
-  if (sets === undefined || setItems === undefined) {
-    return '<h1 class="error">setitems.txt and/or sets.txt not found</h1>';
-  }
-
-  if (properties === undefined) {
-    return '<h1 class="error">properties.txt not found</h1>';
-  }
-
-  const documented: DocumentedSet[] = [];
-  return "";
-}
-
-type DocumentedMagicAffix = {
-  affix: D2RMagicBase;
-  mods: PropertyList;
-};
-
-function DocumentMagicAffix(doc: DocumentedMagicAffix, ws: Workspace): string {
-  const { affix, mods } = doc;
-
-  const include: (keyof D2RMagicBase)[] = [
-    "itype1",
-    "itype2",
-    "itype3",
-    "itype4",
-    "itype5",
-    "itype6",
-    "itype7",
-  ];
-  const exclude: (keyof D2RMagicBase)[] = [
-    "etype1",
-    "etype2",
-    "etype3",
-    "etype4",
-    "etype5",
-  ];
-
-  const affixName = StringForIndex(ws, affix.name as string, "enUS");
-  const includedItemTypes = GetItemTypes(
-    ws,
-    ...(include.map((i) => affix[i] as string)),
-  );
-  const excludedItemTypes = GetItemTypes(
-    ws,
-    ...(exclude.map((i) => affix[i] as string)),
-  );
-  const includedStr = GetItemTypeNames(includedItemTypes);
-  const excludedStr = GetItemTypeNames(excludedItemTypes);
-  let lvltxt = "";
-  let reqlvltxt = "";
-
-  if (affix.level !== "") {
-    const lvl = Number.parseInt(affix.level as string);
-    if (!Number.isNaN(lvl)) {
-      lvltxt = StringForIndex(ws, "strChatLevel", "enUS").replace(
-        /%\+?d/,
-        affix.level as string,
-      );
-      lvltxt = `<span class="required-level">${lvltxt}</span>`;
-    }
-  }
-
-  if (affix.levelreq !== "") {
-    const lvl = Number.parseInt(affix.levelreq as string);
-    if (!Number.isNaN(lvl)) {
-      reqlvltxt = StringForIndex(ws, "ItemStats1p", "enUS").replace(
-        /%\+?d/,
-        affix.levelreq as string,
-      );
-      reqlvltxt = `<span class="required-level">${reqlvltxt}</span>`;
-    }
-  }
-
-  const descStrings = PropertyListToDescString(mods, ws).map((v) =>
-    `<span class="stat">${v.replace(/%%/, "%")}</span>`
-  );
-
-  const excludedSpan = excludedItemTypes.length > 0
-    ? `<span class="ex-types">NOT ${excludedStr}</span>`
-    : "";
-  const includedSpan = `<span class="affix-types">${includedStr}</span>`;
-
-  return `
-    <div class="magic-affix">
-      <span class="affix-name">${affixName}</span>
-      ${includedSpan}
-      ${excludedSpan}
-      ${lvltxt}
-      ${reqlvltxt}
-      ${descStrings.join("\r\n        ")}
-    </div>
-  `;
-}
-
-export function DocMagic(ws: Workspace): string {
-  const { magicPrefix, magicSuffix, properties } = ws;
-
-  if (magicPrefix === undefined || magicSuffix === undefined) {
-    return '<h1 class="error">magicprefix.txt and/or magicsuffix.txt not found</h1>';
-  }
-
-  if (properties === undefined) {
-    return '<h1 class="error">properties.txt not found</h1>';
-  }
-
-  const documentedPrefixes: DocumentedMagicAffix[] = [];
-  const documentedSuffixes: DocumentedMagicAffix[] = [];
-
-  const props: [
-    keyof D2RMagicBase,
-    keyof D2RMagicBase,
-    keyof D2RMagicBase,
-    keyof D2RMagicBase,
-  ][] = [
-    ["mod1code", "mod1param", "mod1min", "mod1max"],
-    ["mod2code", "mod2param", "mod2min", "mod2max"],
-    ["mod3code", "mod3param", "mod3min", "mod3max"],
-  ];
-
-  magicPrefix.forEach((affix) => {
-    if (
-      affix.name === "" || affix.spawnable !== "1" ||
-      (affix.mod1code === "" && affix.mod2code === "" && affix.mod3code === "")
-    ) {
-      return;
-    }
-    documentedPrefixes.push({
-      affix,
-      mods: MakePropertyList(properties, affix, props),
-    });
-  });
-
-  magicSuffix.forEach((affix) => {
-    if (
-      affix.name === "" || affix.spawnable !== "1" ||
-      (affix.mod1code === "" && affix.mod2code === "" && affix.mod3code === "")
-    ) {
-      return;
-    }
-    documentedSuffixes.push({
-      affix,
-      mods: MakePropertyList(properties, affix, props),
-    });
-  });
-
-  return `
-    <h1>Magic Prefixes</h1>
-    ${documentedPrefixes.map((doc) => DocumentMagicAffix(doc, ws)).join("\r\n")}
-    <h1>Magic Suffixes</h1>
-    ${documentedSuffixes.map((doc) => DocumentMagicAffix(doc, ws)).join("\r\n")}
-  `;
-}
-
-type DocumentedItem = {
-  automagic: PropertyList;
-  item: D2RItemExcelRecord;
-  tmog: D2RItemExcelRecord | undefined;
-};
-
-function CreateDocumentedItems(
-  ws: Workspace,
-  items: D2RItemExcelRecord[],
-): DocumentedItem[] {
-  const documented: DocumentedItem[] = [];
-
-  const { armor, weapons, misc, properties, autoMagic, itemStatCost } = ws;
-  if (
-    armor === undefined || weapons === undefined || misc === undefined ||
-    properties === undefined || autoMagic === undefined ||
-    itemStatCost === undefined
-  ) {
-    return [];
-  }
-
-  const allItems = [...weapons, ...armor, ...misc];
-  const autoMagicProps: [
-    keyof D2RAutomagic,
-    keyof D2RAutomagic,
-    keyof D2RAutomagic,
-    keyof D2RAutomagic,
-  ][] = [
-    ["mod1code", "mod1param", "mod1min", "mod1max"],
-    ["mod2code", "mod2param", "mod2min", "mod2max"],
-    ["mod3code", "mod3param", "mod3min", "mod3max"],
-  ];
-
-  items.forEach((item) => {
-    if (item.code === "" || item.code === "xxx") {
-      return; // skip this item?
-    }
-
-    let tmog: D2RItemExcelRecord | undefined = undefined;
-    if (item.transmogrify === "1" && item.tmogtype !== "xxx") {
-      tmog = allItems.find((it) => it.code === item.tmogtype);
-    }
-
-    let candidateAutomagic: PropertyList = [];
-
-    const staffMods = GetStaffMods(ws, item);
-    if (staffMods !== "") {
-      candidateAutomagic.push({
-        stat: properties.find((p) => p.code === staffMods),
-        param: "__staff__",
-        min: 0,
-        max: 5,
-      });
-    }
-
-    if (item["auto prefix"] !== "") {
-      // get all automagic rows that match the auto prefix, make a propertylist out of them and merge
-      const matching = autoMagic.filter((am) =>
-        am.group === item["auto prefix"]
-      );
-      const propLists = matching.map((m) =>
-        MakePropertyList(properties, m, autoMagicProps)
-      );
-      candidateAutomagic = candidateAutomagic.concat(
-        MergePropertyLists(...propLists),
-      );
-    }
-
-    // Blunt items get a hardcoded +50% damage towards undead
-    if (ItemIsOfType(ws, item, "blun")) {
-      candidateAutomagic.push({
-        stat: properties.find((p) => p.code === "dmg-undead"),
-        param: "",
-        min: 50,
-        max: 50,
-      });
-    }
-
-    // automagic - range needs to be fixed
-    const automagic: PropertyList = [];
-    candidateAutomagic.forEach((am) => {
-      const { stat, param, min, max } = am;
-
-      if (automagic.length === 0) {
-        automagic.push(am); // first item always goes in
-        return;
-      }
-
-      if (stat === undefined) {
-        return; // bad stat?
-      }
-
-      const foundAm = properties.find((prop) => prop.code === stat.code);
-      if (foundAm === undefined) {
-        return;
-      }
-
-      // if ANY of the stats that are part of the prop are encoded, just bail
-      const statKeys: (keyof D2RProperties)[] = [
-        "stat1",
-        "stat2",
-        "stat3",
-        "stat4",
-        "stat5",
-        "stat6",
-        "stat7",
-      ];
-      if (
-        statKeys.some((sk) => {
-          const isc = itemStatCost.find((i) => i.stat === foundAm[sk]);
-          if (isc === undefined || isc.encode === "") {
-            return false;
-          }
-          return true;
-        })
-      ) {
-        // no questions asked, just push it
-        automagic.push(am);
-        return;
-      }
-
-      const foundIndex = automagic.findIndex((amx) =>
-        amx.param === param && amx.stat === stat
-      );
-      if (foundIndex !== -1) {
-        if (min < automagic[foundIndex].min) {
-          automagic[foundIndex].min = min;
-        }
-        if (max > automagic[foundIndex].max) {
-          automagic[foundIndex].max = max;
-        }
-      } else {
-        automagic.push(am);
-        return;
-      }
-    });
-
-    documented.push({
-      item,
-      tmog,
-      automagic,
-    });
-  });
-
-  return documented;
-}
-
-function DocumentItem(ws: Workspace, documented: DocumentedItem): string {
-  const { item, tmog, automagic } = documented;
-
-  let itemName = StringForIndex(ws, item.namestr as string, "enUS");
-  let _1handDmg = "";
-  let _2handDmg = "";
-  let throwDmg = "";
-  let reqlvl = "";
-  let lvl = "";
-  let durability = "";
-  let reqstr = "";
-  let reqdex = "";
-  let ac = "";
-  let block = "";
-  let tmogstr = "";
-
-  if (
-    item.mindam !== "" && item.mindam !== undefined && item.maxdam !== "" &&
-    item.maxdam !== undefined &&
-    (item["2handed"] !== "1" || item["1or2handed"] === "1")
-  ) {
-    // one handed damage
-    const mindam = Number.parseInt(item.mindam as string);
-    const maxdam = Number.parseInt(item.maxdam as string);
-
-    let index = "ItemStats1l";
-    if (IsSmiteDamageType(ws, item)) {
-      index = "ItemStats1o";
-    } else if (IsKickDamageType(ws, item)) {
-      index = "ModStre10k";
-    }
-
-    if (!Number.isNaN(mindam) && !Number.isNaN(maxdam) && maxdam > 0) {
-      _1handDmg = StringForIndex(ws, index, "enUS").replace(/%d/, `${mindam}`)
-        .replace(/%d/, `${maxdam}`);
-    }
-  }
-
-  if (
-    item["2handed"] === "1" && item["2handmindam"] !== "" &&
-    item["2handmindam"] !== undefined && item["2handmaxdam"] !== "" &&
-    item["2handmaxdam"] !== undefined
-  ) {
-    // two handed damage
-    const mindam = Number.parseInt(item["2handmindam"] as string);
-    const maxdam = Number.parseInt(item["2handmaxdam"] as string);
-
-    if (!Number.isNaN(mindam) && !Number.isNaN(maxdam)) {
-      _2handDmg = StringForIndex(ws, "ItemStats1m", "enUS").replace(
-        /%d/,
-        `${mindam}`,
-      ).replace(/%d/, `${maxdam}`);
-    }
-  }
-
-  if (
-    item.minmisdam !== "" && item.minmisdam !== undefined &&
-    item.maxmisdam !== "" && item.maxmisdam !== undefined
-  ) {
-    // throw damage
-    const mindam = Number.parseInt(item.minmisdam as string);
-    const maxdam = Number.parseInt(item.maxmisdam as string);
-
-    if (!Number.isNaN(mindam) && !Number.isNaN(maxdam)) {
-      throwDmg = StringForIndex(ws, "ItemStats1n", "enUS").replace(
-        /%d/,
-        `${mindam}`,
-      ).replace(/%d/, `${maxdam}`);
-    }
-  }
-
-  if (item.levelreq !== "" && item.levelreq !== undefined) {
-    // required level
-    const _reqlvl = Number.parseInt(item.levelreq as string);
-
-    if (!Number.isNaN(_reqlvl) && _reqlvl > 1) {
-      reqlvl = StringForIndex(ws, "ItemStats1p", "enUS").replace(
-        /%d/,
-        `${_reqlvl}`,
-      );
-    }
-  }
-
-  if (item.level !== "" && item.level !== undefined) {
-    // level
-    const _lvl = Number.parseInt(item.level as string);
-
-    if (!Number.isNaN(_lvl)) {
-      lvl = StringForIndex(ws, "strChatLevel", "enUS").replace(
-        /%\+?d/,
-        `${_lvl}`,
-      );
-    }
-  }
-
-  if (
-    item.nodurability !== "1" && item.durability !== "" &&
-    item.durability !== undefined
-  ) {
-    // durability
-    const _durability = Number.parseInt(item.durability as string);
-
-    if (!Number.isNaN(_durability)) {
-      durability = StringForIndex(ws, "ItemStats1d", "enUS").replace(
-        /%i.*/,
-        `${_durability}`,
-      );
-    }
-  }
-
-  if (item.reqstr !== "" && item.reqstr !== undefined) {
-    // required strength
-    const _reqstr = Number.parseInt(item.reqstr as string);
-
-    if (!Number.isNaN(_reqstr) && _reqstr > 0) {
-      reqstr = StringForIndex(ws, "ItemStats1e", "enUS").replace(
-        /%d/,
-        `${_reqstr}`,
-      );
-    }
-  }
-
-  if (item.reqdex !== "" && item.reqdex !== undefined) {
-    // required dexterity
-    const _reqdex = Number.parseInt(item.reqdex as string);
-
-    if (!Number.isNaN(_reqdex) && _reqdex > 0) {
-      reqdex = StringForIndex(ws, "ItemStats1f", "enUS").replace(
-        /%d/,
-        `${_reqdex}`,
-      );
-    }
-  }
-
-  if (
-    item.minac !== "" && item.minac !== undefined && item.maxac !== "" &&
-    item.maxac !== undefined
-  ) {
-    // defense
-    const _minac = Number.parseInt(item.minac as string);
-    const _maxac = Number.parseInt(item.maxac as string);
-
-    if (!Number.isNaN(_minac) && !Number.isNaN(_maxac) && _maxac > 0) {
-      ac = StringForIndex(ws, "ItemStats1h", "enUS").replace(
-        /%d/,
-        `[${_minac}-${_maxac}]`,
-      );
-    }
-  }
-
-  if (item.block !== "" && item.block !== undefined) {
-    // block chance
-    const _block = Number.parseInt(item.block as string);
-
-    if (!Number.isNaN(_block) && _block > 0) {
-      block = StringForIndex(ws, "ItemStats1r", "enUS").replace(
-        /%d/,
-        `${_block}`,
-      ).replace(/%%/, "%");
-    }
-  }
-
-  // transmogrify ?
-
-  // automagic stats
-  const descStrings = PropertyListToDescString(automagic, ws).map((v, i) => {
-    const base = v.replace(/%%/, "%");
-    if (automagic[0].param === "__staff__" && i === 0) {
-      return `<span class="stat"><abbr title="Random skills (staff mod)">${base}</abbr></span>`;
-    }
-    return `<span class="stat">${base}</span>`;
-  });
-
-  itemName = `<span class="item-name">${itemName}</span>`;
-  const makeHtmlInfo = (s: string) =>
-    s === "" ? "" : `<span class="item-info">${s}</span>`;
-  _1handDmg = makeHtmlInfo(_1handDmg);
-  _2handDmg = makeHtmlInfo(_2handDmg);
-  throwDmg = makeHtmlInfo(throwDmg);
-  reqlvl = makeHtmlInfo(reqlvl);
-  lvl = makeHtmlInfo(lvl);
-  durability = makeHtmlInfo(durability);
-  reqstr = makeHtmlInfo(reqstr);
-  reqdex = makeHtmlInfo(reqdex);
-  ac = makeHtmlInfo(ac);
-  block = makeHtmlInfo(block);
-
-  return `<div class="base-item">
-        ${itemName}
-        ${lvl}
-        ${ac}
-        ${block}
-        ${_1handDmg}
-        ${_2handDmg}
-        ${throwDmg}
-        ${durability}
-        ${reqlvl}
-        ${reqstr}
-        ${reqdex}
-        <div class="automagic">
-          ${descStrings.join("\r\n")}
-        </div>
-      </div>
-  `;
-}
-
-export function DocArmor(ws: Workspace): string {
-  const { armor } = ws;
-
-  if (armor === undefined) {
-    return '<h1 class="error">armor.txt not found</h1>';
-  }
-
-  const documented = CreateDocumentedItems(ws, armor);
-  return documented.map((doc) => DocumentItem(ws, doc)).join("\r\n");
-}
-
-type DocumentedWeapon = {};
-
-export function DocWeapons(ws: Workspace): string {
-  const { weapons } = ws;
-
-  if (weapons === undefined) {
-    return '<h1 class="error">weapons.txt not found</h1>';
-  }
-
-  const documented = CreateDocumentedItems(ws, weapons);
-  return documented.map((doc) => DocumentItem(ws, doc)).join("\r\n");
-}
-
-type DocumentedMiscItem = {};
-
-export function DocMisc(ws: Workspace): string {
-  const { misc } = ws;
-
-  if (misc === undefined) {
-    return '<h1 class="error">misc.txt not found</h1>';
-  }
-
-  const documented = CreateDocumentedItems(ws, misc);
-  return documented.map((doc) => DocumentItem(ws, doc)).join("\r\n");
-}
-
-type DocumentedGem = {
-  helmMods: PropertyList;
-  weaponMods: PropertyList;
-  shieldMods: PropertyList;
-  gem: D2RGems;
-};
-
-const gemWeaponProps: [
-  keyof D2RGems,
-  keyof D2RGems,
-  keyof D2RGems,
-  keyof D2RGems,
-][] = [
-  ["weaponmod1code", "weaponmod1param", "weaponmod1min", "weaponmod1max"],
-  ["weaponmod2code", "weaponmod2param", "weaponmod2min", "weaponmod2max"],
-  ["weaponmod3code", "weaponmod3param", "weaponmod3min", "weaponmod3max"],
-];
-
-const gemHelmProps: [
-  keyof D2RGems,
-  keyof D2RGems,
-  keyof D2RGems,
-  keyof D2RGems,
-][] = [
-  ["helmmod1code", "helmmod1param", "helmmod1min", "helmmod1max"],
-  ["helmmod2code", "helmmod2param", "helmmod2min", "helmmod2max"],
-  ["helmmod3code", "helmmod3param", "helmmod3min", "helmmod3max"],
-];
-
-const gemShieldProps: [
-  keyof D2RGems,
-  keyof D2RGems,
-  keyof D2RGems,
-  keyof D2RGems,
-][] = [
-  ["shieldmod1code", "shieldmod1param", "shieldmod1min", "shieldmod1max"],
-  ["shieldmod2code", "shieldmod2param", "shieldmod2min", "shieldmod2max"],
-  ["shieldmod3code", "shieldmod3param", "shieldmod3min", "shieldmod3max"],
-];
-
-const gemApplyTypeStrLookup: string[] = [
-  "GemXp3",
-  "GemXp4",
-  "GemXp2",
-  "GemXp1",
-];
-
-const gemProps = [gemWeaponProps, gemHelmProps, gemShieldProps];
-
-function DocumentGem(theGem: DocumentedGem, ws: Workspace): string {
-  const { gem, helmMods, weaponMods, shieldMods } = theGem;
-  const { armor, misc, weapons } = ws;
-
-  if (armor === undefined || misc === undefined || weapons === undefined) {
-    return "";
-  }
-
-  const item = [...armor, ...misc, ...weapons].find((it) =>
-    it.code === gem.code
-  );
-  if (item === undefined) {
-    return "";
-  }
-
-  const gemName = StringForIndex(ws, item.namestr as string, "enUS");
-  const requiredLevel = Number.parseInt(item.levelreq as string);
-
-  let reqlvltxt = "";
-  if (!Number.isNaN(requiredLevel) && requiredLevel > 1) {
-    reqlvltxt = StringForIndex(ws, "ItemStats1p", "enUS").replace(
-      /%\+?d/,
-      `${requiredLevel}`,
-    );
-    reqlvltxt = `<span class="required-level">${reqlvltxt}</span>`;
-  }
-
-  const mods = [weaponMods, helmMods, shieldMods, helmMods];
-  const subsections = mods.map((gm, i) => {
-    const header = `<span class="gem-type-header">${
-      StringForIndex(ws, gemApplyTypeStrLookup[i], "enUS")
-    }</span>`;
-    const mods = PropertyListToDescString(gm, ws).map((v) =>
-      `<span class="stat">${v.replace(/%%/, "%")}</span>`
-    ).join(", ");
-
-    return `<div class="gem-statlist">
-        ${header}
-        ${mods}
-        </div>`;
-  });
-
-  return `
-      <div class="gem">
-        <span class="gem-name">${gemName}</span>
-        ${reqlvltxt}
-        ${subsections.join("\r\n")}
-      </div>
-  `;
-}
-
-export function DocGems(ws: Workspace): string {
-  const { gems, misc, properties } = ws;
-
-  if (gems === undefined || misc === undefined) {
-    return '<h1 class="error">gems.txt and/or misc.txt not found</h1>';
-  }
-
-  if (properties === undefined) {
-    return '<h1 class="error">properties.txt not found</h1>';
-  }
-
-  const documented: DocumentedGem[] = [];
-  gems.forEach((gem) => {
-    if (gem.code === "") {
-      return;
-    }
-
-    documented.push({
-      gem,
-      weaponMods: MakePropertyList(properties, gem, gemWeaponProps),
-      helmMods: MakePropertyList(properties, gem, gemHelmProps),
-      shieldMods: MakePropertyList(properties, gem, gemShieldProps),
-    });
-  });
-
-  return documented.map((doc) => DocumentGem(doc, ws)).join("\r\n");
-}
-
-type DocumentedRuneword = {
-  wordMods: PropertyList;
-  letters: string[];
-  gemMods: {
-    gemApplyType: number;
-    mods: PropertyList;
-  }[];
-  runes: D2RRunes;
-  includedItemTypes: D2RItemTypes[];
-  excludedItemTypes: D2RItemTypes[];
-};
-
-function DocumentRuneword(runeword: DocumentedRuneword, ws: Workspace): string {
-  const {
-    wordMods,
-    gemMods,
-    runes,
-    includedItemTypes,
-    excludedItemTypes,
-    letters,
-  } = runeword;
-
-  const rwName = StringForIndex(ws, runes.name as string, "enUS");
-  const includedTypes = GetItemTypeNames(includedItemTypes);
-  const excludedTypes = GetItemTypeNames(excludedItemTypes);
-
-  const runeFields: (keyof D2RRunes)[] = [
-    "rune1",
-    "rune2",
-    "rune3",
-    "rune4",
-    "rune5",
-    "rune6",
-  ];
-
-  const runeItems = GetItemsWithCode(
-    ws,
-    ...runeFields.map((rf) => runes[rf] as string),
-  );
-  const requiredLevel = GetMaxRequiredLevelOfItems(runeItems);
-
-  const subsections = gemMods.map((gm) => {
-    const header = gemMods.length > 1
-      ? `<span class="rw-type-header">${
-        StringForIndex(ws, gemApplyTypeStrLookup[gm.gemApplyType], "enUS")
-      }</span>`
-      : "";
-    const mods = PropertyListToDescString([...wordMods, ...gm.mods], ws).map((
-      v,
-    ) => `
-          <span class="stat">${v.replace(/%%/, "%")}</span>`).join("");
-
-    return `<div class="rw-stat-list">
-        ${header}
-        ${mods}
-        </div>`;
-  }).join("\r\n");
-
-  const formula = letters.map((l) => StringForIndex(ws, l, "enUS")).join(" + ");
-  const excludedSpan = excludedItemTypes.length > 0
-    ? `<span class="ex-types">NOT ${excludedTypes}</span>`
-    : "";
-
-  let reqlvltxt = StringForIndex(ws, "ItemStats1p", "enUS").replace(
-    /%\+?d/,
-    `${requiredLevel}`,
-  );
-  reqlvltxt = `<span class="required-level">${reqlvltxt}</span>`;
-
-  return `
-      <div class="runeword">
-        <span class="runeword-name">${rwName}</span>
-        <span class="runeword-formula">${formula}</span>
-        <span class="runeword-types">${includedTypes}</span>
-        ${excludedSpan}
-        ${reqlvltxt}
-        ${subsections}
-      </div>
-  `;
-}
-
-export function DocRunewords(ws: Workspace): string {
-  const { runes, misc, gems, properties } = ws;
-
-  if (runes === undefined || misc === undefined) {
-    return '<h1 class="error">runes.txt and/or misc.txt not found</h1>';
-  }
-
-  if (properties === undefined) {
-    return '<h1 class="error">properties.txt not found</h1>';
-  }
-
-  if (gems === undefined) {
-    return '<h1 class="error">gems.txt not found</h1>';
-  }
-
-  const documented: DocumentedRuneword[] = [];
-  const rwProps: [
-    keyof D2RRunes,
-    keyof D2RRunes,
-    keyof D2RRunes,
-    keyof D2RRunes,
-  ][] = [
-    ["t1code1", "t1param1", "t1min1", "t1max1"],
-    ["t1code2", "t1param2", "t1min2", "t1max2"],
-    ["t1code3", "t1param3", "t1min3", "t1max3"],
-    ["t1code4", "t1param4", "t1min4", "t1max4"],
-    ["t1code5", "t1param5", "t1min5", "t1max5"],
-    ["t1code6", "t1param6", "t1min6", "t1max6"],
-    ["t1code7", "t1param7", "t1min7", "t1max7"],
-  ];
-
-  const rwInclude: (keyof D2RRunes)[] = [
-    "itype1",
-    "itype2",
-    "itype3",
-    "itype4",
-    "itype5",
-    "itype6",
-  ];
-  const rwExclude: (keyof D2RRunes)[] = ["etype1", "etype2", "etype3"];
-
-  const runeFields: (keyof D2RRunes)[] = [
-    "rune1",
-    "rune2",
-    "rune3",
-    "rune4",
-    "rune5",
-    "rune6",
-  ];
-
-  runes.forEach((rw) => {
-    if (rw.complete !== "1") {
-      return; // skip any incomplete runewords
-    }
-
-    const wordMods = MakePropertyList(properties, rw, rwProps);
-    const gemItems = runeFields.filter((rf) => rw[rf] !== "").map((rf) =>
-      misc.find((m) => m.code === rw[rf])
-    ).filter((m) => m !== undefined).map((m) =>
-      gems.find((g) => g.code === m?.code)
-    ).filter((g) => g !== undefined) as D2RGems[];
-
-    // So there's a bit of complexity here.
-    // We must first find all items that the runeword can modify.
-    const includedItemTypes = GetItemTypes(
-      ws,
-      ...(rwInclude.map((ri) => rw[ri]) as string[]),
-    );
-    const excludedItemTypes = GetItemTypes(
-      ws,
-      ...(rwExclude.map((re) => rw[re]) as string[]),
-    );
-
-    const gemmableItems = GetItemsWithTypes(
-      ws,
-      includedItemTypes,
-      excludedItemTypes,
-    );
-
-    // Next, we need to get all of the GemApplyTypes that are covered by this runeword
-    const gemApplyTypes = gemmableItems.map((gi) => gi.gemapplytype).filter((
-      v,
-      i,
-      a,
-    ) => a.indexOf(v) === i).map((gat) => Number.parseInt(gat as string));
-
-    const gemMods = gemApplyTypes.map((gemApplyType) => {
-      return {
-        gemApplyType,
-        mods: gemItems.flatMap((gi) =>
-          MakePropertyList(properties, gi, gemProps[gemApplyType])
-        ),
-      };
-    });
-
-    documented.push({
-      wordMods,
-      gemMods,
-      letters: gemItems.map((gi) => gi.letter as string),
-      runes: rw,
-      includedItemTypes,
-      excludedItemTypes,
-    });
-  });
-
-  return documented.map((doc) => DocumentRuneword(doc, ws)).join("\r\n");
 }

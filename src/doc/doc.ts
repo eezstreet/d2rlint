@@ -1,14 +1,10 @@
 import { Workspace } from "../lib/workspace.ts";
-import {
-  DocArmor,
-  DocGems,
-  DocMagic,
-  DocMisc,
-  DocRunewords,
-  DocSets,
-  DocUniques,
-  DocWeapons,
-} from "./items.ts";
+import { DocArmor, DocMisc, DocWeapons } from "./items/base.ts";
+import { DocGems } from "./items/gems.ts";
+import { DocMagic } from "./items/magic.ts";
+import { DocRunewords } from "./items/runeword.ts";
+import { DocSets } from "./items/set.ts";
+import { DocUniques } from "./items/unique.ts";
 import DocMain from "./main.ts";
 import { GenerateHtml } from "./template.ts";
 

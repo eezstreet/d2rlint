@@ -1,3 +1,4 @@
+import { GetConfig } from "../lib/config.ts";
 import {
   D2RCharStats,
   D2RItemExcelRecord,
@@ -7,22 +8,31 @@ import {
 } from "../lib/workspace.ts";
 
 /**
+ * Cached results for StringForIndex so we don't hit stuff over and over again
+ */
+const StringCache: {
+  [key: string]: string;
+} = {};
+
+/**
  * Finds a string (for a language)
  * @param ws - the workspace to look in
  * @param index - the lookup for the string
- * @param lang - the language to use
  * @returns {string} if the string was found
  * @returns {undefined} if the string was not found
  */
-export function StringForIndex(
-  ws: Workspace,
-  index: string,
-  lang: Omit<keyof D2RStringTable, "id" | "Key">,
-): string {
+export function StringForIndex(ws: Workspace, index: string): string {
   const { strings } = ws;
   if (strings === undefined) {
     return "<string jsons not found>";
   }
+
+  if (StringCache[index] !== undefined) {
+    return StringCache[index];
+  }
+
+  const config = GetConfig();
+  const lang = config.docOptions.language;
 
   const keys = Object.keys(strings);
   let result: string | undefined = undefined;
@@ -48,8 +58,10 @@ export function StringForIndex(
   });
 
   if (result !== undefined) {
+    StringCache[index] = result;
     return result;
   }
+  StringCache[index] = `<${index}>`;
   return `<${index}>`;
 }
 
@@ -60,11 +72,7 @@ export function StringForIndex(
  * @param lang - the language
  * @returns {string} - the name of the skill
  */
-export function SkillName(
-  ws: Workspace,
-  skill: string,
-  lang: Omit<keyof D2RStringTable, "id" | "Key">,
-): string {
+export function SkillName(ws: Workspace, skill: string): string {
   const { skills, skillDesc } = ws;
   if (skills === undefined || skillDesc === undefined) {
     return `<bad skills.txt or skillDesc.txt>`;
@@ -90,7 +98,7 @@ export function SkillName(
     return `<'${skill}'>`;
   }
 
-  return StringForIndex(ws, theSkillDesc["str name"] as string, lang);
+  return StringForIndex(ws, theSkillDesc["str name"] as string);
 }
 
 /**
@@ -100,11 +108,7 @@ export function SkillName(
  * @param lang - the language
  * @returns {string}
  */
-export function SkillClassOnly(
-  ws: Workspace,
-  skill: string,
-  lang: Omit<keyof D2RStringTable, "id" | "Key">,
-): string {
+export function SkillClassOnly(ws: Workspace, skill: string): string {
   const { skills, charStats, playerClass } = ws;
   if (
     skills === undefined || charStats === undefined || playerClass === undefined
@@ -142,7 +146,7 @@ export function SkillClassOnly(
     return `<${theClass["player class"]} only>`;
   }
 
-  return StringForIndex(ws, theCharStats.strclassonly as string, lang);
+  return StringForIndex(ws, theCharStats.strclassonly as string);
 }
 
 /**
@@ -152,11 +156,7 @@ export function SkillClassOnly(
  * @param lang - the language
  * @returns {string}
  */
-export function MonsterNameIdx(
-  ws: Workspace,
-  monster: number,
-  lang: Omit<keyof D2RStringTable, "id" | "Key">,
-): string {
+export function MonsterNameIdx(ws: Workspace, monster: number): string {
   const { monStats } = ws;
   if (monStats === undefined) {
     return `<bad monstats.txt>`;
@@ -167,7 +167,7 @@ export function MonsterNameIdx(
   }
 
   const theMonster = monStats[monster];
-  return StringForIndex(ws, theMonster.namestr as string, lang);
+  return StringForIndex(ws, theMonster.namestr as string);
 }
 
 /**
@@ -177,11 +177,7 @@ export function MonsterNameIdx(
  * @param lang - the language
  * @returns {string}
  */
-export function MonsterTypeName(
-  ws: Workspace,
-  monsterType: string,
-  lang: Omit<keyof D2RStringTable, "id" | "Key">,
-): string {
+export function MonsterTypeName(ws: Workspace, monsterType: string): string {
   const { monType } = ws;
   if (monType === undefined) {
     return `<bad montype.txt>`;
@@ -192,7 +188,7 @@ export function MonsterTypeName(
     return `<${monsterType}>`;
   }
 
-  return StringForIndex(ws, record.strplur as string, lang);
+  return StringForIndex(ws, record.strplur as string);
 }
 
 /**
@@ -202,11 +198,7 @@ export function MonsterTypeName(
  * @param lang - the language to use
  * @returns {string}
  */
-export function SkillTabName(
-  ws: Workspace,
-  tab: number,
-  lang: Omit<keyof D2RStringTable, "id" | "Key">,
-): string {
+export function SkillTabName(ws: Workspace, tab: number): string {
   // the way the skill tab function works is a wonky mess, and poorly documented
   // but basically, you need to walk all entries in charStats.txt until you find the right string id
   const { charStats } = ws;
@@ -233,7 +225,7 @@ export function SkillTabName(
     tab -= 3;
   } while (tab > 0);
 
-  return StringForIndex(ws, str, lang);
+  return StringForIndex(ws, str);
 }
 
 /**
@@ -273,11 +265,7 @@ export function GetMaxExperienceLevel(ws: Workspace): number {
  * @param lang - the language to use
  * @returns {string} a formatter string (%s)
  */
-export function GetItemDaylightFormatter(
-  ws: Workspace,
-  param: number,
-  lang: Omit<keyof D2RStringTable, "id" | "Key">,
-): string {
+export function GetItemDaylightFormatter(ws: Workspace, param: number): string {
   const options = [
     "ModStre9e", // increases during daytime
     "ModStre9g", // increases near dusk
@@ -285,7 +273,7 @@ export function GetItemDaylightFormatter(
     "ModStre9f", // increases near dawn
   ];
 
-  return StringForIndex(ws, options[param], lang);
+  return StringForIndex(ws, options[param]);
 }
 
 /**
@@ -298,7 +286,6 @@ export function GetItemDaylightFormatter(
 export function GetClassSkillString(
   ws: Workspace,
   param: number,
-  lang: Omit<keyof D2RStringTable, "id" | "Key">,
 ): string {
   const { charStats } = ws;
 
@@ -318,7 +305,7 @@ export function GetClassSkillString(
     param--;
   } while (param >= 0);
 
-  return StringForIndex(ws, str, lang);
+  return StringForIndex(ws, str);
 }
 
 /**
