@@ -59,9 +59,7 @@ function DocumentSet(ws: Workspace, theSet: DocumentedSet): string {
     }
 
     const str = PropertyListToDescString(propList, ws).map((v) =>
-      `<span class="partial-set-bonus">${
-        v.replace(/%%/, "%")
-      } <span class="bonus-designator">${
+      `<span class="partial-set-bonus">${v} <span class="bonus-designator">${
         config.docOptions.localizedStrings.other.setNItems.replace(
           /%d/,
           `${num}`,
@@ -75,7 +73,7 @@ function DocumentSet(ws: Workspace, theSet: DocumentedSet): string {
   });
 
   const fullSetDescStr = PropertyListToDescString(fullSetBonus, ws).map((v) =>
-    `<span class="full-set-bonus">${v.replace(/%%/, "%")}</span>`
+    `<span class="full-set-bonus">${v}</span>`
   ).join("\r\n");
 
   return `<div class="set" id="${set.index}">

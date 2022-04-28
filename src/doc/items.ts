@@ -14,6 +14,7 @@ import {
   SkillName,
   SkillTabName,
   StringForIndex,
+  StringForIndexFormatted,
 } from "./lib.ts";
 
 // A property list is a list of item properties
@@ -260,19 +261,15 @@ export function PropertyListToDescString(
           repairSpeed > 100 ? repairSpeed / 100 : 100 / repairSpeed,
         );
         if (repairSpeed > 100) {
-          return StringForIndex(ws, "ModStre9t").replace(
-            /%\+?d/,
-            `${replacement}`,
-          );
+          return StringForIndexFormatted(ws, "ModStre9t", replacement);
         }
-        return StringForIndex(ws, "ModStre9u").replace(/%\+?d/, "1")
-          .replace(/%\+?d/, `${replacement}`);
+        return StringForIndexFormatted(ws, "ModStre9u", 1, replacement);
       }
       case 12: // basic
         if (min < 0 && max < 0) {
-          return StringForIndex(ws, strneg);
+          return StringForIndexFormatted(ws, strneg);
         }
-        return StringForIndex(ws, strpos);
+        return StringForIndexFormatted(ws, strpos);
       case 13: // + to character class skills
         return GetClassSkillString(ws, propval).replace(/%\+?d/, val);
       case 14: // skill tab. complex logic aplenty
@@ -281,53 +278,56 @@ export function PropertyListToDescString(
           val,
         );
       case 15: // CtC.
-        return StringForIndex(ws, strpos).replace(/%\+?d/, `${min}`)
-          .replace(/%\+?d/, `${max}`).replace(
-            /%s/,
-            SkillName(ws, param),
-          );
+        return StringForIndexFormatted(ws, strpos, min, max).replace(
+          /%s/,
+          SkillName(ws, param),
+        );
       case 17: // increases by time
       case 18: // not used in vanilla game because it's bugged
         if (min < 0 && max < 0) {
           return GetItemDaylightFormatter(ws, Number.parseInt(param))
             .replace(
               /%s/,
-              StringForIndex(ws, strneg).replace(/%\+?d/, val),
+              StringForIndexFormatted(ws, strneg, val),
             );
         }
         return GetItemDaylightFormatter(ws, Number.parseInt(param))
           .replace(
             /%s/,
-            StringForIndex(ws, strpos).replace(/%\+?d/, val),
+            StringForIndexFormatted(ws, strpos, val),
           );
       case 5: // functionally identical
       case 19: // basic
         if (min < 0 && max < 0) {
-          return `${StringForIndex(ws, strneg).replace(/%\+?d/, val)} ${
-            descstr2 !== "" ? StringForIndex(ws, descstr2) : ""
+          return `${StringForIndexFormatted(ws, strneg, val)} ${
+            descstr2 !== "" ? StringForIndexFormatted(ws, descstr2) : ""
           }`;
         }
-        return `${StringForIndex(ws, strpos).replace(/%\+?d/, val)} ${
-          descstr2 !== "" ? StringForIndex(ws, descstr2) : ""
+        return `${StringForIndexFormatted(ws, strpos, val)} ${
+          descstr2 !== "" ? StringForIndexFormatted(ws, descstr2) : ""
         }`;
       case 22: // attack/damage vs arbitrary monster type, unused in vanilla
         if (min < 0 && max < 0) {
-          return `${StringForIndex(ws, strneg).replace(/%\+?d/, val)} ${
+          return `${StringForIndexFormatted(ws, strneg, val)} ${
             MonsterTypeName(ws, param)
           }`;
         }
-        return `${StringForIndex(ws, strpos).replace(/%\+?d/, val)} ${
+        return `${StringForIndexFormatted(ws, strpos, val)} ${
           MonsterTypeName(ws, param)
         }`;
       case 23: // reanimate as, %0 = val, %1 = param (monstats idx)
         if (min < 0 && max < 0) {
-          return StringForIndex(ws, strneg).replace(/%0/, val).replace(
-            /%1/,
+          return StringForIndexFormatted(
+            ws,
+            strneg,
+            val,
             MonsterNameIdx(ws, Number.parseInt(param)),
           );
         }
-        return StringForIndex(ws, strpos).replace(/%0/, val).replace(
-          /%1/,
+        return StringForIndexFormatted(
+          ws,
+          strpos,
+          val,
           MonsterNameIdx(ws, Number.parseInt(param)),
         );
       case 24: // charges
@@ -340,13 +340,13 @@ export function PropertyListToDescString(
         );
       case 27: // single tab skill
         if (min < 0 && max < 0) {
-          return StringForIndex(ws, strneg).replace(/%\+?d/g, val)
+          return StringForIndexFormatted(ws, strneg, val)
             .replace(/%s/, SkillName(ws, param)).replace(
               /%s/,
               SkillClassOnly(ws, param),
             );
         }
-        return StringForIndex(ws, strpos).replace(/%\+?d/g, val)
+        return StringForIndexFormatted(ws, strpos, val)
           .replace(/%s/, SkillName(ws, param)).replace(
             /%s/,
             SkillClassOnly(ws, param),
@@ -354,10 +354,10 @@ export function PropertyListToDescString(
       case 16: // aura (functionally identical)
       case 28: // oskill
         if (min < 0 && max < 0) {
-          return StringForIndex(ws, strneg).replace(/%\+?d/g, val)
+          return StringForIndexFormatted(ws, strneg, val)
             .replace(/%s/g, SkillName(ws, param));
         }
-        return StringForIndex(ws, strpos).replace(/%\+?d/g, val)
+        return StringForIndexFormatted(ws, strpos, val)
           .replace(/%s/g, SkillName(ws, param));
       default: // default case not handled
         if (statName === "maxdurability") {
@@ -369,10 +369,7 @@ export function PropertyListToDescString(
             : min !== max
             ? `${min}-${max}`
             : `${min}`;
-          return StringForIndex(ws, "Socketable").replace(
-            /%i/,
-            sockStr,
-          );
+          return StringForIndexFormatted(ws, "Socketable", sockStr);
         }
         if (statName === "item_extrablood") {
           // Swordback Hold and Gorefoot have a hidden property that makes enemies 'Extra Bloody' that isn't documented properly ingame.
@@ -405,10 +402,7 @@ export function PropertyListToDescString(
       // dmg%
       const valStr = min === max ? `${min}` : `[${min}-${max}]`;
       statLines.push({
-        line: StringForIndex(ws, "strModEnhancedDamage").replace(
-          /%\+?d/,
-          valStr,
-        ),
+        line: StringForIndexFormatted(ws, "strModEnhancedDamage", valStr),
         priority: 1000,
       });
       return;
@@ -421,7 +415,7 @@ export function PropertyListToDescString(
     if (stat === "ethereal") {
       // is ethereal. push ethereal string to end
       statLines.push({
-        line: StringForIndex(ws, "strethereal"),
+        line: StringForIndexFormatted(ws, "strethereal"),
         priority: -1,
       });
       return;
@@ -552,14 +546,8 @@ export function PropertyListToDescString(
       }
 
       const line = minStr === maxStr
-        ? StringForIndex(ws, strSame).replace(/%\+?d/, minStr).replace(
-          /%\+?d/,
-          `${len}`,
-        )
-        : StringForIndex(ws, str).replace(/%\+?d/, minStr).replace(
-          /%\+?d/,
-          maxStr,
-        ).replace(/%\+?d/, `${len}`);
+        ? StringForIndexFormatted(ws, strSame, minStr, len)
+        : StringForIndexFormatted(ws, str, minStr, maxStr, len);
 
       statLines.push({
         line,

@@ -68,7 +68,7 @@ function DocumentMagicAffix(doc: DocumentedMagicAffix, ws: Workspace): string {
   }
 
   const descStrings = PropertyListToDescString(mods, ws).map((v) =>
-    `<span class="stat">${v.replace(/%%/, "%")}</span>`
+    `<span class="stat">${v}</span>`
   );
 
   const excludedSpan = excludedItemTypes.length > 0

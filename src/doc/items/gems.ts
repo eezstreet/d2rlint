@@ -88,7 +88,7 @@ function DocumentGem(theGem: DocumentedGem, ws: Workspace): string {
       StringForIndex(ws, gemApplyTypeStrLookup[i])
     }</span>`;
     const mods = PropertyListToDescString(gm, ws).map((v) =>
-      `<span class="stat">${v.replace(/%%/, "%")}</span>`
+      `<span class="stat">${v}</span>`
     ).join(", ");
 
     return `<div class="gem-statlist">

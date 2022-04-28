@@ -66,6 +66,36 @@ export function StringForIndex(ws: Workspace, index: string): string {
 }
 
 /**
+ * Like StringForIndex, but replaces some elements of the string.
+ * @param ws - the workspace we are working with
+ * @param index - the string index to pull
+ * @param args - the arguments to insert
+ * @returns {string} - the formatted string
+ */
+export function StringForIndexFormatted(
+  ws: Workspace,
+  index: string,
+  ...args: unknown[]
+): string {
+  let base = StringForIndex(ws, index);
+  args.forEach((arg, i) => {
+    const regex = new RegExp(`%(\\+?)[d${i}i]`);
+    base = base.replace(regex, (_, plus) => {
+      if (plus === "+") {
+        const argAsStr = `${arg}`;
+        if (argAsStr.startsWith("-")) {
+          return argAsStr;
+        }
+        return `+${arg}`;
+      }
+      return `${arg}`;
+    });
+  });
+  base = base.replace(/%%/, "%"); // replace any %% with %
+  return base;
+}
+
+/**
  * Gets the name of a skill (from skills.txt, using its desc name)
  * @param ws - the workspace to use
  * @param skill - the skill to use

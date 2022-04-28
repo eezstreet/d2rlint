@@ -28,7 +28,7 @@ function DocumentUniqueItem(item: DocumentedUniqueItem, ws: Workspace): string {
   const { base, mods, unique, baseType } = item;
 
   const descStrings = PropertyListToDescString(mods, ws).map((v) =>
-    `<span class="stat">${v.replace(/%%/, "%")}</span>`
+    `<span class="stat">${v}</span>`
   );
   const uniqueName = StringForIndex(ws, unique.index as string);
   const uniqueItem = base === undefined

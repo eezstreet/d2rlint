@@ -69,7 +69,7 @@ function DocumentRuneword(runeword: DocumentedRuneword, ws: Workspace): string {
     const mods = PropertyListToDescString([...wordMods, ...gm.mods], ws).map((
       v,
     ) => `
-          <span class="stat">${v.replace(/%%/, "%")}</span>`).join("");
+          <span class="stat">${v}</span>`).join("");
 
     return `<div class="rw-stat-list">
         ${header}

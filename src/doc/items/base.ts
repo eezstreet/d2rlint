@@ -16,6 +16,7 @@ import {
   IsSmiteDamageType,
   ItemIsOfType,
   StringForIndex,
+  StringForIndexFormatted,
 } from "../lib.ts";
 
 type DocumentedItem = {
@@ -198,8 +199,7 @@ function DocumentItem(ws: Workspace, documented: DocumentedItem): string {
     }
 
     if (!Number.isNaN(mindam) && !Number.isNaN(maxdam) && maxdam > 0) {
-      _1handDmg = StringForIndex(ws, index).replace(/%d/, `${mindam}`)
-        .replace(/%d/, `${maxdam}`);
+      _1handDmg = StringForIndexFormatted(ws, index, mindam, maxdam);
     }
   }
 
@@ -213,10 +213,7 @@ function DocumentItem(ws: Workspace, documented: DocumentedItem): string {
     const maxdam = Number.parseInt(item["2handmaxdam"] as string);
 
     if (!Number.isNaN(mindam) && !Number.isNaN(maxdam)) {
-      _2handDmg = StringForIndex(ws, "ItemStats1m").replace(
-        /%d/,
-        `${mindam}`,
-      ).replace(/%d/, `${maxdam}`);
+      _2handDmg = StringForIndexFormatted(ws, "ItemStats1m", mindam, maxdam);
     }
   }
 
@@ -229,10 +226,7 @@ function DocumentItem(ws: Workspace, documented: DocumentedItem): string {
     const maxdam = Number.parseInt(item.maxmisdam as string);
 
     if (!Number.isNaN(mindam) && !Number.isNaN(maxdam)) {
-      throwDmg = StringForIndex(ws, "ItemStats1n").replace(
-        /%d/,
-        `${mindam}`,
-      ).replace(/%d/, `${maxdam}`);
+      throwDmg = StringForIndexFormatted(ws, "ItemStats1n", mindam, maxdam);
     }
   }
 
@@ -241,10 +235,7 @@ function DocumentItem(ws: Workspace, documented: DocumentedItem): string {
     const _reqlvl = Number.parseInt(item.levelreq as string);
 
     if (!Number.isNaN(_reqlvl) && _reqlvl > 1) {
-      reqlvl = StringForIndex(ws, "ItemStats1p").replace(
-        /%d/,
-        `${_reqlvl}`,
-      );
+      reqlvl = StringForIndexFormatted(ws, "ItemStats1p", _reqlvl);
     }
   }
 
@@ -253,10 +244,7 @@ function DocumentItem(ws: Workspace, documented: DocumentedItem): string {
     const _lvl = Number.parseInt(item.level as string);
 
     if (!Number.isNaN(_lvl)) {
-      lvl = StringForIndex(ws, "strChatLevel").replace(
-        /%\+?d/,
-        `${_lvl}`,
-      );
+      lvl = StringForIndexFormatted(ws, "strChatLevel", _lvl);
     }
   }
 
@@ -280,10 +268,7 @@ function DocumentItem(ws: Workspace, documented: DocumentedItem): string {
     const _reqstr = Number.parseInt(item.reqstr as string);
 
     if (!Number.isNaN(_reqstr) && _reqstr > 0) {
-      reqstr = StringForIndex(ws, "ItemStats1e").replace(
-        /%d/,
-        `${_reqstr}`,
-      );
+      reqstr = StringForIndexFormatted(ws, "ItemStats1e", _reqstr);
     }
   }
 
@@ -292,10 +277,7 @@ function DocumentItem(ws: Workspace, documented: DocumentedItem): string {
     const _reqdex = Number.parseInt(item.reqdex as string);
 
     if (!Number.isNaN(_reqdex) && _reqdex > 0) {
-      reqdex = StringForIndex(ws, "ItemStats1f").replace(
-        /%d/,
-        `${_reqdex}`,
-      );
+      reqdex = StringForIndexFormatted(ws, "ItemStats1f", _reqdex);
     }
   }
 
@@ -308,9 +290,10 @@ function DocumentItem(ws: Workspace, documented: DocumentedItem): string {
     const _maxac = Number.parseInt(item.maxac as string);
 
     if (!Number.isNaN(_minac) && !Number.isNaN(_maxac) && _maxac > 0) {
-      ac = StringForIndex(ws, "ItemStats1h").replace(
-        /%d/,
-        `[${_minac}-${_maxac}]`,
+      ac = StringForIndexFormatted(
+        ws,
+        "ItemStats1h",
+        _minac === _maxac ? _minac : `[${_minac}-${_maxac}]`,
       );
     }
   }
@@ -320,10 +303,7 @@ function DocumentItem(ws: Workspace, documented: DocumentedItem): string {
     const _block = Number.parseInt(item.block as string);
 
     if (!Number.isNaN(_block) && _block > 0) {
-      block = StringForIndex(ws, "ItemStats1r").replace(
-        /%d/,
-        `${_block}`,
-      ).replace(/%%/, "%");
+      block = StringForIndexFormatted(ws, "ItemStats1r", _block);
     }
   }
 
@@ -331,11 +311,10 @@ function DocumentItem(ws: Workspace, documented: DocumentedItem): string {
 
   // automagic stats
   const descStrings = PropertyListToDescString(automagic, ws).map((v, i) => {
-    const base = v.replace(/%%/, "%");
     if (automagic[0].param === "__staff__" && i === 0) {
-      return `<span class="stat"><abbr title="Random skills (staff mod)">${base}</abbr></span>`;
+      return `<span class="stat"><abbr title="Random skills (staff mod)">${v}</abbr></span>`;
     }
-    return `<span class="stat">${base}</span>`;
+    return `<span class="stat">${v}</span>`;
   });
 
   itemName = `<span class="item-name">${itemName}</span>`;
