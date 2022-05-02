@@ -50,6 +50,65 @@ export interface SavedConfiguration {
         partialSetBonus: string;
         setItems: string;
       };
+      cubeInputQualifiers: {
+        qty: string;
+        low: string;
+        nor: string;
+        hiq: string;
+        mag: string;
+        set: string;
+        rar: string;
+        uni: string;
+        crf: string;
+        tmp: string;
+        nos: string;
+        sock: string;
+        sockN: string;
+        noe: string;
+        eth: string;
+        bas: string;
+        exc: string;
+        eli: string;
+        nru: string;
+        any: string;
+      };
+      cubeOutputQualifiers: {
+        usetypeitem: string;
+        low: string;
+        nor: string;
+        hiq: string;
+        mag: string;
+        set: string;
+        rar: string;
+        uni: string;
+        crf: string;
+        tmp: string;
+        eth: string;
+        sockN: string;
+        mod: string;
+        nonMod: string;
+        uns: string;
+        rem: string;
+        reg: string;
+        exc: string;
+        eli: string;
+        rep: string;
+        rch: string;
+        percentChance: string;
+        plvl: string;
+        ilvl: string;
+        modNoList: string;
+        pre: string;
+        suf: string;
+      };
+      cubeHardcodedOutputs: {
+        "Cow Portal": string;
+        "Pandemonium Portal": string;
+        "Pandemonium Finale Portal": string;
+        "Red Portal": string;
+      };
+      cubeDaysOfWeek: string[];
+      cubeOps: string[];
       other: {
         setNItems: string;
         setSpecificItem: string;
@@ -110,6 +169,104 @@ function CreateDefaultConfig(): SavedConfiguration {
           partialSetBonus: "Partial Set Bonuses",
           setItems: "Set Items",
         },
+        cubeInputQualifiers: {
+          qty: "%s x %d",
+          low: "Low Quality %s",
+          nor: "Normal %s",
+          hiq: "Superior %s",
+          mag: "Magic %s",
+          set: "Set %s",
+          rar: "Rare %s",
+          uni: "Unique %s",
+          crf: "Crafted %s",
+          tmp: "Tempered %s",
+          nos: "Non-Socketed %s",
+          sock: "Socketed %s",
+          sockN: "%s with %d sockets",
+          noe: "Non-Ethereal %s",
+          eth: "Ethereal %s",
+          bas: "Basic (Non-Exceptional, Non-Elite) %s",
+          exc: "Exceptional %s",
+          eli: "Elite %s",
+          nru: "%s, non-runeworded",
+          any: "Any Item",
+        },
+        cubeHardcodedOutputs: {
+          "Cow Portal": "Portal to %s",
+          "Pandemonium Portal": "Portal to Pandemonium Sub-Level",
+          "Pandemonium Finale Portal": "Portal to Uber Tristram",
+          "Red Portal": "Portal to %s",
+        },
+        cubeOutputQualifiers: {
+          usetypeitem: "The same item",
+          low: "%s, Low Quality",
+          nor: "%s, Normal Quality",
+          hiq: "%s, Superior Quality",
+          mag: "%s, Magic Quality",
+          set: "%s, Set Quality",
+          rar: "%s, Rare Quality",
+          uni: "%s, Unique Quality",
+          crf: "%s, Crafted",
+          tmp: "%s, Tempered",
+          eth: "%s, Ethereal",
+          sockN: "%s, with %d sockets",
+          mod: "These extra properties are added:",
+          nonMod: "These properties replace the existing ones:",
+          modNoList: "The item's properties are preserved",
+          uns: "Socketed items are destroyed",
+          rem: "Socketed items are removed (and not destroyed)",
+          reg: "Properties are regenerated",
+          exc: "%s, Exceptional",
+          eli: "%s, Elite",
+          rep: "The item is repaired",
+          rch: "The item is recharged",
+          percentChance: "%d%% chance: %s",
+          plvl: "Required Level: %d%% of Character Level",
+          ilvl: "Required Level: %d%% of Item Level",
+          pre: "%pre %item",
+          suf: "%item %suf",
+        },
+        cubeOps: [
+          "Invalid",
+          "%value < Current Day of Month < %param",
+          "Current Day of Week is not %datevalue",
+          "Player Stat '%paramstat' > %value",
+          "Player Stat '%paramstat' < %value",
+          "Player Stat '%paramstat' is not %value",
+          "Player Stat '%paramstat' is %value",
+          "Base Player Stat '%paramstat' > %value",
+          "Base Player Stat '%paramstat' < %value",
+          "Base Player Stat '%paramstat' is not %value",
+          "Base Player Stat '%paramstat' is %value",
+          "Added Player Stat '%paramstat' > %value",
+          "Added Player Stat '%paramstat' < %value",
+          "Added Player Stat '%paramstat' is not %value",
+          "Added Player Stat '%paramstat' is %value",
+          "First Input's '%paramstat' > %value",
+          "First Input's '%paramstat' < %value",
+          "First Input's '%paramstat' is not %value",
+          "First Input's '%paramstat' is %value",
+          "First Input's Base '%paramstat' > %value",
+          "First Input's Base '%paramstat' < %value",
+          "First Input's Base '%paramstat' is not %value",
+          "First Input's Base '%paramstat' is %value",
+          "First Input's Added '%paramstat' > %value",
+          "First Input's Added '%paramstat' < %value",
+          "First Input's Added '%paramstat' is not %value",
+          "First Input's Added '%paramstat' is %value",
+          "First Input's Mod Class is not %value",
+          "Special",
+        ],
+        cubeDaysOfWeek: [
+          "None",
+          "Sunday",
+          "Monday",
+          "Tuesday",
+          "Wednesday",
+          "Thursday",
+          "Friday",
+          "Saturday",
+        ],
         other: {
           setNItems: "(%d items)",
           setSpecificItem: "(only if %s is equipped)",

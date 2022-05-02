@@ -1,4 +1,5 @@
 import { Workspace } from "../lib/workspace.ts";
+import DocCubeRecipes from "./cube/cube.ts";
 import { DocArmor, DocMisc, DocWeapons } from "./items/base.ts";
 import { DocGems } from "./items/gems.ts";
 import { DocMagic } from "./items/magic.ts";
@@ -32,6 +33,7 @@ export default function GenerateDocs(workspace: Workspace): void {
   GenerateHtml("magic.html", workspace, DocMagic);
 
   // generate cube recipes page
+  GenerateHtml("cube.html", workspace, DocCubeRecipes);
 
   // generate armor page
   GenerateHtml("armor.html", workspace, DocArmor);
