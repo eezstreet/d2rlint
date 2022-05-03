@@ -12,6 +12,16 @@ import { D2RStringTable } from "./workspace.ts";
  * Types
  */
 export type RuleAction = "warn" | "error" | "ignore";
+export type DocPageType =
+  | "uniques"
+  | "sets"
+  | "magic"
+  | "cube"
+  | "armor"
+  | "weapons"
+  | "misc"
+  | "gems"
+  | "runeword";
 
 export interface RuleConfig {
   action: RuleAction;
@@ -25,11 +35,13 @@ export interface SavedConfiguration {
   fallback: string;
   log: string;
   logAppend: boolean;
+  iveConsideredDonating: boolean;
   rules: { [ruleName: string]: RuleConfig };
   generateDocs: boolean;
   docOptions: {
     title: string;
     language: Omit<keyof D2RStringTable, "id" | "Key">;
+    filterPages: DocPageType[];
     localizedStrings: {
       pageNames: {
         main: string;
@@ -73,7 +85,8 @@ export interface SavedConfiguration {
         any: string;
       };
       cubeOutputQualifiers: {
-        usetypeitem: string;
+        usetype: string;
+        useitem: string;
         low: string;
         nor: string;
         hiq: string;
@@ -86,7 +99,6 @@ export interface SavedConfiguration {
         eth: string;
         sockN: string;
         mod: string;
-        nonMod: string;
         uns: string;
         rem: string;
         reg: string;
@@ -95,6 +107,7 @@ export interface SavedConfiguration {
         rep: string;
         rch: string;
         percentChance: string;
+        lvl: string;
         plvl: string;
         ilvl: string;
         modNoList: string;
@@ -144,11 +157,13 @@ function CreateDefaultConfig(): SavedConfiguration {
     fallback: "",
     logAppend: false,
     log: "output.txt",
+    iveConsideredDonating: false,
     rules,
     generateDocs: false,
     docOptions: {
       title: "My Mod Documentation",
       language: "enUS",
+      filterPages: [],
       localizedStrings: {
         pageNames: {
           main: "Main",
@@ -198,7 +213,8 @@ function CreateDefaultConfig(): SavedConfiguration {
           "Red Portal": "Portal to %s",
         },
         cubeOutputQualifiers: {
-          usetypeitem: "The same item",
+          useitem: "The same item",
+          usetype: "The same item, rerolled",
           low: "%s, Low Quality",
           nor: "%s, Normal Quality",
           hiq: "%s, Superior Quality",
@@ -211,7 +227,6 @@ function CreateDefaultConfig(): SavedConfiguration {
           eth: "%s, Ethereal",
           sockN: "%s, with %d sockets",
           mod: "These extra properties are added:",
-          nonMod: "These properties replace the existing ones:",
           modNoList: "The item's properties are preserved",
           uns: "Socketed items are destroyed",
           rem: "Socketed items are removed (and not destroyed)",
@@ -221,8 +236,9 @@ function CreateDefaultConfig(): SavedConfiguration {
           rep: "The item is repaired",
           rch: "The item is recharged",
           percentChance: "%d%% chance: %s",
-          plvl: "Required Level: %d%% of Character Level",
-          ilvl: "Required Level: %d%% of Item Level",
+          lvl: "Item Level: %d",
+          plvl: "Item Level: +%d%% of Player Level",
+          ilvl: "Item Level: +%d%% of Item Level",
           pre: "%pre %item",
           suf: "%item %suf",
         },

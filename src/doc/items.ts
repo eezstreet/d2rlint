@@ -377,13 +377,17 @@ export function PropertyListToDescString(
           // If we don't handle this special case though, we get a gross mess.
           return StringForIndex(ws, "ModStr5p");
         }
+        if (statName === "item_levelreq") {
+          // Special case, we can add level requirements to the item
+          return StringForIndex(ws, "ItemStats1p").replace(/%d/, `+${val}`);
+        }
         if (
           statName === "coldlength" || statName === "poisonlength" ||
           statName === "state" || statName === "fade"
         ) {
           return ""; // hacky.
         }
-        return `author needs to handle case ${descfunc}`;
+        return `author needs to handle case ${descfunc} for ${statName}`;
     }
   };
 

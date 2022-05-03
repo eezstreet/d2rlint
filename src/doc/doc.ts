@@ -1,3 +1,4 @@
+import { DocPageType, GetConfig } from "../lib/config.ts";
 import { Workspace } from "../lib/workspace.ts";
 import DocCubeRecipes from "./cube/cube.ts";
 import { DocArmor, DocMisc, DocWeapons } from "./items/base.ts";
@@ -20,33 +21,60 @@ export default function GenerateDocs(workspace: Workspace): void {
     // do nothing, allow directories that already exist to not blow up the whole thing
   }
 
+  const startTime = new Date();
+  const config = GetConfig();
+  const shouldGenerate = (p: DocPageType) =>
+    !config.docOptions.filterPages.includes(p);
+
   // generate main page
   GenerateHtml("index.html", workspace, DocMain);
 
   // generate unique items page
-  GenerateHtml("uniques.html", workspace, DocUniques);
+  if (shouldGenerate("uniques")) {
+    GenerateHtml("uniques.html", workspace, DocUniques);
+  }
 
   // generate sets/set items page
-  GenerateHtml("sets.html", workspace, DocSets);
+  if (shouldGenerate("sets")) {
+    GenerateHtml("sets.html", workspace, DocSets);
+  }
 
   // generate magic prefixes/suffixes page
-  GenerateHtml("magic.html", workspace, DocMagic);
+  if (shouldGenerate("magic")) {
+    GenerateHtml("magic.html", workspace, DocMagic);
+  }
 
   // generate cube recipes page
-  GenerateHtml("cube.html", workspace, DocCubeRecipes);
+  if (shouldGenerate("cube")) {
+    GenerateHtml("cube.html", workspace, DocCubeRecipes);
+  }
 
   // generate armor page
-  GenerateHtml("armor.html", workspace, DocArmor);
+  if (shouldGenerate("armor")) {
+    GenerateHtml("armor.html", workspace, DocArmor);
+  }
 
   // generate weapons page
-  GenerateHtml("weapons.html", workspace, DocWeapons);
+  if (shouldGenerate("weapons")) {
+    GenerateHtml("weapons.html", workspace, DocWeapons);
+  }
 
   // generate misc items page
-  GenerateHtml("misc.html", workspace, DocMisc);
+  if (shouldGenerate("misc")) {
+    GenerateHtml("misc.html", workspace, DocMisc);
+  }
 
   // generate gems page
-  GenerateHtml("gems.html", workspace, DocGems);
+  if (shouldGenerate("gems")) {
+    GenerateHtml("gems.html", workspace, DocGems);
+  }
 
   // generate runewords page
-  GenerateHtml("runewords.html", workspace, DocRunewords);
+  if (shouldGenerate("runeword")) {
+    GenerateHtml("runewords.html", workspace, DocRunewords);
+  }
+
+  const endTime = new Date();
+  const diff = (endTime.getTime() - startTime.getTime()) / 1000;
+  console.log(`Took ${Math.round(diff)} seconds`);
 }

@@ -31,11 +31,12 @@ function CreateDocumentedItems(
 ): DocumentedItem[] {
   const documented: DocumentedItem[] = [];
 
-  const { armor, weapons, misc, properties, autoMagic, itemStatCost } = ws;
+  const { armor, weapons, misc, properties, autoMagic, itemStatCost, gems } =
+    ws;
   if (
     armor === undefined || weapons === undefined || misc === undefined ||
     properties === undefined || autoMagic === undefined ||
-    itemStatCost === undefined
+    itemStatCost === undefined || gems === undefined
   ) {
     return [];
   }
@@ -55,6 +56,10 @@ function CreateDocumentedItems(
   items.forEach((item) => {
     if (item.code === "" || item.code === "xxx") {
       return; // skip this item?
+    }
+
+    if (gems.find((gem) => gem.code === item.code)) {
+      return; // skip, already covered by gems
     }
 
     let tmog: D2RItemExcelRecord | undefined = undefined;
@@ -166,8 +171,57 @@ function CreateDocumentedItems(
   return documented;
 }
 
+function MakeSpellDesc(ws: Workspace, documented: DocumentedItem): string {
+  const { item, tmog } = documented;
+
+  const colorCssTable = [
+    "color-white",
+    "color-red",
+    "color-green",
+    "color-blue",
+    "color-lightgold",
+    "color-grey",
+    "color-black",
+    "color-darkgold",
+    "color-orange",
+    "color-yellow",
+    "color-darkgreen",
+    "color-purple",
+    "color-mediumgreen",
+  ];
+
+  const colorNum = Number.parseInt(item.spelldesccolor as string);
+  const colorOpen = Number.isNaN(colorNum)
+    ? "<span>"
+    : `<span class="${colorCssTable[colorNum]}">`;
+
+  switch (item.spelldesc) {
+    case "1": {
+      const baseStr = StringForIndex(ws, item.spelldescstr as string);
+      let tmogStr = "";
+      if (tmog !== undefined) {
+        tmogStr = StringForIndex(ws, tmog.namestr as string);
+      }
+      return `${colorOpen}${baseStr} ${tmogStr}</span>`;
+    }
+    case "3": {
+      const baseStr = StringForIndex(ws, item.spelldescstr as string);
+      return `${colorOpen}${baseStr} ${item.spelldesccalc}</span>`;
+    }
+    case "2":
+    case "4": {
+      const baseStr = StringForIndex(ws, item.spelldescstr as string);
+      return `${colorOpen}${
+        baseStr.replace(/%d/, item.spelldesccalc as string).replace(/%%/, "%")
+      }</span>`;
+    }
+    default:
+      return "";
+  }
+}
+
 function DocumentItem(ws: Workspace, documented: DocumentedItem): string {
-  const { item, tmog, automagic } = documented;
+  const { item, automagic } = documented;
 
   let itemName = StringForIndex(ws, item.namestr as string);
   let _1handDmg = "";
@@ -180,7 +234,6 @@ function DocumentItem(ws: Workspace, documented: DocumentedItem): string {
   let reqdex = "";
   let ac = "";
   let block = "";
-  let tmogstr = "";
 
   if (
     item.mindam !== "" && item.mindam !== undefined && item.maxdam !== "" &&
@@ -331,6 +384,8 @@ function DocumentItem(ws: Workspace, documented: DocumentedItem): string {
   ac = makeHtmlInfo(ac);
   block = makeHtmlInfo(block);
 
+  // make spell desc
+
   return `<div class="base-item" id="${item.code}">
         ${itemName}
         ${lvl}
@@ -343,6 +398,7 @@ function DocumentItem(ws: Workspace, documented: DocumentedItem): string {
         ${reqlvl}
         ${reqstr}
         ${reqdex}
+        ${MakeSpellDesc(ws, documented)}
         <div class="automagic">
           ${descStrings.join("\r\n")}
         </div>

@@ -249,6 +249,7 @@ function DocumentSet(ws: Workspace, theSet: DocumentedSet): string {
       <div class="set-items">
         ${DocumentSetItems(ws, items)}
       </div>
+      <a class="return-top" href="#">Return to Top</a>
     </div>`;
 }
 
@@ -308,5 +309,16 @@ export function DocSets(ws: Workspace): string {
     });
   });
 
-  return documented.map((set) => DocumentSet(ws, set)).join("\r\n");
+  const setHeader = documented.map((set) => `
+    <a class="set-link" href="#${set.set.index}">${
+    StringForIndex(ws, set.set.index as string)
+  }</a>
+  `).join(" | ");
+
+  return `
+    <div class="page-header">
+      ${setHeader}
+    </div>
+    ${documented.map((set) => DocumentSet(ws, set)).join("\r\n")}
+  `;
 }

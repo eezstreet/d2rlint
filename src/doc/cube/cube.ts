@@ -18,7 +18,7 @@ function EvaluateCubeInput(input: string, ws: Workspace): string {
     return "";
   }
 
-  const split = input.replace(/"?([^"]*)"?$/, "$1").split(",");
+  const split = input.replace(/"/gi, "").split(",");
   if (split.length <= 0) {
     return "";
   }
@@ -205,7 +205,7 @@ function EvaluateCubeOutput(
   }
 
   // handle hardcoded outputs
-  const parsedOutput = strOutput.replace(/"/, "").split(",");
+  const parsedOutput = strOutput.replace(/"/gi, "").split(",");
   if (parsedOutput.length <= 0) {
     return [];
   } else if (parsedOutput[0] === "Cow Portal") {
@@ -257,48 +257,7 @@ function EvaluateCubeOutput(
 
   if (parsedOutput[0] === "usetype" || parsedOutput[0] === "useitem") {
     outputName =
-      config.docOptions.localizedStrings.cubeOutputQualifiers.usetypeitem;
-    const extra: string[] = [];
-    for (let i = 1; i < parsedOutput.length; i++) {
-      const qual = parsedOutput[i];
-      switch (qual) {
-        case "low":
-        case "nor":
-        case "hiq":
-        case "mag":
-        case "set":
-        case "rar":
-        case "uni":
-        case "crf":
-        case "tmp":
-        case "eth":
-        case "exc":
-        case "eli":
-          outputName = config.docOptions.localizedStrings
-            .cubeOutputQualifiers[qual].replace(/%s/, outputName);
-          break;
-        case "uns":
-        case "rem":
-        case "reg":
-        case "rep":
-        case "rch":
-          extra.push(
-            config.docOptions.localizedStrings.cubeOutputQualifiers[qual],
-          );
-          break;
-      }
-
-      if (qual.startsWith("sock=")) {
-        const sockNum = qual.replace(/sock=([0-9]+)/, "$1");
-        outputName = config.docOptions.localizedStrings.cubeOutputQualifiers
-          .sockN.replace(/%s/, outputName).replace(/%d/, sockNum);
-      } else if (qual.startsWith("qty=") || qual.startsWith("lvl=")) {
-        const qtyNum = qual.replace(/(qty|lvl)=([0-9]+)/, "$2");
-        outputName = config.docOptions.localizedStrings.cubeInputQualifiers.qty
-          .replace(/%s/, outputName).replace(/%d/, qtyNum);
-      }
-    }
-    returnValue.push(...extra);
+      config.docOptions.localizedStrings.cubeOutputQualifiers[parsedOutput[0]];
   } else if (foundUnique !== undefined) {
     outputName = StringForIndex(ws, foundUnique.index as string);
   } else if (foundSetItem !== undefined) {
@@ -311,6 +270,56 @@ function EvaluateCubeOutput(
     return [];
   }
 
+  const extra: string[] = [];
+  for (let i = 1; i < parsedOutput.length; i++) {
+    const qual = parsedOutput[i];
+    switch (qual) {
+      case "low":
+      case "nor":
+      case "hiq":
+      case "mag":
+      case "set":
+      case "rar":
+      case "uni":
+      case "crf":
+      case "tmp":
+      case "eth":
+      case "exc":
+      case "eli":
+        outputName = config.docOptions.localizedStrings
+          .cubeOutputQualifiers[qual].replace(/%s/, outputName);
+        break;
+      case "uns":
+      case "rem":
+      case "reg":
+      case "rep":
+      case "rch":
+        extra.push(
+          config.docOptions.localizedStrings.cubeOutputQualifiers[qual],
+        );
+        break;
+    }
+
+    if (qual.startsWith("sock=")) {
+      const sockNum = qual.replace(/sock=([0-9]+)/, "$1");
+      outputName = config.docOptions.localizedStrings.cubeOutputQualifiers
+        .sockN.replace(/%s/, outputName).replace(/%d/, sockNum);
+    } else if (qual.startsWith("qty=") || qual.startsWith("lvl=")) {
+      const qtyNum = qual.replace(/(qty|lvl)=([0-9]+)/, "$2");
+      outputName = config.docOptions.localizedStrings.cubeInputQualifiers.qty
+        .replace(/%s/, outputName).replace(/%d/, qtyNum);
+    }
+  }
+  returnValue.push(...extra);
+
+  if (recipe[outputLvl] !== "") {
+    returnValue.push(
+      config.docOptions.localizedStrings.cubeOutputQualifiers.lvl.replace(
+        /%d/,
+        recipe[outputLvl] as string,
+      ),
+    );
+  }
   if (recipe[outputPLvl] !== "") {
     returnValue.push(
       config.docOptions.localizedStrings.cubeOutputQualifiers.plvl.replace(
@@ -325,14 +334,6 @@ function EvaluateCubeOutput(
         /%d/,
         recipe[outputILvl] as string,
       ).replace(/%%/, "%"),
-    );
-  }
-  if (recipe[outputLvl] !== "") {
-    returnValue.push(
-      StringForIndex(ws, "ItemStats1p").replace(
-        /%d/,
-        recipe[outputLvl] as string,
-      ),
     );
   }
 
@@ -445,7 +446,7 @@ function EvaluateCubeOutput(
         outputName = config.docOptions.localizedStrings.cubeOutputQualifiers
           .pre.replace(
             /%pre/,
-            StringForIndex(ws, magicPrefix[prenum].name as string),
+            `"${StringForIndex(ws, magicPrefix[prenum].name as string)}"`,
           ).replace(/%item/, outputName);
 
         // add prop items
@@ -465,7 +466,7 @@ function EvaluateCubeOutput(
         outputName = config.docOptions.localizedStrings.cubeOutputQualifiers
           .suf.replace(
             /%suf/,
-            StringForIndex(ws, magicSuffix[sufnum].name as string),
+            `"${StringForIndex(ws, magicSuffix[sufnum].name as string)}"`,
           ).replace(/%item/, outputName);
 
         // add prop items
@@ -482,15 +483,9 @@ function EvaluateCubeOutput(
   isMod = parsedOutput.includes("mod") || parsedOutput.includes("useitem");
 
   if (propItems.length > 0) {
-    if (isMod) {
-      returnValue.push(
-        config.docOptions.localizedStrings.cubeOutputQualifiers.mod,
-      );
-    } else {
-      returnValue.push(
-        config.docOptions.localizedStrings.cubeOutputQualifiers.nonMod,
-      );
-    }
+    returnValue.push(
+      config.docOptions.localizedStrings.cubeOutputQualifiers.mod,
+    );
     returnValue.push(...propItems);
   } else if (isMod) {
     returnValue.push(

@@ -20,8 +20,25 @@ import "./rules/treasure.ts";
 
 // Load workspace, iterate through rules, passing workspace into rule
 const config = GetConfig();
-const { workspace, fallback, rules, legacy } = config;
+const { workspace, fallback, rules, legacy, iveConsideredDonating } = config;
 const ws = LoadWorkspace(workspace, fallback, legacy);
+
+if (!iveConsideredDonating) {
+  console.log(`-----------------------------------------`);
+  console.log(`| d2rlint is always available for free, |`);
+  console.log(`| but it takes many man-hours to main-  |`);
+  console.log(`| -tain it and produce new features for |`);
+  console.log(`| all mod-makers to use.                |`);
+  console.log(`|                                       |`);
+  console.log(`| Please consider making a direct do-   |`);
+  console.log(`| -nation, or sponsoring me on Patreon: |`);
+  console.log(`| https://www.patreon.com/eezstreet     |`);
+  console.log(`|                                       |`);
+  console.log(`| Alternatively, change the following   |`);
+  console.log(`| value in your config.json to be true: |`);
+  console.log(`|   iveConsideredDonating: "false",     |`);
+  console.log(`-----------------------------------------`);
+}
 
 const allRules = GetAllRules();
 allRules.forEach((rule) => {
