@@ -27,7 +27,9 @@ You will find that it has produced a `config.json` file:
   "workspace": "",
   "fallback": "",
   "log": "output.txt",
+  "logAppend": false,
   "legacy": false,
+  "iveConsideredDonating": false,
   "rules": {
     "Basic/NoDuplicateExcel": {
       "action": "warn"
@@ -59,6 +61,7 @@ You will find that it has produced a `config.json` file:
     "TC/ValidTreasure": {
       "action": "warn"
     }
+    // ...
   }
 }
 ```
@@ -83,6 +86,13 @@ You can adjust the level of concern for each individual rule within the
 Please note that only `"ignore"` has any impact at the moment as this tool is
 still under development.
 
+The program by default writes to `stdout`, but it can also write to a log file.
+If `logAppend` is turned on, it will write to the same log file over and over
+again.
+
+The program will output a banner at the top of `stdout` unless
+`iveConsideredDonating` has been turned on. **Please consider donating!**
+
 ### List of Rules
 
 - `Basic/NoDuplicateExcel`: Fields that should not be duplicated will present a
@@ -106,20 +116,31 @@ still under development.
   opcodes.
 - `Items/NoIllegalGambling`: Ensures that charms cannot be gambled.
 - `Items/ValidSockets`: Ensures that all items have valid numbers of sockets.
+- `Items/ValidStatParameters`: Ensures that all item minimums and maximums are
+  within the bounds specified by the `Save Bits` and `Save Add` fields in
+  `itemstatcost.txt`. Additionally, it verifies that all skill-based parameters
+  for items (such as chance-to-cast and charged skills) point to valid skills.
 - `Level/ValidWarp`: Ensures that levels are linked together with valid vis/warp
   values.
 - `Level/ValidWPs`: Ensures that no two levels share the same waypoint index.
-- `Monsters/ValidChains`: Ensures that baseId/NextInClass chain is correct.
+- `Monsters/ValidChains`: Ensures that baseId/NextInClass chains are correct.
 - `Skills/EqualSkills`: Ensures that all classes have the same number of skills.
 - `String/NoUntranslated`: Ensures that all languages for all strings are
-  translated, and no fields are excluded unnecessarily. **This is ignored by
-  default.** This triggers a lot of errors and can slow down the program
-  considerably and is only really meant for advanced usage.
-- `TC/ValidProbs`: Ensures that Treasure Classes with negative `Picks` values
-  have their probs values equal the negative absolute value of the `Picks`
-  column.
+  translated, and no fields are excluded unnecessarily. _This is ignored by
+  default._ This triggers a lot of errors in the base game and can be slow.
+- `TC/ValidNegativePicks`: Ensures that Treasure Classes with negative `Picks`
+  values have their `prob`s values equal the negative absolute value of the
+  `Picks` column.
+- `TC/ValidProbs`: Ensures that Treasure Classes have pairing values for
+  `item1`-`item10` and `prob1`-`prob10`. For example, if an item has a value in
+  `item1` but not a matching value in `prob1`, this will trigger a warning.
 - `TC/ValidTreasure`: Ensures that Treasure Classes are linked together
-  properly.
+  properly. Specifically, this triggers warnings if a value in `item1`-`item10`
+  points to something that is _not_ a previously-occurring Treasure Class, a Set
+  or Unique item name (as indicated by the `index` field of `setitems.txt` or
+  `uniqueitems.txt`), an item type from `itemtypes.txt` with `AutoTC` set, _or_
+  a valid item code from `armor.txt`, `misc.txt` or `weapons.txt`. It handles
+  `mul=` on item codes.
 
 Note that the files that ship with the original game will trigger some of these
 rules. **This is normal.** There are genuine errors in their own files, and this
@@ -188,7 +209,6 @@ This project is licensed under the GNU GPLv3 license.
 
 ## Future plans
 
-- Backwards compatibility with Diablo II (un-resurrected). It works fine, but it
-  will warn about missing column headers.
 - Auto-fix problems (similar to ESLint)
 - More rules!
+- Maybe an IDE?
