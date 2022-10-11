@@ -1001,6 +1001,16 @@ export class D2RHireling extends D2RExcelRecord {
   }
 }
 
+// Added in Diablo II: Resurrected 2.5
+export class D2RHirelingDesc extends D2RExcelRecord {
+  id: unknown;
+  alternateVoice: unknown;
+
+  GetFileName(): string {
+    return "hiredesc.txt";
+  }
+}
+
 export class D2RHitclass extends D2RExcelRecord {
   "hit class": unknown;
   code: unknown;
@@ -1216,6 +1226,17 @@ export class D2RItemTypes extends D2RExcelRecord {
   }
 }
 
+// Added in Diablo II: Resurrected 2.5
+export class D2RLevelGroups extends D2RExcelRecord {
+  name: unknown;
+  id: unknown;
+  groupname: unknown;
+
+  GetFileName(): string {
+    return "levelgroups.txt";
+  }
+}
+
 export class D2RLevels extends D2RExcelRecord {
   name: unknown;
   id: unknown;
@@ -1400,6 +1421,8 @@ export class D2RLevels extends D2RExcelRecord {
   objprb5: unknown;
   objprb6: unknown;
   objprb7: unknown;
+  // Added in Diablo II: Resurrected 2.5
+  levelgroup: unknown;
 
   GetFileName(): string {
     return "levels.txt";
@@ -2165,7 +2188,7 @@ export class D2RMonStats extends D2RExcelRecord {
   damageregen: unknown;
   skilldamage: unknown;
   noratio: unknown;
-  noshldblock: unknown;
+  shieldblockoverride: unknown; // D2R 2.5 changed this from "noshldblock"
   toblock: unknown;
   "toblock(n)": unknown;
   "toblock(h)": unknown;
@@ -2251,18 +2274,18 @@ export class D2RMonStats extends D2RExcelRecord {
   "el3mind(h)": unknown;
   "el3maxd(h)": unknown;
   "el3dur(h)": unknown;
-  treasureclass1: unknown;
-  treasureclass2: unknown;
-  treasureclass3: unknown;
-  treasureclass4: unknown;
-  "treasureclass1(n)": unknown;
-  "treasureclass2(n)": unknown;
-  "treasureclass3(n)": unknown;
-  "treasureclass4(n)": unknown;
-  "treasureclass1(h)": unknown;
-  "treasureclass2(h)": unknown;
-  "treasureclass3(h)": unknown;
-  "treasureclass4(h)": unknown;
+  treasureclass: unknown; // D2R 2.5 changed this from "treasureclass1"
+  treasureclasschamp: unknown; // D2R 2.5 changed this from "treasureclass2"
+  treasureclassunique: unknown; // D2R 2.5 changed this from "treasureclass3"
+  treasureclassquest: unknown; // D2R 2.5 changed this from "treasureclass4"
+  "treasureclass(n)": unknown; // D2R 2.5 changed this from "treasureclass1(n)"
+  "treasureclasschamp(n)": unknown; // D2R 2.5 changed this from "treasureclass2(n)"
+  "treasureclassunique(n)": unknown; // D2R 2.5 changed this from "treasureclass3(n)"
+  "treasureclassquest(n)": unknown; // D2R 2.5 changed this from "treasureclass4(n)"
+  "treasureclass(h)": unknown; // D2R 2.5 changed this from "treasureclass1(h)"
+  "treasureclasschamp(h)": unknown; // D2R 2.5 changed this from "treasureclass2(h)"
+  "treasureclassunique(h)": unknown; // D2R 2.5 changed this from "treasureclass3(h)"
+  "treasureclassquest(h)": unknown; // D2R 2.5 changed this from "treasureclass4(h)"
   tcquestid: unknown;
   tcquestcp: unknown;
   splenddeath: unknown;
@@ -2273,6 +2296,17 @@ export class D2RMonStats extends D2RExcelRecord {
   rightarmitemtype: unknown;
   leftarmitemtype: unknown;
   cannotusetwohandeditems: unknown;
+  // Added in Diablo II: Resurrected 2.5
+  treasureclassdesecrated: unknown;
+  treasureclasschampdesecrated: unknown;
+  treasureclassuniquedesecrated: unknown;
+  "treasureclassdesecrated(n)": unknown;
+  "treasureclasschampdesecrated(n)": unknown;
+  "treasureclassuniquedesecrated(n)": unknown;
+  "treasureclassdesecrated(h)": unknown;
+  "treasureclasschampdesecrated(h)": unknown;
+  "treasureclassuniquedesecrated(h)": unknown;
+  cannotdesecrate: unknown;
 
   GetFileName(): string {
     return "monstats.txt";
@@ -3228,6 +3262,8 @@ export class D2RSkillDesc extends D2RExcelRecord {
   dsc3textb7: unknown;
   dsc3calca7: unknown;
   dsc3calcb7: unknown;
+  // Added in Diablo II: Resurrected 2.5
+  hireableiconcel: unknown;
 
   GetFileName(): string {
     return "skilldesc.txt";
@@ -3477,7 +3513,7 @@ export class D2RSkills extends D2RExcelRecord {
   aibonus: unknown;
   "cost mult": unknown;
   "cost add": unknown;
-  // new in retail release
+  // added in Diablo II: Resurrected retail release
   srvstopfunc: unknown;
   useservermissilesonremoteclients: unknown;
   cltstopfunc: unknown;
@@ -3490,6 +3526,15 @@ export class D2RSkills extends D2RExcelRecord {
   param10: unknown;
   param11: unknown;
   param12: unknown;
+  // added in Diablo II: Resurrected 2.5
+  passivestat7: unknown;
+  passivecalc7: unknown;
+  passivestat8: unknown;
+  passivecalc8: unknown;
+  passivestat9: unknown;
+  passivecalc9: unknown;
+  passivestat10: unknown;
+  passivecalc10: unknown;
 
   GetFileName(): string {
     return "skills.txt";
@@ -3533,6 +3578,8 @@ export class D2RSoundEnviron extends D2RExcelRecord {
   "vox eax reflect delay": unknown;
   "vox eax reverb": unknown;
   "vox eax rev delay": unknown;
+  // Added in Diablo II: Resurrected 2.5
+  inheritenvironment: unknown;
 
   GetFileName(): string {
     return "soundenviron.txt";
@@ -3689,6 +3736,10 @@ export class D2RSuperUniques extends D2RExcelRecord {
   tc: unknown;
   "tc(n)": unknown;
   "tc(h)": unknown;
+  // Added in Diablo II: Resurrected 2.5
+  "tc desecrated": unknown;
+  "tc(n) desecrated": unknown;
+  "tc(h) desecrated": unknown;
 
   GetFileName(): string {
     return "superuniques.txt";
@@ -3725,6 +3776,8 @@ export class D2RTreasureClassEx extends D2RExcelRecord {
   prob9: unknown;
   item10: unknown;
   prob10: unknown;
+  // Added in Diablo II: Resurrected 2.5
+  ladder: unknown;
 
   GetFileName(): string {
     return "treasureclassex.txt";
@@ -3897,12 +3950,14 @@ export interface Workspace {
   gamble?: D2RGamble[];
   gems?: D2RGems[];
   hireling?: D2RHireling[];
+  hirelingDesc?: D2RHirelingDesc[];
   hitclass?: D2RHitclass[];
   inventory?: D2RInventory[];
   itemRatio?: D2RItemRatio[];
   itemStatCost?: D2RItemStatCost[];
   itemTypes?: D2RItemTypes[];
   levels?: D2RLevels[];
+  levelGroups?: D2RLevelGroups[];
   lowQualityItems?: D2RLowQualityItems[];
   lvlMaze?: D2RLvlMaze[];
   lvlPrest?: D2RLvlPrest[];
@@ -4279,12 +4334,17 @@ export function LoadWorkspace(
     gamble: ParseExcel(location, fallback, D2RGamble),
     gems: ParseExcel(location, fallback, D2RGems),
     hireling: ParseExcel(location, fallback, D2RHireling),
+    hirelingDesc: legacy
+      ? undefined
+      : ParseExcel(location, fallback, D2RHirelingDesc),
     hitclass: ParseExcel(location, fallback, D2RHitclass),
     inventory: ParseExcel(location, fallback, D2RInventory),
     itemRatio: ParseExcel(location, fallback, D2RItemRatio),
     itemStatCost: ParseExcel(location, fallback, D2RItemStatCost),
     itemTypes: ParseExcel(location, fallback, D2RItemTypes),
     levels: ParseExcel(location, fallback, D2RLevels),
+    levelGroups: legacy ? undefined
+    : ParseExcel(location, fallback, D2RLevelGroups),
     lowQualityItems: ParseExcel(
       location,
       fallback,
@@ -4317,9 +4377,8 @@ export function LoadWorkspace(
     objects: ParseExcel(location, fallback, D2RObjects),
     objGroup: ParseExcel(location, fallback, D2RObjGroup),
     objMode: ParseExcel(location, fallback, D2RObjMode),
-    objPreset: legacy
-      ? undefined
-      : ParseExcel(location, fallback, D2RObjPreset),
+    objPreset: legacy ? undefined
+    : ParseExcel(location, fallback, D2RObjPreset),
     objType: ParseExcel(location, fallback, D2RObjType),
     overlay: ParseExcel(location, fallback, D2ROverlay),
     petType: ParseExcel(location, fallback, D2RPetType),

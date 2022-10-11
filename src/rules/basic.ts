@@ -592,12 +592,9 @@ export class LinkedExcel extends Rule {
     mustExist(monStats, "skilldamage", "id", skills, "skill", isOptional);
 
     // ensure treasureclasses in monstats.txt point to valid entries in treasureclassex.txt
-    const ntcFields = multifield1<D2RMonStats>("treasureclass", 4);
-    const ntcNFields = multifield2<D2RMonStats>("treasureclass", "(n)", 4);
-    const ntcHFields = multifield2<D2RMonStats>("treasureclass", "(h)", 4);
-
-    [ntcFields, ntcNFields, ntcHFields].forEach((fieldSet) =>
-      fieldSet.forEach((field) =>
+    // the exact name of these fields varies strongly depending on which game version
+    const fieldSetChecker = (f: (keyof D2RMonStats)[]) => {
+      f.forEach((field) =>
         mustExist(
           monStats,
           field,
@@ -606,8 +603,45 @@ export class LinkedExcel extends Rule {
           "treasure class",
           isOptional,
         )
-      )
-    );
+      );
+    };
+
+    if (config.legacy) {
+      const ntcFields = multifield1<D2RMonStats>("treasureclass", 4);
+      const ntcNFields = multifield2<D2RMonStats>("treasureclass", "(n)", 4);
+      const ntcHFields = multifield2<D2RMonStats>("treasureclass", "(h)", 4);
+
+      [ntcFields, ntcNFields, ntcHFields].forEach(fieldSetChecker);
+    } else {
+      const monstatKeys: (keyof D2RMonStats)[] = [
+        "treasureclass",
+        "treasureclass(n)",
+        "treasureclass(h)",
+        "treasureclasschamp",
+        "treasureclasschamp(n)",
+        "treasureclasschamp(h)",
+        "treasureclassunique",
+        "treasureclassunique(n)",
+        "treasureclassunique(h)",
+        "treasureclassquest",
+        "treasureclassquest(n)",
+        "treasureclassquest(h)",
+        "treasureclassdesecrated",
+        "treasureclassdesecrated(n)",
+        "treasureclassdesecrated(h)",
+      ];
+
+      monstatKeys.forEach((field) =>
+        mustExist(
+          monStats,
+          field,
+          "id",
+          treasureClassEx,
+          "treasure class",
+          isOptional,
+        )
+      );
+    }
 
     // ensure that AI in monstats.txt is valid
     mustExist(monStats, "ai", "id", monAi, "ai");
@@ -1019,9 +1053,13 @@ export class LinkedExcel extends Rule {
     );
 
     // ensure passivestat, aurastat point to entries in itemstatcost.txt
+    const numPassiveFields = config.legacy ? 5 : 10; // 2.4 upped to 6, 2.5 upped again to 10
     const skStatFields: (keyof D2RSkills)[] = [
       ...multifield1<D2RSkills>("aurastat", 6),
-      ...multifield1<D2RSkills>("passivestat", 6 /* 5 prior to 2.4 */),
+      ...multifield1<D2RSkills>(
+        "passivestat",
+        numPassiveFields,
+      ),
     ];
     skStatFields.forEach((field) =>
       mustExist(skills, field, "skill", itemStatCost, "stat", isOptional)
@@ -1140,6 +1178,33 @@ export class LinkedExcel extends Rule {
       "treasure class",
       isOptional,
     );
+    if (!config.legacy) {
+      // these were added in 2.5
+      mustExist(
+        superUniques,
+        "tc desecrated",
+        "superunique",
+        treasureClassEx,
+        "treasure class",
+        isOptional,
+      );
+      mustExist(
+        superUniques,
+        "tc(n) desecrated",
+        "superunique",
+        treasureClassEx,
+        "treasure class",
+        isOptional,
+      );
+      mustExist(
+        superUniques,
+        "tc(h) desecrated",
+        "superunique",
+        treasureClassEx,
+        "treasure class",
+        isOptional,
+      );
+    }
 
     /**
      * NOTE: Treasure class linkage is excluded in this because it's quite complicated.
@@ -1758,7 +1823,7 @@ export class NumericBounds extends Rule {
     inRng(itemStatCost, "op", "stat", 0, 13);
     inRng(itemStatCost, "direct", "stat", 0, 1);
     inRng(itemStatCost, "damagerelated", "stat", 0, 1);
-    inRng(itemStatCost, "descfunc", "stat", 0, 28);
+    inRng(itemStatCost, "descfunc", "stat", 0, 29); // descfunc 29 added in 2.5
     inRng(itemStatCost, "descval", "stat", 0, 2);
     inRng(itemStatCost, "stuff", "stat", 1, 8);
     inRng(itemTypes, "throwable", "code", 0, 1);
@@ -1819,7 +1884,10 @@ export class NumericBounds extends Rule {
     inRng(lvlPrest, "automap", "name", 0, 1);
     inRng(lvlPrest, "scan", "name", 0, 1);
     inRng(lvlTypes, "act", "name", 0, 5, true);
-    inRng(missiles, "pcltdofunc", "missile", 0, 69); // 69th function = undocumented (Corpse Explosion)
+    // NOTENOTE, there are two undocumented pcltdofunc functions:
+    // 69th function = in use by Corpse Explosion
+    // 70th function = in use by vine beast death
+    inRng(missiles, "pcltdofunc", "missile", 0, 70);
     inRng(missiles, "pclthitfunc", "missile", 0, 64);
     inRng(missiles, "psrvdofunc", "missile", 0, 37);
     inRng(missiles, "psrvhitfunc", "missile", 0, 59);
@@ -1963,7 +2031,7 @@ export class NumericBounds extends Rule {
     inRng(skillDesc, "skillrow", "skilldesc", 0, 6);
     inRng(skillDesc, "skillcolumn", "skilldesc", 0, 3);
     inRng(skillDesc, "listrow", "skilldesc", -1, 4);
-    inRng(skillDesc, "descdam", "skilldesc", 0, 24);
+    inRng(skillDesc, "descdam", "skilldesc", 0, 26); // D2R 2.5 added 25 and 26
     inRng(skillDesc, "descatt", "skilldesc", 0, 5);
     inRng(states, "setfunc", "state", 0, 19);
     inRng(states, "remfunc", "state", 0, 12);
