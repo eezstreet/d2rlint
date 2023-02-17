@@ -1,0 +1,37 @@
+name: Deno Try Build
+
+on:
+  push:
+    branches: ["master"]
+  pull_request:
+    branches: ["master"]
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    runs-on: windows-latest
+
+    steps:
+      - name: Setup repo
+        uses: actions/checkout@v3
+
+      - name: Setup Deno
+        # uses: denoland/setup-deno@v1
+        uses: denoland/setup-deno@9db7f66e8e16b5699a514448ce994936c63f0d54
+        with:
+          deno-version: v1.x
+
+      # Uncomment this step to verify the use of 'deno fmt' on each commit.
+      # - name: Verify formatting
+      #   run: deno fmt --check
+
+      - name: Compile
+        run: deno compile --allow-read --allow-write --allow-env --output artifacts.exe src/main.ts
+        
+      - name: Archive artifacts
+        uses: actions/upload-artifact@v3
+        with:
+          name: Artifacts
+          path: artifacts.exe

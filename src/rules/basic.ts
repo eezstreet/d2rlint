@@ -61,7 +61,7 @@ export class NoDuplicates extends Rule {
             this.Warn(
               `${records[i].GetFileName()} - duplicate detected on lines ${
                 i + 2
-              } and ${j + 2} for field '${field}' (${thisField})`,
+              } and ${j + 2} for field '${String(field)}' (${thisField})`,
             );
           }
         }
@@ -221,7 +221,7 @@ export class LinkedExcel extends Rule {
             this.Warn(
               `${item.GetFileName()}, line ${
                 i + 2
-              }: ${al} '${val}' not found for '${key}'`,
+              }: ${String(al)} '${val}' not found for '${key}'`,
             );
           } else if (
             !b.some((item2) =>
@@ -232,7 +232,7 @@ export class LinkedExcel extends Rule {
             this.Warn(
               `${item.GetFileName()}, line ${
                 i + 2
-              }: ${al} '${val}' not found for '${key}'`,
+              }: ${String(al)} '${val}' not found for '${key}'`,
             );
           }
         }
@@ -1256,7 +1256,7 @@ export class LinkedExcel extends Rule {
             return;
           }
           this.Warn(
-            `${record.GetFileName()}, line ${i + 2}: ${column} for '${
+            `${record.GetFileName()}, line ${i + 2}: ${String(column)} for '${
               record[indexColumn]
             }' is blank but required`,
           );
@@ -1277,7 +1277,7 @@ export class LinkedExcel extends Rule {
           this.Warn(
             `${record.GetFileName()}, line ${i + 2}: couldn't find string '${
               record[column]
-            }' for ${column} for '${record[indexColumn]}'`,
+            }' for ${String(column)} for '${record[indexColumn]}'`,
           );
         }
       });
@@ -1606,7 +1606,7 @@ export class NumericBounds extends Rule {
               this.Warn(
                 `${record.GetFileName()}, line ${
                   line + 2
-                }: '${field}' is not filled in for '${indexStr}'`,
+                }: '${String(field)}' is not filled in for '${indexStr}'`,
               );
             }
             return;
@@ -1618,7 +1618,7 @@ export class NumericBounds extends Rule {
             this.Warn(
               `${record.GetFileName()}, line ${
                 line + 2
-              }: '${field}' is not a number for '${indexStr}'`,
+              }: '${String(field)}' is not a number for '${indexStr}'`,
             );
             return;
           }
@@ -1706,7 +1706,7 @@ export class NumericBounds extends Rule {
             this.Warn(
               `${record.GetFileName()}, line ${
                 line + 2
-              }: '${field}' is not filled in for "${indexStr}'`,
+              }: '${String(field)}' is not filled in for "${indexStr}'`,
             );
           }
           return;
@@ -1718,7 +1718,7 @@ export class NumericBounds extends Rule {
           this.Warn(
             `${record.GetFileName()}, line ${
               line + 2
-            }: '${field}' is not a number for '${indexStr}'`,
+            }: '${String(field)}' is not a number for '${indexStr}'`,
           );
           return;
         }
@@ -1727,7 +1727,7 @@ export class NumericBounds extends Rule {
           this.Warn(
             `${record.GetFileName()}, line ${
               line + 2
-            }: '${field}' is out of range for '${indexStr}', expected number between ${min} and ${max} (inclusive), found ${numericAmt}`,
+            }: '${String(field)}' is out of range for '${indexStr}', expected number between ${min} and ${max} (inclusive), found ${numericAmt}`,
           );
         }
       });
