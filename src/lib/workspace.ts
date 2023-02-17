@@ -670,7 +670,7 @@ export class D2RComposit extends D2RExcelRecord {
 export class D2RCubemain extends D2RExcelRecord {
   description: unknown;
   enabled: unknown;
-  ladder: unknown;
+  //ladder: unknown;  // Removed in Diablo II: Resurrected 2.6
   "min diff": unknown;
   version: unknown;
   op: unknown;
@@ -772,6 +772,9 @@ export class D2RCubemain extends D2RExcelRecord {
   "c mod 5 param": unknown;
   "c mod 5 min": unknown;
   "c mod 5 max": unknown;
+  // added in Diablo II: Resurrected 2.6
+  firstLadderSeason: unknown;
+  lastLadderSeason: unknown;
 
   GetFileName(): string {
     return "cubemain.txt";
@@ -2895,7 +2898,7 @@ export class D2RRareSuffix extends D2RRareBase {
 export class D2RRunes extends D2RExcelRecord {
   name: unknown;
   complete: unknown;
-  server: unknown;
+  //server: unknown;    // Removed in Diablo II: Resurrected 2.6
   itype1: unknown;
   itype2: unknown;
   itype3: unknown;
@@ -2939,6 +2942,9 @@ export class D2RRunes extends D2RExcelRecord {
   t1param7: unknown;
   t1min7: unknown;
   t1max7: unknown;
+  // added in Diablo II: Resurrected 2.6
+  firstLadderSeason: unknown;
+  lastLadderSeason: unknown;
 
   GetFileName(): string {
     return "runes.txt";
@@ -3264,6 +3270,9 @@ export class D2RSkillDesc extends D2RExcelRecord {
   dsc3calcb7: unknown;
   // Added in Diablo II: Resurrected 2.5
   hireableiconcel: unknown;
+  // Added in Diablo II: Resurrected 2.6
+  "item proc text": unknown;
+  "item proc descline count": unknown;
 
   GetFileName(): string {
     return "skilldesc.txt";
@@ -3535,6 +3544,8 @@ export class D2RSkills extends D2RExcelRecord {
   passivecalc9: unknown;
   passivestat10: unknown;
   passivecalc10: unknown;
+  // added in Diablo II: Resurrected 2.6
+  itemuserestrict: unknown;
 
   GetFileName(): string {
     return "skills.txt";
@@ -3699,6 +3710,8 @@ export class D2RStates extends D2RExcelRecord {
   cltactivefunc: unknown;
   srvactivefunc: unknown;
   canstack: unknown;
+  // new in Diablo II: Resurrected 2.6
+  "sunder-res-reduce": unknown;
   // new in retail release
   hidedead: unknown;
 
@@ -3776,8 +3789,9 @@ export class D2RTreasureClassEx extends D2RExcelRecord {
   prob9: unknown;
   item10: unknown;
   prob10: unknown;
-  // Added in Diablo II: Resurrected 2.5
-  ladder: unknown;
+  // 'ladder' was added in 2.5, but was replaced by the following in 2.6
+  firstLadderSeason: unknown;
+  lastLadderSeason: unknown;
 
   GetFileName(): string {
     return "treasureclassex.txt";
@@ -3796,7 +3810,9 @@ export class D2RUniqueItems extends D2RExcelRecord {
   index: unknown;
   version: unknown;
   enabled: unknown;
-  ladder: unknown;
+  // 'firstLadderSeason' and 'lastLadderSeason' replace 'ladder' in Diablo II: Resurrected 2.6
+  firstLadderSeason: unknown;
+  lastLadderSeason: unknown;
   rarity: unknown;
   nolimit: unknown;
   lvl: unknown;
