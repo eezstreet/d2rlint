@@ -219,9 +219,9 @@ export class LinkedExcel extends Rule {
             caseSensitive !== false && !b.some((item2) => item2[bl] === val)
           ) {
             this.Warn(
-              `${item.GetFileName()}, line ${
-                i + 2
-              }: ${String(al)} '${val}' not found for '${key}'`,
+              `${item.GetFileName()}, line ${i + 2}: ${
+                String(al)
+              } '${val}' not found for '${key}'`,
             );
           } else if (
             !b.some((item2) =>
@@ -230,9 +230,9 @@ export class LinkedExcel extends Rule {
             )
           ) {
             this.Warn(
-              `${item.GetFileName()}, line ${
-                i + 2
-              }: ${String(al)} '${val}' not found for '${key}'`,
+              `${item.GetFileName()}, line ${i + 2}: ${
+                String(al)
+              } '${val}' not found for '${key}'`,
             );
           }
         }
@@ -1250,7 +1250,8 @@ export class LinkedExcel extends Rule {
         }
         if (
           record[column] === undefined ||
-          record[column] as unknown as string === ""
+          record[column] as unknown as string === "" ||
+          (record[column] as unknown as string).length === 0
         ) {
           if (optional) {
             return;
@@ -1579,7 +1580,8 @@ export class NumericBounds extends Rule {
       index: string,
       field: string,
     ) => string;
-    const makeComparer = (c: comparer, m: messager) =>
+    const makeComparer =
+      (c: comparer, m: messager) =>
       <T extends D2RExcelRecord, U extends keyof T = keyof T>(
         records: T[] | undefined,
         field: U,
@@ -1604,9 +1606,9 @@ export class NumericBounds extends Rule {
           if (asStr === "") {
             if (mustExist) {
               this.Warn(
-                `${record.GetFileName()}, line ${
-                  line + 2
-                }: '${String(field)}' is not filled in for '${indexStr}'`,
+                `${record.GetFileName()}, line ${line + 2}: '${
+                  String(field)
+                }' is not filled in for '${indexStr}'`,
               );
             }
             return;
@@ -1616,9 +1618,9 @@ export class NumericBounds extends Rule {
             numericAmt = parseInt(asStr);
           } catch {
             this.Warn(
-              `${record.GetFileName()}, line ${
-                line + 2
-              }: '${String(field)}' is not a number for '${indexStr}'`,
+              `${record.GetFileName()}, line ${line + 2}: '${
+                String(field)
+              }' is not a number for '${indexStr}'`,
             );
             return;
           }
@@ -1704,9 +1706,9 @@ export class NumericBounds extends Rule {
         if (asStr === "") {
           if (mustExist) {
             this.Warn(
-              `${record.GetFileName()}, line ${
-                line + 2
-              }: '${String(field)}' is not filled in for "${indexStr}'`,
+              `${record.GetFileName()}, line ${line + 2}: '${
+                String(field)
+              }' is not filled in for "${indexStr}'`,
             );
           }
           return;
@@ -1716,18 +1718,18 @@ export class NumericBounds extends Rule {
           numericAmt = parseInt(asStr);
         } catch {
           this.Warn(
-            `${record.GetFileName()}, line ${
-              line + 2
-            }: '${String(field)}' is not a number for '${indexStr}'`,
+            `${record.GetFileName()}, line ${line + 2}: '${
+              String(field)
+            }' is not a number for '${indexStr}'`,
           );
           return;
         }
 
         if (numericAmt < min || numericAmt > max) {
           this.Warn(
-            `${record.GetFileName()}, line ${
-              line + 2
-            }: '${String(field)}' is out of range for '${indexStr}', expected number between ${min} and ${max} (inclusive), found ${numericAmt}`,
+            `${record.GetFileName()}, line ${line + 2}: '${
+              String(field)
+            }' is out of range for '${indexStr}', expected number between ${min} and ${max} (inclusive), found ${numericAmt}`,
           );
         }
       });
