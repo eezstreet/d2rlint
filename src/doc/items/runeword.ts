@@ -151,7 +151,7 @@ export function DocRunewords(ws: Workspace): string {
   ];
 
   runes.forEach((rw) => {
-    if (rw.complete !== "1") {
+    if (rw.complete !== "1" || rw.skipInDocs === true) {
       return; // skip any incomplete runewords
     }
 

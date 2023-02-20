@@ -288,7 +288,7 @@ export function DocSets(ws: Workspace): string {
 
   const documented: DocumentedSet[] = [];
   sets.forEach((set) => {
-    if (set.name === "") {
+    if (set.name === "" || set.skipInDocs === true) {
       return;
     }
 

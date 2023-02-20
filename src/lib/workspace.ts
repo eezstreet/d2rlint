@@ -218,6 +218,9 @@ export abstract class D2RItemExcelRecord extends D2RExcelRecord {
   "2handedwclass": unknown;
   "hit class": unknown;
 
+  /// Stuff specific for documentation
+  skipInDocs: unknown;
+
   abstract GetOptionalFields(): (keyof D2RItemExcelRecord)[];
 }
 
@@ -418,6 +421,9 @@ export class D2RAutomagic extends D2RExcelRecord {
   etype5: unknown;
   multiply: unknown;
   add: unknown;
+
+  /// Internal use only
+  skipInDocs: unknown;
 
   GetFileName(): string {
     return "automagic.txt";
@@ -777,6 +783,9 @@ export class D2RCubemain extends D2RExcelRecord {
   firstLadderSeason: unknown;
   lastLadderSeason: unknown;
 
+  /// Internal use only
+  skipInDocs: unknown;
+
   GetFileName(): string {
     return "cubemain.txt";
   }
@@ -915,6 +924,9 @@ export class D2RGems extends D2RExcelRecord {
   shieldmod3param: unknown;
   shieldmod3min: unknown;
   shieldmod3max: unknown;
+
+  /// Internal use only
+  skipInDocs: unknown;
 
   GetFileName(): string {
     return "gems.txt";
@@ -1619,6 +1631,9 @@ export abstract class D2RMagicBase extends D2RExcelRecord {
   etype5: unknown;
   multiply: unknown;
   add: unknown;
+
+  /// Internal use only
+  skipInDocs: unknown;
 }
 
 export class D2RMagicPrefix extends D2RMagicBase {
@@ -2947,6 +2962,9 @@ export class D2RRunes extends D2RExcelRecord {
   firstLadderSeason: unknown;
   lastLadderSeason: unknown;
 
+  /// Internal use only
+  skipInDocs: unknown;
+
   GetFileName(): string {
     return "runes.txt";
   }
@@ -3120,6 +3138,9 @@ export class D2RSets extends D2RExcelRecord {
   fparam8: unknown;
   fmin8: unknown;
   fmax8: unknown;
+
+  /// Internal use only
+  skipInDocs: unknown;
 
   GetFileName(): string {
     return "sets.txt";
@@ -3879,6 +3900,9 @@ export class D2RUniqueItems extends D2RExcelRecord {
   max12: unknown;
   worldevent: unknown;
 
+  /// Internal use only
+  skipInDocs: unknown;
+
   GetFileName(): string {
     return "uniqueitems.txt";
   }
@@ -4036,6 +4060,14 @@ export interface Workspace {
 
   strings?: { [key: string]: D2RStringTable[] | undefined };
   json?: D2RJsonTables;
+
+  /// Docs only
+  armorCategories?: { [key: number]: string };
+  weaponCategories?: { [key: number]: string };
+  cubeCategories?: { [key: number]: string };
+  setCategories?: { [key: number]: string };
+  runeCategories?: { [key: number]: string };
+  uniqueCategories?: { [key: number]: string };
 }
 
 /**
@@ -4152,6 +4184,10 @@ function ParseExcel<T extends D2RExcelRecord = D2RExcelRecord>(
     const row = new type();
     headerFields.forEach((column) => {
       const { field, idx } = column;
+      if (field === "@skipdocs" && line[idx] !== "") {
+        // deno-lint-ignore no-explicit-any
+        (row as any)[field]["skipInDocs"] = true;
+      }
       const fieldName = field as keyof T;
       row[fieldName] = line[idx] as unknown as T[keyof T];
     });

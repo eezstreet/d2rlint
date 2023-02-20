@@ -115,7 +115,7 @@ export function DocUniques(ws: Workspace): string {
 
   const documented: DocumentedUniqueItem[] = [];
   uniqueItems.forEach((unique) => {
-    if (unique.code === "") {
+    if (unique.code === "" || unique.skipInDocs === true) {
       return; // just skip this unique item, it's probably a placeholder
     }
 

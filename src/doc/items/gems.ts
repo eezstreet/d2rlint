@@ -66,7 +66,7 @@ function DocumentGem(theGem: DocumentedGem, ws: Workspace): string {
   const item = [...armor, ...misc, ...weapons].find((it) =>
     it.code === gem.code
   );
-  if (item === undefined) {
+  if (item === undefined || item.skipInDocs === true) {
     return "";
   }
 
@@ -119,7 +119,7 @@ export function DocGems(ws: Workspace): string {
 
   const documented: DocumentedGem[] = [];
   gems.forEach((gem) => {
-    if (gem.code === "") {
+    if (gem.code === "" || gem.skipInDocs === true) {
       return;
     }
 

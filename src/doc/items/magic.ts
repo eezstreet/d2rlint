@@ -4,7 +4,12 @@ import {
   PropertyList,
   PropertyListToDescString,
 } from "../items.ts";
-import { GetItemTypeNames, GetItemTypes, StringForIndex, StringForIndexFormatted } from "../lib.ts";
+import {
+  GetItemTypeNames,
+  GetItemTypes,
+  StringForIndex,
+  StringForIndexFormatted,
+} from "../lib.ts";
 
 type DocumentedMagicAffix = {
   affix: D2RMagicBase;
@@ -48,7 +53,7 @@ function DocumentMagicAffix(doc: DocumentedMagicAffix, ws: Workspace): string {
   if (affix.level !== "") {
     const lvl = Number.parseInt(affix.level as string);
     if (!Number.isNaN(lvl)) {
-      lvltxt = StringForIndexFormatted(ws, 'strChatLevel', lvl);
+      lvltxt = StringForIndexFormatted(ws, "strChatLevel", lvl);
       lvltxt = `<span class="required-level">${lvltxt}</span>`;
     }
   }
@@ -56,7 +61,7 @@ function DocumentMagicAffix(doc: DocumentedMagicAffix, ws: Workspace): string {
   if (affix.levelreq !== "") {
     const lvl = Number.parseInt(affix.levelreq as string);
     if (!Number.isNaN(lvl)) {
-      reqlvltxt = StringForIndexFormatted(ws, 'ItemStats1p', lvl);
+      reqlvltxt = StringForIndexFormatted(ws, "ItemStats1p", lvl);
       reqlvltxt = `<span class="required-level">${reqlvltxt}</span>`;
     }
   }
@@ -110,7 +115,9 @@ export function DocMagic(ws: Workspace): string {
   magicPrefix.forEach((affix) => {
     if (
       affix.name === "" || affix.spawnable !== "1" ||
-      (affix.mod1code === "" && affix.mod2code === "" && affix.mod3code === "")
+      (affix.mod1code === "" && affix.mod2code === "" &&
+        affix.mod3code === "") ||
+      affix.skipInDocs === true
     ) {
       return;
     }
@@ -123,7 +130,9 @@ export function DocMagic(ws: Workspace): string {
   magicSuffix.forEach((affix) => {
     if (
       affix.name === "" || affix.spawnable !== "1" ||
-      (affix.mod1code === "" && affix.mod2code === "" && affix.mod3code === "")
+      (affix.mod1code === "" && affix.mod2code === "" &&
+        affix.mod3code === "") ||
+      affix.skipInDocs === true
     ) {
       return;
     }

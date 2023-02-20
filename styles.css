@@ -1,0 +1,124 @@
+.header-item:nth-of-type(n)::after {
+  content: ' |';
+  text-decoration: none;
+}
+
+.header-item:last-of-type::after {
+  content: '';
+}
+
+.header {
+  margin-left: 2em;
+}
+
+.page-header {
+  margin: 2em;
+}
+
+a.set-link, .set a.return-top {
+  color: #22FF22;
+}
+
+a.set-link:hover, .set a.return-top:hover {
+  color: #00CC00;
+}
+
+body {
+  background-color: #333333;
+  color: #FEFEFE;
+}
+
+.magic-affix, .unique-item, .runeword, .gem, .base-item, .set-item, .set {
+  /*display: inline-block;*/
+  margin: 30px;
+}
+
+.set-item {
+  margin-left: 0px;
+  margin-top: 0px;
+}
+
+.magic-affix span, .unique-item span, .runeword span, .gem span, .base-item span, .full-set-bonus span, .bonus-item span, .set-item span {
+  display: block;
+}
+
+.gem .gem-statlist {
+  display: block;
+}
+
+.gem .gem-statlist span, span .bonus-designator {
+  display: inline-block;
+}
+
+.rw-stat-list {
+  display: inline-block;
+  margin-right: 3em;
+}
+
+.affix-name, .stat, a .stat {
+  color: #84b7ff;
+}
+
+.ex-types {
+  color: #AAAAAA;
+}
+
+.unique-name, .unique-item .item-type, .runeword-name, .runeword-formula, .unique-item a, .set h2, .header-item {
+  color: #ecd2a8;
+}
+
+.unique-item a:hover, .header-item:hover {
+  color: #cab086;
+}
+
+.set h1, .set-item-name, .set-item-base {
+  color: #22FF22
+}
+
+.full-set-bonus, .partial-set-bonus, .partial-set-item-bonus {
+  color: rgb(0, 200, 0);
+}
+
+.partial-set-bonus .bonus-designator, .partial-set-item-bonus .bonus-designator {
+  color: #FEFEFE;
+}
+
+.cube-recipe {
+  margin: 3em;
+  width: 50%;
+}
+
+.cube-recipe table {
+  width: 100%;
+  border: 3px solid white;
+}
+
+.cube-recipe th {
+  padding: 10px;
+  background: #666666;
+}
+
+.cube-recipe td:nth-of-type(2n) {
+  background: #222222;
+}
+
+.cube-recipe span.cube-description {
+  display: block;
+  margin: auto;
+  text-align: center;
+  padding: 20px;
+}
+
+.cube-recipe td {
+  padding: 1em;
+}
+
+div.set h2 {
+  margin-top: 0.5em;
+  margin-bottom: 0.25em;
+}
+
+div.set h1 {
+  margin-top: 2em;
+  margin-bottom: 0.5em;
+}

@@ -203,6 +203,79 @@ have already been created within that directory.
 Remember that rules need to be imported within the `main.ts` otherwise they will
 not be called.
 
+## Advanced Feature: Automatic Mod Documentation
+
+This program also features the ability to automatically generate mod
+documentation for your mod in HTML format. It can generate data for the
+following:
+
+- Cube Recipes
+- Sets
+- Magic Affixes
+- Base Items
+- Runewords
+- Unique Items
+
+To use it, you'll need to enable it in the configuration and re-run the tool.
+
+There is the following:
+
+```json
+"generateDocs": false,
+```
+
+Change this to read:
+
+```json
+"generateDocs": true,
+```
+
+It'll automatically generate a "docs" folder, with HTML files that you can
+customize and edit at your whim.
+
+### CSS Styling
+
+By default, the mod documentation is totally unstyled and you'll want a CSS file
+to make everything look pretty. A 'styles.css' file is included in this repo.
+Move it into the 'docs' folder that is generated for a nice clean look to start
+out with. Feel free to customize as you want.
+
+### Hidden item properties
+
+By default, entries in itemstatcost.txt will throw warnings if there is no
+descfunc specified. To fix this problem, you can add a field to the
+`localizedStrings` section of the `docOptions` within the config. For a
+real-world scenario, consider Eastern Sun; every item in the mod has a hidden
+number of "tinker points" that are available for use. But since this property is
+hidden, it will throw a warning on every `item_tinkerflag2` that it comes
+across.
+
+To fix it in this case, we would add the following:
+
+```json
+"hiddenItemProperties": {
+  "item_tinkerflag2": "%d Tinker Points"
+},
+```
+
+### Hiding certain items
+
+We might want certain things to be hidden or discovered by the player, or we
+might want to just hide lots of superfluous recipes in the cube - there's sure
+to be a lot of them.
+
+In the following files, you can add a `@skipdocs` column. Anything with a '1' in
+this column will be hidden in the documentation:
+
+- armor.txt
+- misc.txt
+- weapons.txt
+- gems.txt
+- uniqueitems.txt
+- sets.txt
+- runes.txt
+- cubemain.txt
+
 ## Licensing
 
 This project is licensed under the GNU GPLv3 license.

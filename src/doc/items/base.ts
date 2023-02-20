@@ -54,7 +54,7 @@ function CreateDocumentedItems(
   ];
 
   items.forEach((item) => {
-    if (item.code === "" || item.code === "xxx") {
+    if (item.code === "" || item.code === "xxx" || item.skipInDocs === true) {
       return; // skip this item?
     }
 
@@ -82,7 +82,8 @@ function CreateDocumentedItems(
     if (item["auto prefix"] !== "") {
       // get all automagic rows that match the auto prefix, make a propertylist out of them and merge
       const matching = autoMagic.filter((am) =>
-        am.group === item["auto prefix"]
+        am.group === item["auto prefix"] &&
+        am.skipInDocs !== true
       );
       const propLists = matching.map((m) =>
         MakePropertyList(properties, m, autoMagicProps)
