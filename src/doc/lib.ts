@@ -14,6 +14,60 @@ const StringCache: {
   [key: string]: string;
 } = {};
 
+const ColorCodeClasses = {
+  "ÿc0": '<span class="white1">',
+  "ÿc=": '<span class="white2">',
+  "ÿc5": '<span class="gray1">',
+  "ÿcK": '<span class="gray2">',
+  "ÿcI": '<span class="gray3">',
+  "ÿc6": '<span class="black1">',
+  "ÿcM": '<span class="black2">',
+  "ÿcE": '<span class="lightred">',
+  "ÿc1": '<span class="red1">',
+  "ÿcU": '<span class="red2">',
+  "ÿcS": '<span class="darkred">',
+  "ÿc@": '<span class="orange1">',
+  "ÿc8": '<span class="orange2">',
+  "ÿcJ": '<span class="orange3">',
+  "ÿcL": '<span class="orange4">',
+  "ÿc7": '<span class="lightgold1">',
+  "ÿcH": '<span class="lightgold2">',
+  "ÿc4": '<span class="gold1">',
+  "ÿcD": '<span class="gold2">',
+  "ÿc9": '<span class="yellow1">',
+  "ÿcR": '<span class="yellow2">',
+  "ÿc2": '<span class="green1">',
+  "ÿcQ": '<span class="green2">',
+  "ÿcC": '<span class="green3">',
+  "ÿc<": '<span class="green4">',
+  "ÿcA": '<span class="darkgreen1">',
+  "ÿc:": '<span class="darkgreen2">',
+  "ÿcN": '<span class="turquoise">',
+  "ÿcT": '<span class="skyblue">',
+  "ÿcF": '<span class="lightblue1">',
+  "ÿcP": '<span class="lightblue2">',
+  "ÿc3": '<span class="blue1">',
+  "ÿcB": '<span class="blue2">',
+  "ÿcG": '<span class="lightpink">',
+  "ÿcO": '<span class="pink">',
+  "ÿc;": '<span class="purple">',
+};
+
+/**
+ * Given a string with color-codes, this converts the color codes into <span> elements.
+ */
+function ExtractColorCodes(str: string): string {
+  const foundElements = str.match(/ÿc([0-9A-Z=@<:;])/g);
+  if (foundElements === null) return str;
+  for (const element of foundElements) {
+    str = str.replace(
+      element, // deno-lint-ignore no-explicit-any
+      (ColorCodeClasses as any)[element],
+    );
+  }
+  return str;
+}
+
 /**
  * Finds a string (for a language)
  * @param ws - the workspace to look in
@@ -28,7 +82,7 @@ export function StringForIndex(ws: Workspace, index: string): string {
   }
 
   if (StringCache[index] !== undefined) {
-    return StringCache[index];
+    return ExtractColorCodes(StringCache[index]);
   }
 
   const config = GetConfig();
@@ -59,7 +113,7 @@ export function StringForIndex(ws: Workspace, index: string): string {
 
   if (result !== undefined) {
     StringCache[index] = result;
-    return result;
+    return ExtractColorCodes(result);
   }
   StringCache[index] = `<${index}>`;
   return `<${index}>`;

@@ -15,11 +15,11 @@
   margin: 2em;
 }
 
-a.set-link, .set a.return-top {
+a.set-link, .set a.return-top, .green1 {
   color: #22FF22;
 }
 
-a.set-link:hover, .set a.return-top:hover {
+a.set-link:hover, .set a.return-top:hover, .green2 {
   color: #00CC00;
 }
 
@@ -55,7 +55,7 @@ body {
   margin-right: 3em;
 }
 
-.affix-name, .stat, a .stat {
+.affix-name, .stat, a .stat, .blue1 {
   color: #84b7ff;
 }
 
@@ -63,11 +63,11 @@ body {
   color: #AAAAAA;
 }
 
-.unique-name, .unique-item .item-type, .runeword-name, .runeword-formula, .unique-item a, .set h2, .header-item {
+.unique-name, .unique-item .item-type, .runeword-name, .runeword-formula, .unique-item a, .set h2, .header-item, .gold1 {
   color: #ecd2a8;
 }
 
-.unique-item a:hover, .header-item:hover {
+.unique-item a:hover, .header-item:hover, .gold1:hover {
   color: #cab086;
 }
 
@@ -121,4 +121,34 @@ div.set h2 {
 div.set h1 {
   margin-top: 2em;
   margin-bottom: 0.5em;
+}
+
+/** Color codes */
+.white1 {
+  color: #FEFEFE;
+}
+
+.white2 {
+  color: #FEFEFE;
+  font-weight: bold;
+}
+
+.purple {
+  color: rgb(155, 66, 245);
+}
+
+.red1 {
+  color: rgb(200, 20, 20);
+}
+
+.yellow1 {
+  color: rgb(255, 255, 0);
+}
+
+.gray1 {
+  color: rgb(112, 112, 112);
+}
+
+.orange2 {
+  color: rgb(222, 152, 0);
 }

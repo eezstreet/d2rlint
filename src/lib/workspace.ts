@@ -4184,11 +4184,11 @@ function ParseExcel<T extends D2RExcelRecord = D2RExcelRecord>(
     const row = new type();
     headerFields.forEach((column) => {
       const { field, idx } = column;
-      if (field === "@skipdocs" && line[idx] !== "") {
-        // deno-lint-ignore no-explicit-any
-        (row as any)[field]["skipInDocs"] = true;
-      }
       const fieldName = field as keyof T;
+      if (field === "@skipdocs" && line[idx] !== "") {
+        (row[fieldName] as any) = true;
+      }
+
       row[fieldName] = line[idx] as unknown as T[keyof T];
     });
 
@@ -4259,11 +4259,6 @@ function LoadStrings(
           if (fileEntry.isFile && fileEntry.name.match(/\.json$/gi) !== null) {
             const fileName = fileEntry.name.replace(/(.*)\.json$/gi, "$1");
             entries[fileName] = ParseJsonFile<D2RStringTable[]>(fileEntry.path);
-            console.log(
-              `parsed ${
-                (entries[fileName] as unknown[]).length
-              } entries for ${fileEntry.name}`,
-            );
           }
         }
       }
@@ -4277,11 +4272,6 @@ function LoadStrings(
         if (fileEntry.isFile && fileEntry.name.match(/\.json$/gi) !== null) {
           const fileName = fileEntry.name.replace(/(.*)\.json$/gi, "$1");
           entries[fileName] = ParseJsonFile<D2RStringTable[]>(fileEntry.path);
-          console.log(
-            `parsed ${
-              (entries[fileName] as unknown[]).length
-            } entries for ${fileEntry.name}`,
-          );
         }
       }
     }
