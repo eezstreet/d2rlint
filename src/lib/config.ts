@@ -129,6 +129,7 @@ export interface SavedConfiguration {
         setNItems: string;
         setSpecificItem: string;
         setFull: string;
+        potentialSockets: string;
       };
     };
   };
@@ -291,6 +292,7 @@ function CreateDefaultConfig(): SavedConfiguration {
           setNItems: "(%d items)",
           setSpecificItem: "(only if %s is equipped)",
           setFull: "(Full set)",
+          potentialSockets: "%d potential sockets",
         },
       },
     },

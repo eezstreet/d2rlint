@@ -1,3 +1,4 @@
+import { GetConfig } from "../../lib/config.ts";
 import {
   D2RAutomagic,
   D2RItemExcelRecord,
@@ -176,19 +177,19 @@ function MakeSpellDesc(ws: Workspace, documented: DocumentedItem): string {
   const { item, tmog } = documented;
 
   const colorCssTable = [
-    "color-white",
-    "color-red",
-    "color-green",
-    "color-blue",
-    "color-lightgold",
-    "color-grey",
-    "color-black",
-    "color-darkgold",
-    "color-orange",
-    "color-yellow",
-    "color-darkgreen",
-    "color-purple",
-    "color-mediumgreen",
+    "white1",
+    "red1",
+    "green1",
+    "blue1",
+    "gold1",
+    "gray1",
+    "black",
+    "gold2",
+    "orange2",
+    "yellow1",
+    "green2",
+    "purple",
+    "green3",
   ];
 
   const colorNum = Number.parseInt(item.spelldesccolor as string);
@@ -223,6 +224,7 @@ function MakeSpellDesc(ws: Workspace, documented: DocumentedItem): string {
 
 function DocumentItem(ws: Workspace, documented: DocumentedItem): string {
   const { item, automagic } = documented;
+  const { itemTypes } = ws;
 
   let itemName = StringForIndex(ws, item.namestr as string);
   let _1handDmg = "";
@@ -235,6 +237,7 @@ function DocumentItem(ws: Workspace, documented: DocumentedItem): string {
   let reqdex = "";
   let ac = "";
   let block = "";
+  let sockets = "";
 
   if (
     item.mindam !== "" && item.mindam !== undefined && item.maxdam !== "" &&
@@ -361,7 +364,27 @@ function DocumentItem(ws: Workspace, documented: DocumentedItem): string {
     }
   }
 
-  // transmogrify ?
+  if (item.hasinv === "1") {
+    const gemsockets = Number.parseInt(item.gemsockets as string);
+    let _sockets = gemsockets;
+    if (!Number.isNaN(_sockets) && _sockets > 0) {
+      // gotta check the item type too
+      if (ws.itemTypes !== undefined) {
+        ws.itemTypes.forEach((rec) => {
+          if (rec.code === item.type || rec.code === item.type2) {
+            const sock1 = Number.parseInt(rec.maxsockets1 as string);
+            const sock2 = Number.parseInt(rec.maxsockets2 as string);
+            const sock3 = Number.parseInt(rec.maxsockets3 as string);
+            const max = Math.max(sock1, sock2, sock3);
+            _sockets = Math.min(max, gemsockets);
+          }
+        });
+      }
+
+      sockets = GetConfig().docOptions.localizedStrings.other.potentialSockets
+        .replace("%d", `${_sockets}`);
+    }
+  }
 
   // automagic stats
   const descStrings = PropertyListToDescString(automagic, ws).map((v, i) => {
@@ -384,6 +407,7 @@ function DocumentItem(ws: Workspace, documented: DocumentedItem): string {
   reqdex = makeHtmlInfo(reqdex);
   ac = makeHtmlInfo(ac);
   block = makeHtmlInfo(block);
+  sockets = makeHtmlInfo(sockets);
 
   // make spell desc
 
@@ -396,6 +420,7 @@ function DocumentItem(ws: Workspace, documented: DocumentedItem): string {
         ${_2handDmg}
         ${throwDmg}
         ${durability}
+        ${sockets}
         ${reqlvl}
         ${reqstr}
         ${reqdex}
