@@ -4186,7 +4186,7 @@ function ParseExcel<T extends D2RExcelRecord = D2RExcelRecord>(
       const { field, idx } = column;
       const fieldName = field as keyof T;
       if (field === "@skipdocs" && line[idx] !== "") {
-        (row[fieldName] as any) = true;
+        (row as any)["skipInDocs"] = true;
       }
 
       row[fieldName] = line[idx] as unknown as T[keyof T];
