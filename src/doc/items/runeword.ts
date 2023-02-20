@@ -195,10 +195,18 @@ export function DocRunewords(ws: Workspace): string {
       };
     });
 
+    const letters = gemItems.map((gi) => {
+      if (gi.letter as string === "") {
+        return StringForIndex(ws, gi.code as string);
+      } else {
+        return gi.letter as string;
+      }
+    });
+
     documented.push({
       wordMods,
       gemMods,
-      letters: gemItems.map((gi) => gi.letter as string),
+      letters,
       runes: rw,
       includedItemTypes,
       excludedItemTypes,

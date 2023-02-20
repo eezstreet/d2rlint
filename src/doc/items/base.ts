@@ -53,7 +53,7 @@ function CreateDocumentedItems(
     ["mod3code", "mod3param", "mod3min", "mod3max"],
   ];
 
-  items.forEach((item) => {
+  items.forEach((item, i) => {
     if (item.code === "" || item.code === "xxx" || item.skipInDocs === true) {
       return; // skip this item?
     }
