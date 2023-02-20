@@ -4068,6 +4068,7 @@ export interface Workspace {
   setCategories?: { [key: number]: string };
   runeCategories?: { [key: number]: string };
   uniqueCategories?: { [key: number]: string };
+  gemCategories?: { [key: number]: string };
 }
 
 /**

@@ -21,14 +21,16 @@ import {
 } from "../lib.ts";
 
 type DocumentedItem = {
+  categoryName?: string;
   automagic: PropertyList;
-  item: D2RItemExcelRecord;
-  tmog: D2RItemExcelRecord | undefined;
+  item?: D2RItemExcelRecord;
+  tmog?: D2RItemExcelRecord;
 };
 
 function CreateDocumentedItems(
   ws: Workspace,
   items: D2RItemExcelRecord[],
+  type: "armor" | "weapon" | "misc",
 ): DocumentedItem[] {
   const documented: DocumentedItem[] = [];
 
@@ -54,7 +56,26 @@ function CreateDocumentedItems(
     ["mod3code", "mod3param", "mod3min", "mod3max"],
   ];
 
+  ws.armorCategories = [];
+  ws.weaponCategories = [];
+
   items.forEach((item, i) => {
+    let itemNameStr = item.name as string;
+    if (itemNameStr !== undefined && itemNameStr.startsWith("@")) {
+      // start of a new section
+      itemNameStr = itemNameStr.replace("@", "");
+      if (type === "armor" && ws.armorCategories !== undefined) {
+        ws.armorCategories[i] = itemNameStr;
+      } else if (type === "weapon" && ws.weaponCategories !== undefined) {
+        ws.weaponCategories[i] = itemNameStr;
+      }
+      documented.push({
+        automagic: [],
+        categoryName: itemNameStr,
+      });
+      return;
+    }
+
     if (item.code === "" || item.code === "xxx" || item.skipInDocs === true) {
       return; // skip this item?
     }
@@ -176,6 +197,10 @@ function CreateDocumentedItems(
 function MakeSpellDesc(ws: Workspace, documented: DocumentedItem): string {
   const { item, tmog } = documented;
 
+  if (item === undefined) {
+    return "";
+  }
+
   const colorCssTable = [
     "white1",
     "red1",
@@ -222,10 +247,36 @@ function MakeSpellDesc(ws: Workspace, documented: DocumentedItem): string {
   }
 }
 
-function DocumentItem(ws: Workspace, documented: DocumentedItem): string {
-  const { item, automagic } = documented;
+function DocumentItem(
+  ws: Workspace,
+  documented: DocumentedItem,
+  type: "armor" | "weapons" | "misc",
+): string {
+  const { item, automagic, categoryName } = documented;
   const { itemTypes } = ws;
 
+  if (item === undefined) {
+    if (type === "armor" && ws.armorCategories !== undefined) {
+      const keys = Object.keys(ws.armorCategories);
+      const ac = ws.armorCategories;
+      const links = keys.map((key) =>
+        `<a href="#${ac[Number.parseInt(key)]}" class="anchor-link">${
+          ac[Number.parseInt(key)]
+        }</a>`
+      ).join("");
+      return `<h3 class="subheader" id="${categoryName}">${categoryName}</h3><p class="anchor-container"><a href="#" class="anchor-link">Return to Top</a>${links}</p>`;
+    } else if (type === "weapons" && ws.weaponCategories !== undefined) {
+      const keys = Object.keys(ws.weaponCategories);
+      const wc = ws.weaponCategories;
+      const links = keys.map((key) =>
+        `<a href="#${wc[Number.parseInt(key)]}" class="anchor-link">${
+          wc[Number.parseInt(key)]
+        }</a>`
+      ).join("");
+      return `<h3 class="subheader" id="${categoryName}">${categoryName}</h3><p class="anchor-container"><a href="#" class="anchor-link">Return to Top</a>${links}</p>`;
+    }
+    return `<h3 class="subheader" id="${categoryName}">${categoryName}</h3><p class="anchor-container"><a href="#" class="anchor-link">Return to Top</a></p>`;
+  }
   let itemName = StringForIndex(ws, item.namestr as string);
   let _1handDmg = "";
   let _2handDmg = "";
@@ -366,23 +417,9 @@ function DocumentItem(ws: Workspace, documented: DocumentedItem): string {
 
   if (item.hasinv === "1") {
     const gemsockets = Number.parseInt(item.gemsockets as string);
-    let _sockets = gemsockets;
-    if (!Number.isNaN(_sockets) && _sockets > 0) {
-      // gotta check the item type too
-      if (ws.itemTypes !== undefined) {
-        ws.itemTypes.forEach((rec) => {
-          if (rec.code === item.type || rec.code === item.type2) {
-            const sock1 = Number.parseInt(rec.maxsockets1 as string);
-            const sock2 = Number.parseInt(rec.maxsockets2 as string);
-            const sock3 = Number.parseInt(rec.maxsockets3 as string);
-            const max = Math.max(sock1, sock2, sock3);
-            _sockets = Math.min(max, gemsockets);
-          }
-        });
-      }
-
+    if (!Number.isNaN(gemsockets) && gemsockets > 0) {
       sockets = GetConfig().docOptions.localizedStrings.other.potentialSockets
-        .replace("%d", `${_sockets}`);
+        .replace("%d", `${gemsockets}`);
     }
   }
 
@@ -439,8 +476,8 @@ export function DocArmor(ws: Workspace): string {
     return '<h1 class="error">armor.txt not found</h1>';
   }
 
-  const documented = CreateDocumentedItems(ws, armor);
-  return documented.map((doc) => DocumentItem(ws, doc)).join("\r\n");
+  const documented = CreateDocumentedItems(ws, armor, "armor");
+  return documented.map((doc) => DocumentItem(ws, doc, "armor")).join("\r\n");
 }
 
 type DocumentedWeapon = {};
@@ -452,8 +489,8 @@ export function DocWeapons(ws: Workspace): string {
     return '<h1 class="error">weapons.txt not found</h1>';
   }
 
-  const documented = CreateDocumentedItems(ws, weapons);
-  return documented.map((doc) => DocumentItem(ws, doc)).join("\r\n");
+  const documented = CreateDocumentedItems(ws, weapons, "weapon");
+  return documented.map((doc) => DocumentItem(ws, doc, "weapons")).join("\r\n");
 }
 
 type DocumentedMiscItem = {};
@@ -465,6 +502,6 @@ export function DocMisc(ws: Workspace): string {
     return '<h1 class="error">misc.txt not found</h1>';
   }
 
-  const documented = CreateDocumentedItems(ws, misc);
-  return documented.map((doc) => DocumentItem(ws, doc)).join("\r\n");
+  const documented = CreateDocumentedItems(ws, misc, "misc");
+  return documented.map((doc) => DocumentItem(ws, doc, "misc")).join("\r\n");
 }

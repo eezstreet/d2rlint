@@ -18,7 +18,8 @@ type DocumentedSetItem = {
 };
 
 type DocumentedSet = {
-  set: D2RSets;
+  set?: D2RSets;
+  categoryName?: string;
   items: DocumentedSetItem[];
   fullSetBonus: PropertyList;
 };
@@ -183,7 +184,22 @@ function DocumentSetItems(ws: Workspace, theSet: DocumentedSetItem[]): string {
 }
 
 function DocumentSet(ws: Workspace, theSet: DocumentedSet): string {
-  const { set, items, fullSetBonus } = theSet;
+  const { set, items, fullSetBonus, categoryName } = theSet;
+
+  if (set === undefined) {
+    if (ws.setCategories !== undefined) {
+      const keys = Object.keys(ws.setCategories);
+      const sc = ws.setCategories;
+      const links = keys.map((key) =>
+        `<a href="#${sc[Number.parseInt(key)]}" class="anchor-link">${
+          sc[Number.parseInt(key)]
+        }</a>`
+      ).join("");
+      return `<h3 class="subheader" id="${categoryName}">${categoryName}</h3><p class="anchor-container"><a href="#" class="anchor-link">Return to Top</a>${links}</p>`;
+    }
+    return `<h3 class="subheader" id="${categoryName}">${categoryName}</h3>`;
+  }
+
   const setName = StringForIndex(ws, set.name as string);
   const config = GetConfig();
   const { properties } = ws;
@@ -256,6 +272,8 @@ function DocumentSet(ws: Workspace, theSet: DocumentedSet): string {
 export function DocSets(ws: Workspace): string {
   const { sets, setItems, properties, armor, weapons, misc } = ws;
 
+  ws.setCategories = [];
+
   if (sets === undefined || setItems === undefined) {
     return '<h1 class="error">setitems.txt and/or sets.txt not found</h1>';
   }
@@ -287,7 +305,16 @@ export function DocSets(ws: Workspace): string {
   ];
 
   const documented: DocumentedSet[] = [];
-  sets.forEach((set) => {
+  sets.forEach((set, i) => {
+    let nameAsStr = set.name as string;
+    if (nameAsStr !== undefined && nameAsStr.startsWith("@")) {
+      nameAsStr = nameAsStr.replace("@", "");
+      if (ws.setCategories !== undefined) {
+        ws.setCategories[i] = nameAsStr;
+      }
+      documented.push({ categoryName: nameAsStr, items: [], fullSetBonus: [] });
+      return;
+    }
     if (set.name === "" || set.skipInDocs === true) {
       return;
     }
@@ -309,9 +336,11 @@ export function DocSets(ws: Workspace): string {
     });
   });
 
-  const setHeader = documented.map((set) => `
-    <a class="set-link" href="#${set.set.index}">${
-    StringForIndex(ws, set.set.index as string)
+  const setHeader = documented.filter((set) => set.set !== undefined).map((
+    set,
+  ) => `
+    <a class="set-link" href="#${(set as any).set.index}">${
+    StringForIndex(ws, (set as any).set.index as string)
   }</a>
   `).join(" | ");
 

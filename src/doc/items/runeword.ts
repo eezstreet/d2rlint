@@ -20,13 +20,14 @@ import {
 import { gemApplyTypeStrLookup, gemProps } from "./gems.ts";
 
 type DocumentedRuneword = {
+  categoryName?: string;
   wordMods: PropertyList;
   letters: string[];
   gemMods: {
     gemApplyType: number;
     mods: PropertyList;
   }[];
-  runes: D2RRunes;
+  runes?: D2RRunes;
   includedItemTypes: D2RItemTypes[];
   excludedItemTypes: D2RItemTypes[];
 };
@@ -39,7 +40,22 @@ function DocumentRuneword(runeword: DocumentedRuneword, ws: Workspace): string {
     includedItemTypes,
     excludedItemTypes,
     letters,
+    categoryName,
   } = runeword;
+
+  if (runes === undefined) {
+    if (ws.runeCategories !== undefined) {
+      const keys = Object.keys(ws.runeCategories);
+      const rc = ws.runeCategories;
+      const links = keys.map((key) =>
+        `<a href="#${rc[Number.parseInt(key)]}" class="anchor-link">${
+          rc[Number.parseInt(key)]
+        }</a>`
+      ).join("");
+      return `<h3 class="subheader" id="${categoryName}">${categoryName}</h3><p class="anchor-container"><a href="#" class="anchor-link">Return to Top</a>${links}</p>`;
+    }
+    return `<h3 class="subheader" id="${categoryName}">${categoryName}</h3>`;
+  }
 
   const rwName = StringForIndex(ws, runes.name as string);
   const includedTypes = GetItemTypeNames(includedItemTypes);
@@ -103,6 +119,8 @@ function DocumentRuneword(runeword: DocumentedRuneword, ws: Workspace): string {
 export function DocRunewords(ws: Workspace): string {
   const { runes, misc, gems, properties } = ws;
 
+  ws.runeCategories = [];
+
   if (runes === undefined || misc === undefined) {
     return '<h1 class="error">runes.txt and/or misc.txt not found</h1>';
   }
@@ -150,7 +168,23 @@ export function DocRunewords(ws: Workspace): string {
     "rune6",
   ];
 
-  runes.forEach((rw) => {
+  runes.forEach((rw, i) => {
+    let nameAsStr = rw.name as string;
+    if (nameAsStr !== undefined && nameAsStr.startsWith("@")) {
+      nameAsStr = nameAsStr.replace("@", "");
+      if (ws.runeCategories !== undefined) {
+        ws.runeCategories[i] = nameAsStr;
+      }
+      documented.push({
+        categoryName: nameAsStr,
+        wordMods: [],
+        letters: [],
+        gemMods: [],
+        includedItemTypes: [],
+        excludedItemTypes: [],
+      });
+      return;
+    }
     if (rw.complete !== "1" || rw.skipInDocs === true) {
       return; // skip any incomplete runewords
     }

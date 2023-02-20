@@ -63,11 +63,11 @@ body {
   color: #AAAAAA;
 }
 
-.unique-name, .unique-item .item-type, .runeword-name, .runeword-formula, .unique-item a, .set h2, .header-item, .gold1 {
+.unique-name, .unique-item .item-type, .runeword-name, .runeword-formula, .unique-item a, .set h2, .header-item, .gold1, .anchor-link {
   color: #ecd2a8;
 }
 
-.unique-item a:hover, .header-item:hover, .gold1:hover {
+.unique-item a:hover, .header-item:hover, .gold1:hover, .anchor-link:hover {
   color: #cab086;
 }
 
@@ -151,4 +151,29 @@ div.set h1 {
 
 .orange2 {
   color: rgb(222, 152, 0);
+}
+
+/** Subheaders */
+h3.subheader {
+  margin-bottom: 0.2em;
+  margin-left: 2em;
+}
+
+.anchor-link {
+  font-size: 0.8em;
+  margin-right: 0.8em;
+  margin-top: 0;
+}
+
+.anchor-link::before {
+  content: '[';
+}
+
+.anchor-link::after {
+  content: ']';
+}
+
+.anchor-container {
+  margin-top: 0;
+  margin-left: 2em;
 }

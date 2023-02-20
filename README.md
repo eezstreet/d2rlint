@@ -258,7 +258,7 @@ To fix it in this case, we would add the following:
 },
 ```
 
-### Hiding certain items
+### Hiding data from the docs
 
 We might want certain things to be hidden or discovered by the player, or we
 might want to just hide lots of superfluous recipes in the cube - there's sure
@@ -275,6 +275,26 @@ this column will be hidden in the documentation:
 - sets.txt
 - runes.txt
 - cubemain.txt
+
+### Section Headers
+
+Let's say you're a huge mod with thousands of unique items. Creating a list of a
+thousand items to scroll through is very tedious; you can break it up by using
+sections.
+
+Making your docs have sections is really easy. All you need to do is add a row
+in your excel file, with the first cell starting with a '@'. For example,
+creating a cell called '@Helmets' will show a section titled "Helmets" and add
+that to the list of section headers. It's really that simple.
+
+You can do this in the following files:
+
+- armor.txt
+- weapons.txt
+- gems.txt
+- uniqueitems.txt
+- sets.txt
+- runes.txt
 
 ## Licensing
 

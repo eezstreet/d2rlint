@@ -13,8 +13,9 @@ import {
 import { StringForIndex } from "../lib.ts";
 
 type DocumentedUniqueItem = {
-  unique: D2RUniqueItems;
-  base: D2RArmor | D2RWeapons | D2RMisc | undefined;
+  categoryName?: string;
+  unique?: D2RUniqueItems;
+  base?: D2RArmor | D2RWeapons | D2RMisc;
   baseType: "armor" | "weapons" | "misc";
   mods: PropertyList;
 };
@@ -25,7 +26,21 @@ type DocumentedUniqueItem = {
  * @param ws - the workspace we are working with
  */
 function DocumentUniqueItem(item: DocumentedUniqueItem, ws: Workspace): string {
-  const { base, mods, unique, baseType } = item;
+  const { base, mods, unique, baseType, categoryName } = item;
+
+  if (unique === undefined) {
+    if (ws.uniqueCategories !== undefined) {
+      const keys = Object.keys(ws.uniqueCategories);
+      const uc = ws.uniqueCategories;
+      const links = keys.map((key) =>
+        `<a href="#${uc[Number.parseInt(key)]}" class="anchor-link">${
+          uc[Number.parseInt(key)]
+        }</a>`
+      ).join("");
+      return `<h3 class="subheader" id="${categoryName}">${categoryName}</h3><p class="anchor-container"><a href="#" class="anchor-link">Return to Top</a>${links}</p>`;
+    }
+    return `<h3 class="subheader" id="${categoryName}">${categoryName}</h3>`;
+  }
 
   const descStrings = PropertyListToDescString(mods, ws).map((v) =>
     `<span class="stat">${v}</span>`
@@ -81,6 +96,8 @@ function DocumentUniqueItem(item: DocumentedUniqueItem, ws: Workspace): string {
 export function DocUniques(ws: Workspace): string {
   const { uniqueItems, properties, weapons, armor, misc } = ws;
 
+  ws.uniqueCategories = [];
+
   if (uniqueItems === undefined) {
     return '<h1 class="error">uniqueitems.txt not found</h1>';
   }
@@ -114,7 +131,15 @@ export function DocUniques(ws: Workspace): string {
   ];
 
   const documented: DocumentedUniqueItem[] = [];
-  uniqueItems.forEach((unique) => {
+  uniqueItems.forEach((unique, i) => {
+    let nameAsStr = unique.index as string;
+    if (nameAsStr.startsWith("@")) {
+      nameAsStr = nameAsStr.replace("@", "");
+      if (ws.uniqueCategories !== undefined) {
+        ws.uniqueCategories[i] = nameAsStr;
+      }
+      documented.push({ categoryName: nameAsStr, baseType: "misc", mods: [] });
+    }
     if (unique.code === "" || unique.skipInDocs === true) {
       return; // just skip this unique item, it's probably a placeholder
     }

@@ -131,7 +131,7 @@ export class ExcelColumns extends Rule {
 
     // Warn if there are non-standard columns in use
     headerFields.forEach((field) => {
-      if (!keys.includes(field.field) && field.field !== "@skipdocs") {
+      if (!keys.includes(field.field) && !field.field.startsWith("@")) {
         this.Warn(
           `${generic.GetFileName()} - non-standard column '${field.field}' found`,
         );

@@ -10,7 +10,8 @@ type DocumentedGem = {
   helmMods: PropertyList;
   weaponMods: PropertyList;
   shieldMods: PropertyList;
-  gem: D2RGems;
+  gem?: D2RGems;
+  categoryName?: string;
 };
 
 export const gemWeaponProps: [
@@ -56,8 +57,22 @@ export const gemApplyTypeStrLookup: string[] = [
 export const gemProps = [gemWeaponProps, gemHelmProps, gemShieldProps];
 
 function DocumentGem(theGem: DocumentedGem, ws: Workspace): string {
-  const { gem, helmMods, weaponMods, shieldMods } = theGem;
+  const { gem, helmMods, weaponMods, shieldMods, categoryName } = theGem;
   const { armor, misc, weapons } = ws;
+
+  if (gem === undefined) {
+    if (ws.gemCategories !== undefined) {
+      const keys = Object.keys(ws.gemCategories);
+      const gc = ws.gemCategories;
+      const links = keys.map((key) =>
+        `<a href="#${gc[Number.parseInt(key)]}" class="anchor-link">${
+          gc[Number.parseInt(key)]
+        }</a>`
+      ).join("");
+      return `<h3 class="subheader" id="${categoryName}">${categoryName}</h3><p class="anchor-container"><a href="#" class="anchor-link">Return to Top</a>${links}</p>`;
+    }
+    return `<h3 class="subheader" id="${categoryName}">${categoryName}</h3>`;
+  }
 
   if (armor === undefined || misc === undefined || weapons === undefined) {
     return "";
@@ -109,6 +124,8 @@ function DocumentGem(theGem: DocumentedGem, ws: Workspace): string {
 export function DocGems(ws: Workspace): string {
   const { gems, misc, properties } = ws;
 
+  ws.gemCategories = [];
+
   if (gems === undefined || misc === undefined) {
     return '<h1 class="error">gems.txt and/or misc.txt not found</h1>';
   }
@@ -118,7 +135,21 @@ export function DocGems(ws: Workspace): string {
   }
 
   const documented: DocumentedGem[] = [];
-  gems.forEach((gem) => {
+  gems.forEach((gem, i) => {
+    let gemNameStr = gem.name as string;
+    if (gemNameStr !== undefined && gemNameStr.startsWith("@")) {
+      // start of a new section
+      gemNameStr = gemNameStr.replace("@", "");
+      if (ws.gemCategories !== undefined) {
+        ws.gemCategories[i] = gemNameStr;
+      }
+      documented.push({
+        weaponMods: [],
+        helmMods: [],
+        shieldMods: [],
+        categoryName: gemNameStr,
+      });
+    }
     if (gem.code === "" || gem.skipInDocs === true) {
       return;
     }
