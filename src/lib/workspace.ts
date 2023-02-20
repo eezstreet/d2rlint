@@ -1,5 +1,6 @@
 import * as fs from "https://deno.land/std@0.130.0/fs/mod.ts";
 import * as path from "https://deno.land/std/path/mod.ts";
+import { parse } from "https://deno.land/std/encoding/jsonc.ts";
 import { ExcelColumns } from "../rules/basic.ts";
 
 /**
@@ -4086,11 +4087,14 @@ export function GetAllWorkspaceExcelFiles(
  * @returns {undefined} when no file is found
  * @returns {string} with the text of the file
  */
-function FindExcelOrJson(location: string, file: string): string | undefined {
+function FindExcelOrJson(
+  location: string,
+  file: string,
+): BufferSource | undefined {
   const lowercased = file.toLocaleLowerCase();
   for (const entry of fs.walkSync(location)) {
     if (entry.isFile && entry.name.toLowerCase() === lowercased) {
-      return Deno.readTextFileSync(entry.path);
+      return Deno.readFileSync(entry.path);
     }
   }
   return undefined;
@@ -4120,7 +4124,9 @@ function ParseExcel<T extends D2RExcelRecord = D2RExcelRecord>(
     return undefined;
   }
 
-  const lines = fileText.split(/(?:\r\n|\n)/gi);
+  const decoder = new TextDecoder("ascii");
+  const decoded = decoder.decode(fileText);
+  const lines = decoded.split(/(?:\r\n|\n)/gi);
   if (lines.length < 2) {
     console.log(
       `WARNING: No data in ${file}, data will be incomplete or incorrect!`,
@@ -4155,28 +4161,6 @@ function ParseExcel<T extends D2RExcelRecord = D2RExcelRecord>(
 }
 
 /**
- * Removes C-style comments (\/* *\/ and //) from a string.
- * @param str - the JSON string to manipulate
- * @returns a JSON string without comments
- */
-function StripComments(str: string): string {
-  return str.replaceAll(
-    // remove all C-style comments
-    /(?:\/\/(?:\\\n|[^\n])*\n)|(?:\/\*[\s\S]*?\*\/)|((?:R"([^(\\\s]{0,16})\([^)]*\)\2")|(?:@"[^"]*?")|(?:"(?:\?\?'|\\\\|\\"|\\\n|[^"])*?")|(?:'(?:\\\\|\\'|\\\n|[^'])*?'))/g,
-    "$1",
-  ).replaceAll(
-    // remove all whitespace
-    "\s",
-    "",
-  ).replaceAll(
-    // remove any trailing commas
-    /\,(?!\s*?[\{\[\"\'\w])/g,
-    "",
-    // remove any UTF-16 or filesystem artifacts
-  ).trim();
-}
-
-/**
  * Attempts to parse some JSON text (with C comments)
  * @param fileText - the text of the file
  * @param fileName - the name of the file (used for putting out a warning if the file could not be parsed)
@@ -4184,16 +4168,16 @@ function StripComments(str: string): string {
  * @returns {undefined} if the text is invalid
  */
 function ParseJsonText<T>(
-  fileText: string | undefined,
+  fileText: BufferSource | undefined,
   fileName: string,
 ): T | undefined {
   if (fileText === undefined) {
     return undefined;
   }
 
-  const stripped = StripComments(fileText);
+  const decoder = new TextDecoder("utf-8");
   try {
-    return JSON.parse(stripped);
+    return parse(decoder.decode(fileText)) as T;
   } catch (e) {
     console.log(`Couldn't parse ${fileName}: ${e.message}`);
   }
@@ -4211,7 +4195,7 @@ function ParseJsonFile<T>(filePath: string | undefined): T | undefined {
   }
 
   try {
-    const fileText = Deno.readTextFileSync(filePath);
+    const fileText = Deno.readFileSync(filePath);
     return ParseJsonText<T>(fileText, filePath);
   } catch (e) {
     console.log(`Couldn't load ${filePath}: ${e.message}`);
@@ -4239,6 +4223,11 @@ function LoadStrings(
           if (fileEntry.isFile && fileEntry.name.match(/\.json$/gi) !== null) {
             const fileName = fileEntry.name.replace(/(.*)\.json$/gi, "$1");
             entries[fileName] = ParseJsonFile<D2RStringTable[]>(fileEntry.path);
+            console.log(
+              `parsed ${
+                (entries[fileName] as unknown[]).length
+              } entries for ${fileEntry.name}`,
+            );
           }
         }
       }
@@ -4252,6 +4241,11 @@ function LoadStrings(
         if (fileEntry.isFile && fileEntry.name.match(/\.json$/gi) !== null) {
           const fileName = fileEntry.name.replace(/(.*)\.json$/gi, "$1");
           entries[fileName] = ParseJsonFile<D2RStringTable[]>(fileEntry.path);
+          console.log(
+            `parsed ${
+              (entries[fileName] as unknown[]).length
+            } entries for ${fileEntry.name}`,
+          );
         }
       }
     }
