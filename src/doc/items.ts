@@ -1,3 +1,4 @@
+import { GetConfig } from "../lib/config.ts";
 import {
   D2RExcelRecord,
   D2RItemStatCost,
@@ -255,7 +256,7 @@ export function PropertyListToDescString(
 
     switch (descfunc) {
       case 11: // self-repair
-       {
+      {
         const repairSpeed = Number.parseInt(param);
         const replacement = Math.round(
           repairSpeed > 100 ? repairSpeed / 100 : 100 / repairSpeed,
@@ -386,8 +387,20 @@ export function PropertyListToDescString(
           statName === "state" || statName === "fade"
         ) {
           return ""; // hacky.
+        } else {
+          const config = GetConfig();
+          const hiddenProps =
+            config.docOptions.localizedStrings.hiddenItemProperties;
+          if (hiddenProps[statName] !== undefined) {
+            const minmaxstr = Number.isNaN(min) || Number.isNaN(max)
+              ? param
+              : min !== max
+              ? `${min}-${max}`
+              : `${min}`;
+            return hiddenProps[statName].replace(/%d/, minmaxstr);
+          }
+          return `author needs to handle case ${descfunc} for ${statName}`;
         }
-        return `author needs to handle case ${descfunc} for ${statName}`;
     }
   };
 

@@ -62,6 +62,9 @@ export interface SavedConfiguration {
         partialSetBonus: string;
         setItems: string;
       };
+      hiddenItemProperties: {
+        [key: string]: string;
+      };
       cubeInputQualifiers: {
         qty: string;
         low: string;
@@ -177,6 +180,7 @@ function CreateDefaultConfig(): SavedConfiguration {
           gems: "Gems",
           misc: "Misc Items",
         },
+        hiddenItemProperties: {},
         subPageNames: {
           magicPrefixes: "Magic Prefixes",
           magicSuffixes: "Magic Suffixes",
