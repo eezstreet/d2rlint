@@ -35,12 +35,12 @@ function WriteMetadataUniqueWeapons(ws: Workspace): string {
   const keys = Object.keys(weaponTypeMap);
   const groups = keys.map((k) => {
     const group = weaponTypeMap[k].sort((a, b) => a.lvl - b.lvl).map((itm) =>
-      `    <Item Index="${itm.index}" Name="${itm.name}" Lvl="${itm.lvl}" />`
+      `      <Item Index="${itm.index}" Name="${itm.name}" Lvl="${itm.lvl}" />`
     ).join("\n");
-    return `  <Group Index="${k}">\n${group}\n  </Group>`;
+    return `    <Group Index="${k}">\n${group}\n    </Group>`;
   }).join("\n");
 
-  return `<Group Name="Unique-Weapon">\n${groups}\n</Group>`;
+  return `  <Group Name="Unique-Weapon">\n${groups}\n  </Group>`;
 }
 
 function WriteMetadataUniqueArmor(ws: Workspace): string {
@@ -74,12 +74,12 @@ function WriteMetadataUniqueArmor(ws: Workspace): string {
   const keys = Object.keys(weaponTypeMap);
   const groups = keys.map((k) => {
     const group = weaponTypeMap[k].sort((a, b) => a.lvl - b.lvl).map((itm) =>
-      `    <Item Index="${itm.index}" Name="${itm.name}" Lvl="${itm.lvl}" />`
+      `      <Item Index="${itm.index}" Name="${itm.name}" Lvl="${itm.lvl}" />`
     ).join("\n");
-    return `  <Group Index="${k}">\n${group}\n  </Group>`;
+    return `    <Group Index="${k}">\n${group}\n    </Group>`;
   }).join("\n");
 
-  return `<Group Name="Unique-Armor">\n${groups}\n</Group>`;
+  return `  <Group Name="Unique-Armor">\n${groups}\n  </Group>`;
 }
 
 function WriteMetadataUniqueMisc(ws: Workspace): string {
@@ -113,12 +113,12 @@ function WriteMetadataUniqueMisc(ws: Workspace): string {
   const keys = Object.keys(weaponTypeMap);
   const groups = keys.map((k) => {
     const group = weaponTypeMap[k].sort((a, b) => a.lvl - b.lvl).map((itm) =>
-      `    <Item Index="${itm.index}" Name="${itm.name}" Lvl="${itm.lvl}" />`
+      `      <Item Index="${itm.index}" Name="${itm.name}" Lvl="${itm.lvl}" />`
     ).join("\n");
-    return `  <Group Index="${k}">\n${group}\n  </Group>`;
+    return `    <Group Index="${k}">\n${group}\n    </Group>`;
   }).join("\n");
 
-  return `<Group Name="Unique-Misc">\n${groups}\n</Group>`;
+  return `  <Group Name="Unique-Misc">\n${groups}\n  </Group>`;
 }
 
 function WriteMetadataSetWeapons(ws: Workspace): string {
@@ -153,12 +153,12 @@ function WriteMetadataSetWeapons(ws: Workspace): string {
   const keys = Object.keys(weaponTypeMap);
   const groups = keys.map((k) => {
     const group = weaponTypeMap[k].sort((a, b) => a.lvl - b.lvl).map((itm) =>
-      `    <Item Index="${itm.index}" Name="${itm.name}" Lvl="${itm.lvl}" />`
+      `      <Item Index="${itm.index}" Name="${itm.name}" Lvl="${itm.lvl}" />`
     ).join("\n");
-    return `  <Group Index="${k}">\n${group}\n  </Group>`;
+    return `    <Group Index="${k}">\n${group}\n    </Group>`;
   }).join("\n");
 
-  return `<Group Name="Set-Weapon">\n${groups}\n</Group>`;
+  return `  <Group Name="Set-Weapon">\n${groups}\n  </Group>`;
 }
 
 function WriteMetadataSetArmor(ws: Workspace): string {
@@ -192,12 +192,12 @@ function WriteMetadataSetArmor(ws: Workspace): string {
   const keys = Object.keys(weaponTypeMap);
   const groups = keys.map((k) => {
     const group = weaponTypeMap[k].sort((a, b) => a.lvl - b.lvl).map((itm) =>
-      `    <Item Index="${itm.index}" Name="${itm.name}" Lvl="${itm.lvl}" />`
+      `      <Item Index="${itm.index}" Name="${itm.name}" Lvl="${itm.lvl}" />`
     ).join("\n");
-    return `  <Group Index="${k}">\n${group}\n  </Group>`;
+    return `    <Group Index="${k}">\n${group}\n    </Group>`;
   }).join("\n");
 
-  return `<Group Name="Set-Armor">\n${groups}\n</Group>`;
+  return `  <Group Name="Set-Armor">\n${groups}\n  </Group>`;
 }
 
 function WriteMetadataSetMisc(ws: Workspace): string {
@@ -231,23 +231,25 @@ function WriteMetadataSetMisc(ws: Workspace): string {
   const keys = Object.keys(weaponTypeMap);
   const groups = keys.map((k) => {
     const group = weaponTypeMap[k].sort((a, b) => a.lvl - b.lvl).map((itm) =>
-      `    <Item Index="${itm.index}" Name="${itm.name}" Lvl="${itm.lvl}" />`
+      `      <Item Index="${itm.index}" Name="${itm.name}" Lvl="${itm.lvl}" />`
     ).join("\n");
-    return `  <Group Index="${k}">\n${group}\n  </Group>`;
+    return `    <Group Index="${k}">\n${group}\n    </Group>`;
   }).join("\n");
 
-  return `<Group Name="Set-Misc">\n${groups}\n</Group>`;
+  return `  <Group Name="Set-Misc">\n${groups}\n  </Group>`;
 }
 
 export function GenerateMetadata(ws: Workspace) {
   const outputSections = [
     WriteMetadataHeader(),
+    "<Groups>",
     WriteMetadataUniqueWeapons(ws),
     WriteMetadataUniqueArmor(ws),
     WriteMetadataUniqueMisc(ws),
     WriteMetadataSetWeapons(ws),
     WriteMetadataSetArmor(ws),
     WriteMetadataSetMisc(ws),
+    "</Groups>",
   ].join("\n");
   Deno.writeTextFileSync("metadata.xml", outputSections);
 }
