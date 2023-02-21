@@ -1018,14 +1018,15 @@ export class D2RHireling extends D2RExcelRecord {
 }
 
 // Added in Diablo II: Resurrected 2.5
-export class D2RHirelingDesc extends D2RExcelRecord {
+// Removed in Diablo II: Resurrected 2.6
+/*export class D2RHirelingDesc extends D2RExcelRecord {
   id: unknown;
   alternateVoice: unknown;
 
   GetFileName(): string {
     return "hiredesc.txt";
   }
-}
+}*/
 
 export class D2RHitclass extends D2RExcelRecord {
   "hit class": unknown;
@@ -3991,7 +3992,6 @@ export interface Workspace {
   gamble?: D2RGamble[];
   gems?: D2RGems[];
   hireling?: D2RHireling[];
-  hirelingDesc?: D2RHirelingDesc[];
   hitclass?: D2RHitclass[];
   inventory?: D2RInventory[];
   itemRatio?: D2RItemRatio[];
@@ -4380,9 +4380,6 @@ export function LoadWorkspace(
     gamble: ParseExcel(location, fallback, D2RGamble),
     gems: ParseExcel(location, fallback, D2RGems),
     hireling: ParseExcel(location, fallback, D2RHireling),
-    hirelingDesc: legacy
-      ? undefined
-      : ParseExcel(location, fallback, D2RHirelingDesc),
     hitclass: ParseExcel(location, fallback, D2RHitclass),
     inventory: ParseExcel(location, fallback, D2RInventory),
     itemRatio: ParseExcel(location, fallback, D2RItemRatio),
