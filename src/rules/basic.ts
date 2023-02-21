@@ -201,7 +201,8 @@ export class LinkedExcel extends Rule {
       a.forEach((item, i) => {
         const key = item[unl] as unknown as string;
         if (
-          key === "" || key === "Expansion" || key === "*end*  do not remove"
+          key === "" || key === "Expansion" || key === "*end*  do not remove" ||
+          key.startsWith("@")
         ) {
           return; // skip, because this entry is null
         }
@@ -1499,7 +1500,8 @@ export class NumericBounds extends Rule {
           idString !== "" && idString !== "Expansion" &&
           idString !== "Armor" && idString !== "Elite Uniques" &&
           idString !== "Rings" && idString !== "Class Specific" &&
-          kString !== "0" && kString !== "1" && kString !== "100"
+          kString !== "0" && kString !== "1" && kString !== "100" &&
+          !idString.startsWith("@")
         ) {
           this.Warn(
             `${record.GetFileName()}, line ${
