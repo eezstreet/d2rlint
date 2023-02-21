@@ -34,7 +34,7 @@ function WriteMetadataUniqueWeapons(ws: Workspace): string {
 
   const keys = Object.keys(weaponTypeMap);
   const groups = keys.map((k) => {
-    const group = weaponTypeMap[k].map((itm) =>
+    const group = weaponTypeMap[k].sort((a, b) => a.lvl - b.lvl).map((itm) =>
       `    <Item Index="${itm.index}" Name="${itm.name}" Lvl="${itm.lvl}" />`
     ).join("\n");
     return `  <Group Index="${k}">\n${group}\n  </Group>`;
@@ -73,7 +73,7 @@ function WriteMetadataUniqueArmor(ws: Workspace): string {
 
   const keys = Object.keys(weaponTypeMap);
   const groups = keys.map((k) => {
-    const group = weaponTypeMap[k].map((itm) =>
+    const group = weaponTypeMap[k].sort((a, b) => a.lvl - b.lvl).map((itm) =>
       `    <Item Index="${itm.index}" Name="${itm.name}" Lvl="${itm.lvl}" />`
     ).join("\n");
     return `  <Group Index="${k}">\n${group}\n  </Group>`;
@@ -112,7 +112,7 @@ function WriteMetadataUniqueMisc(ws: Workspace): string {
 
   const keys = Object.keys(weaponTypeMap);
   const groups = keys.map((k) => {
-    const group = weaponTypeMap[k].map((itm) =>
+    const group = weaponTypeMap[k].sort((a, b) => a.lvl - b.lvl).map((itm) =>
       `    <Item Index="${itm.index}" Name="${itm.name}" Lvl="${itm.lvl}" />`
     ).join("\n");
     return `  <Group Index="${k}">\n${group}\n  </Group>`;
@@ -152,7 +152,7 @@ function WriteMetadataSetWeapons(ws: Workspace): string {
 
   const keys = Object.keys(weaponTypeMap);
   const groups = keys.map((k) => {
-    const group = weaponTypeMap[k].map((itm) =>
+    const group = weaponTypeMap[k].sort((a, b) => a.lvl - b.lvl).map((itm) =>
       `    <Item Index="${itm.index}" Name="${itm.name}" Lvl="${itm.lvl}" />`
     ).join("\n");
     return `  <Group Index="${k}">\n${group}\n  </Group>`;
@@ -191,7 +191,7 @@ function WriteMetadataSetArmor(ws: Workspace): string {
 
   const keys = Object.keys(weaponTypeMap);
   const groups = keys.map((k) => {
-    const group = weaponTypeMap[k].map((itm) =>
+    const group = weaponTypeMap[k].sort((a, b) => a.lvl - b.lvl).map((itm) =>
       `    <Item Index="${itm.index}" Name="${itm.name}" Lvl="${itm.lvl}" />`
     ).join("\n");
     return `  <Group Index="${k}">\n${group}\n  </Group>`;
@@ -230,7 +230,7 @@ function WriteMetadataSetMisc(ws: Workspace): string {
 
   const keys = Object.keys(weaponTypeMap);
   const groups = keys.map((k) => {
-    const group = weaponTypeMap[k].map((itm) =>
+    const group = weaponTypeMap[k].sort((a, b) => a.lvl - b.lvl).map((itm) =>
       `    <Item Index="${itm.index}" Name="${itm.name}" Lvl="${itm.lvl}" />`
     ).join("\n");
     return `  <Group Index="${k}">\n${group}\n  </Group>`;
