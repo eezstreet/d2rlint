@@ -6,6 +6,7 @@ import GenerateDocs from "./doc/doc.ts";
 import { GetConfig } from "./lib/config.ts";
 import { GetAllRules } from "./lib/rule.ts";
 import { LoadWorkspace } from "./lib/workspace.ts";
+import { GenerateMetadata } from "./metadata/metadata.ts";
 
 // Import all rules here so that they get loaded.
 import "./rules/basic.ts";
@@ -52,6 +53,12 @@ allRules.forEach((rule) => {
 
 console.log(`Checking complete. Press enter to continue...`);
 Deno.stdin.readSync(new Uint8Array(32));
+
+if (config.generateMetadata === true) {
+  GenerateMetadata(ws);
+  console.log(`Metadata generated. Press enter to continue...`);
+  Deno.stdin.readSync(new Uint8Array(32));
+}
 
 if (config.generateDocs === true) {
   GenerateDocs(ws);

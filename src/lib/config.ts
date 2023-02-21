@@ -38,6 +38,7 @@ export interface SavedConfiguration {
   iveConsideredDonating: boolean;
   rules: { [ruleName: string]: RuleConfig };
   generateDocs: boolean;
+  generateMetadata: boolean;
   docOptions: {
     title: string;
     language: Omit<keyof D2RStringTable, "id" | "Key">;
@@ -164,6 +165,7 @@ function CreateDefaultConfig(): SavedConfiguration {
     iveConsideredDonating: false,
     rules,
     generateDocs: false,
+    generateMetadata: true,
     docOptions: {
       title: "My Mod Documentation",
       language: "enUS",
