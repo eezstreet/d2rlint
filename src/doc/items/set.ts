@@ -306,7 +306,7 @@ export function DocSets(ws: Workspace): string {
 
   const documented: DocumentedSet[] = [];
   sets.forEach((set, i) => {
-    let nameAsStr = set.name as string;
+    let nameAsStr = set.index as string;
     if (nameAsStr !== undefined && nameAsStr.startsWith("@")) {
       nameAsStr = nameAsStr.replace("@", "");
       if (ws.setCategories !== undefined) {
