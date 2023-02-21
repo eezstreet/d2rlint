@@ -57,12 +57,12 @@ function WriteMetadataUniqueArmor(ws: Workspace): string {
     const found = armor.find((weap) =>
       weap.code === unique.code && weap.code !== ""
     );
-    if (!found) {
+    if (!found || unique.enabled === "" || unique.enabled === "0") {
       return;
     }
 
     const name = unique.index as string;
-    const lvl = Number.parseInt(unique.lvl as string);
+    const lvl = Number.parseInt(unique["lvl req"] as string);
 
     if (weaponTypeMap[found.type as string] !== undefined) {
       weaponTypeMap[found.type as string].push({ index, name, lvl });
@@ -96,12 +96,12 @@ function WriteMetadataUniqueMisc(ws: Workspace): string {
     const found = misc.find((weap) =>
       weap.code === unique.code && weap.code !== ""
     );
-    if (!found) {
+    if (!found || unique.enabled === "" || unique.enabled === "0") {
       return;
     }
 
     const name = unique.index as string;
-    const lvl = Number.parseInt(unique.lvl as string);
+    const lvl = Number.parseInt(unique["lvl req"] as string);
 
     if (weaponTypeMap[found.type as string] !== undefined) {
       weaponTypeMap[found.type as string].push({ index, name, lvl });
@@ -141,7 +141,7 @@ function WriteMetadataSetWeapons(ws: Workspace): string {
     }
 
     const name = unique.index as string;
-    const lvl = Number.parseInt(unique.lvl as string);
+    const lvl = Number.parseInt(unique["lvl req"] as string);
 
     if (weaponTypeMap[found.type as string] !== undefined) {
       weaponTypeMap[found.type as string].push({ index, name, lvl });
@@ -180,7 +180,7 @@ function WriteMetadataSetArmor(ws: Workspace): string {
     }
 
     const name = unique.index as string;
-    const lvl = Number.parseInt(unique.lvl as string);
+    const lvl = Number.parseInt(unique["lvl req"] as string);
 
     if (weaponTypeMap[found.type as string] !== undefined) {
       weaponTypeMap[found.type as string].push({ index, name, lvl });
@@ -219,7 +219,7 @@ function WriteMetadataSetMisc(ws: Workspace): string {
     }
 
     const name = unique.index as string;
-    const lvl = Number.parseInt(unique.lvl as string);
+    const lvl = Number.parseInt(unique["lvl req"] as string);
 
     if (weaponTypeMap[found.type as string] !== undefined) {
       weaponTypeMap[found.type as string].push({ index, name, lvl });
