@@ -18,7 +18,9 @@ export const ExecuteBulkCodeLookup = (ws: Workspace, args: string[]) => {
     .split("\n")
     .map((s) => s.replace("[\s\r\n]", "").trim())
     .map((s) => {
-      console.log(`attempting to find for "${s}"`);
+      if (s.length <= 0) {
+        return "";
+      }
       const found = allItems.find((itm) => {
         const name = itm.name as string;
         return name.trim() === s;
