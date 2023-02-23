@@ -1529,12 +1529,18 @@ export class NumericBounds extends Rule {
     const validVersion = <
       T extends D2RExcelRecord,
       U extends keyof T = keyof T,
-    >(excel: T[] | undefined, index: U, k: U) => {
+    >(
+      excel: T[] | undefined,
+      index: U,
+      k: U,
+      shouldConsider?: (r: T) => boolean,
+    ) => {
       if (excel === undefined) {
         return;
       }
 
-      excel.forEach((record, line) => {
+      // deno-lint-ignore no-explicit-any
+      excel.forEach((record: any, line) => {
         const idString = record[index] as unknown as string;
         const kString = record[k] as unknown as string;
         if (
@@ -1542,7 +1548,8 @@ export class NumericBounds extends Rule {
           idString !== "Armor" && idString !== "Elite Uniques" &&
           idString !== "Rings" && idString !== "Class Specific" &&
           kString !== "0" && kString !== "1" && kString !== "100" &&
-          !idString.startsWith("@")
+          !idString.startsWith("@") &&
+          (!shouldConsider || shouldConsider(record))
         ) {
           this.Warn(
             `${record.GetFileName()}, line ${
@@ -1602,7 +1609,6 @@ export class NumericBounds extends Rule {
     validVersion(armor, "name", "version");
     validVersion(misc, "name", "version");
     validVersion(weapons, "name", "version");
-    validVersion(cubemain, "description", "version");
     validVersion(magicPrefix, "name", "version");
     validVersion(magicSuffix, "name", "version");
     validVersion(monUMod, "uniquemod", "version");
@@ -1612,6 +1618,7 @@ export class NumericBounds extends Rule {
     validVersion(sets, "index", "version");
     validVersion(uniqueItems, "index", "version");
     validVersion(itemRatio, "function", "version");
+    validVersion(cubemain, "description", "version", (r) => r.enabled === "1");
 
     /**
      * check numeric amounts
