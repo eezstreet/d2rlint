@@ -19,7 +19,7 @@ export const ExecuteBulkCodeLookup = (ws: Workspace, args: string[]) => {
     .map((s) => s.replace("[\s\r\n]", "").trim())
     .map((s) => {
       if (s.length <= 0) {
-        return "";
+        return "\t";
       }
       const found = allItems.find((itm) => {
         const name = itm.name as string;
@@ -27,9 +27,8 @@ export const ExecuteBulkCodeLookup = (ws: Workspace, args: string[]) => {
       });
       if (found === undefined) {
         return `{{${s}}}\t${s}`;
-      } else {
-        return `${found.code}\t${s}`;
       }
+      return `${found.code}\t${s}`;
     })
     .join("\n");
 

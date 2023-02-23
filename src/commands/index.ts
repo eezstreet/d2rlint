@@ -1,9 +1,11 @@
 import { Workspace } from "../lib/workspace.ts";
 import { ExecuteBulkCodeLookup } from "./bulk-code-lookup.ts";
+import { ExecuteBulkItemGfxLookup } from "./bulk-itemgfx-lookup.ts";
 import { ExecuteBulkSetAndUnique } from "./bulk-set-and-unique.ts";
 
 const commands: { [key: string]: (ws: Workspace, args: string[]) => void } = {
   "bulk-code-lookup": ExecuteBulkCodeLookup,
+  "bulk-itemgfx-lookup": ExecuteBulkItemGfxLookup,
   "bulk-set-and-unique": ExecuteBulkSetAndUnique,
 };
 
