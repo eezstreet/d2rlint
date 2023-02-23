@@ -1245,7 +1245,8 @@ export class LinkedExcel extends Rule {
           record[indexColumn] as unknown as string === "Expansion" ||
           record[indexColumn] as unknown as string === "Null" ||
           record[indexColumn] as unknown as string === "" ||
-          record[indexColumn] as unknown as string === "Elite Uniques"
+          record[indexColumn] as unknown as string === "Elite Uniques" ||
+          (record[indexColumn] as unknown as string).startsWith("@")
         ) {
           return;
         }
@@ -1469,6 +1470,46 @@ export class LinkedExcel extends Rule {
               }
             }
           });
+        }
+      }
+    }
+  }
+}
+
+/**
+ *  Check that no two strings share the same ID or Key
+ */
+@lintrule
+export class StringCheck extends Rule {
+  GetRuleName(): string {
+    return "Basic/StringCheck";
+  }
+
+  Evaluate(workspace: Workspace): void {
+    const { strings } = workspace;
+    if (!strings) {
+      return;
+    }
+
+    const foundIds: { id: number; key: string }[] = [];
+
+    const tableNames = Object.keys(strings);
+    for (let j = 0; j < tableNames.length; j++) {
+      const theTable = strings[tableNames[j]];
+      if (!theTable) {
+        continue;
+      }
+
+      for (let i = 0; i < theTable.length; i++) {
+        const found = foundIds.find((v) => v.id === theTable[i].id);
+        if (found && found.key !== theTable[i].Key) {
+          this.Warn(
+            `String "${theTable[i].Key}" shares an ID ('${
+              theTable[i].id
+            }') with string "${found.key}"`,
+          );
+        } else {
+          foundIds.push({ id: theTable[i].id, key: theTable[i].Key });
         }
       }
     }
