@@ -352,7 +352,7 @@ function LoadConfigFirstTime(): SavedConfiguration {
  */
 export function GetConfig(): SavedConfiguration {
   if (config === undefined) {
-    return LoadConfigFirstTime();
+    config = LoadConfigFirstTime();
   }
   return config;
 }

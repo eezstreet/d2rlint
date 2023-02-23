@@ -2,6 +2,7 @@
  * The main starting point for the application
  */
 
+import { executeCommands } from "./commands/index.ts";
 import GenerateDocs from "./doc/doc.ts";
 import { GetConfig } from "./lib/config.ts";
 import { GetAllRules } from "./lib/rule.ts";
@@ -39,6 +40,16 @@ if (!iveConsideredDonating) {
   console.log(`| value in your config.json to be true: |`);
   console.log(`|   iveConsideredDonating: "false",     |`);
   console.log(`-----------------------------------------`);
+}
+
+// See if we're entering a command
+if (Deno.args.length > 0) {
+  if (!executeCommands(Deno.args, ws)) {
+    console.log(
+      `ERROR: A command by that name (${Deno.args[0]}) does not exist.`,
+    );
+  }
+  Deno.exit(0);
 }
 
 const allRules = GetAllRules();

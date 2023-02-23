@@ -798,7 +798,6 @@ export class ValidStatParameters extends Rule {
   Evaluate(workspace: Workspace) {
     const {
       autoMagic,
-      cubemain,
       gems,
       itemStatCost,
       properties,
@@ -824,7 +823,6 @@ export class ValidStatParameters extends Rule {
     // iterate over all relevant sets of records
     [
       autoMagic,
-      cubemain,
       gems,
       magicPrefix,
       magicSuffix,

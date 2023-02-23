@@ -201,7 +201,8 @@ export class LinkedExcel extends Rule {
       a.forEach((item, i) => {
         const key = item[unl] as unknown as string;
         if (
-          key === "" || key === "Expansion" || key === "*end*  do not remove"
+          key === "" || key === "Expansion" || key === "*end*  do not remove" ||
+          key.startsWith("@")
         ) {
           return; // skip, because this entry is null
         }
@@ -1244,7 +1245,8 @@ export class LinkedExcel extends Rule {
           record[indexColumn] as unknown as string === "Expansion" ||
           record[indexColumn] as unknown as string === "Null" ||
           record[indexColumn] as unknown as string === "" ||
-          record[indexColumn] as unknown as string === "Elite Uniques"
+          record[indexColumn] as unknown as string === "Elite Uniques" ||
+          (record[indexColumn] as unknown as string).startsWith("@")
         ) {
           return;
         }
@@ -1475,6 +1477,46 @@ export class LinkedExcel extends Rule {
 }
 
 /**
+ *  Check that no two strings share the same ID or Key
+ */
+@lintrule
+export class StringCheck extends Rule {
+  GetRuleName(): string {
+    return "Basic/StringCheck";
+  }
+
+  Evaluate(workspace: Workspace): void {
+    const { strings } = workspace;
+    if (!strings) {
+      return;
+    }
+
+    const foundIds: { id: number; key: string }[] = [];
+
+    const tableNames = Object.keys(strings);
+    for (let j = 0; j < tableNames.length; j++) {
+      const theTable = strings[tableNames[j]];
+      if (!theTable) {
+        continue;
+      }
+
+      for (let i = 0; i < theTable.length; i++) {
+        const found = foundIds.find((v) => v.id === theTable[i].id);
+        if (found && found.key !== theTable[i].Key) {
+          this.Warn(
+            `String "${theTable[i].Key}" shares an ID ('${
+              theTable[i].id
+            }') with string "${found.key}"`,
+          );
+        } else {
+          foundIds.push({ id: theTable[i].id, key: theTable[i].Key });
+        }
+      }
+    }
+  }
+}
+
+/**
  * Check that certain numeric bounds are met
  */
 @lintrule
@@ -1487,19 +1529,27 @@ export class NumericBounds extends Rule {
     const validVersion = <
       T extends D2RExcelRecord,
       U extends keyof T = keyof T,
-    >(excel: T[] | undefined, index: U, k: U) => {
+    >(
+      excel: T[] | undefined,
+      index: U,
+      k: U,
+      shouldConsider?: (r: T) => boolean,
+    ) => {
       if (excel === undefined) {
         return;
       }
 
-      excel.forEach((record, line) => {
+      // deno-lint-ignore no-explicit-any
+      excel.forEach((record: any, line) => {
         const idString = record[index] as unknown as string;
         const kString = record[k] as unknown as string;
         if (
           idString !== "" && idString !== "Expansion" &&
           idString !== "Armor" && idString !== "Elite Uniques" &&
           idString !== "Rings" && idString !== "Class Specific" &&
-          kString !== "0" && kString !== "1" && kString !== "100"
+          kString !== "0" && kString !== "1" && kString !== "100" &&
+          !idString.startsWith("@") &&
+          (!shouldConsider || shouldConsider(record))
         ) {
           this.Warn(
             `${record.GetFileName()}, line ${
@@ -1559,7 +1609,6 @@ export class NumericBounds extends Rule {
     validVersion(armor, "name", "version");
     validVersion(misc, "name", "version");
     validVersion(weapons, "name", "version");
-    validVersion(cubemain, "description", "version");
     validVersion(magicPrefix, "name", "version");
     validVersion(magicSuffix, "name", "version");
     validVersion(monUMod, "uniquemod", "version");
@@ -1569,6 +1618,7 @@ export class NumericBounds extends Rule {
     validVersion(sets, "index", "version");
     validVersion(uniqueItems, "index", "version");
     validVersion(itemRatio, "function", "version");
+    validVersion(cubemain, "description", "version", (r) => r.enabled === "1");
 
     /**
      * check numeric amounts

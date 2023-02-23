@@ -251,6 +251,9 @@ export function MonsterNameIdx(ws: Workspace, monster: number): string {
   }
 
   const theMonster = monStats[monster];
+  if (theMonster === undefined) {
+    return `<monster not found ${monster}>`;
+  }
   return StringForIndex(ws, theMonster.namestr as string);
 }
 

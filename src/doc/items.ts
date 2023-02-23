@@ -244,7 +244,7 @@ export function PropertyListToDescString(
       // FIXME: we should check the op column in case the user is doing funny things here
       // we default to doing this for level checks, but we really shouldn't
       min = Number.parseInt(param) / 8;
-      max = Number.parseInt(param) * GetMaxExperienceLevel(ws);
+      max = Number.parseInt(param) * GetMaxExperienceLevel(ws) / 8;
     }
     if (min === max) {
       val = `${min}`;
