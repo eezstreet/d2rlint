@@ -12,7 +12,7 @@ export const ExecuteBulkSetAndUnique = (ws: Workspace, args: string[]) => {
   const objects = Deno.readTextFileSync(args[0])
     .split("\n")
     .map((s) => s.replaceAll(/[ \-]/gi, "_").toLocaleLowerCase())
-    .map((s) => s.replaceAll(/['"!@#$%^&*]/gi, ""))
+    .map((s) => s.replaceAll("'", ""))
     .map((s) => s.trim())
     .map((s) => {
       const items = s.split("\t");
