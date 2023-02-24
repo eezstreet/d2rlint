@@ -2,11 +2,18 @@
 
 Taking cues from projects such as [eslint](https://eslint.org/), D2RLint will
 examine the tab-delimited spreadsheet ("Excel") files and JSON string tables for
-Diablo II: Resurrected, and make note of any errors.
+Diablo II: Resurrected, and make note of any errors. Designed to be the direct
+successor of Paul Siramy's fantastic D2TxtAnalyzer, this tool checks for many
+more problems and is designed to work with Diablo II: Resurrected. It is still
+partially backwards-compatible with the legacy version of the game.
 
-It is partially backwards compatible with Legacy. See below.
+This tool also provides two more features:
 
-This is designed to be the direct successor of Paul Siramy's D2TxtAnalyzer.
+- **Automatic mod documentation**. Once enabled in the configuration file,
+  d2rlint will genenerate HTML documentation for your mod. This includes
+  information about Horadric Cube recipes, runewords, sets, and more.
+- **Other helpful utilities**. There are a number of different commands that you
+  can execute in the commandline to make your life a little bit easier.
 
 ## For users
 
@@ -295,6 +302,209 @@ You can do this in the following files:
 - uniqueitems.txt
 - sets.txt
 - runes.txt
+
+## Other helpful utilities
+
+There are three helpful utilities that can be accessed through the commandline.
+
+### Bulk Item Code Lookup
+
+To use this utility, execute d2rlint from the commandline like so:
+
+```
+./d2rlint bulk-code-lookup <input file> <output file>
+```
+
+What this does is take a list of item names (from the first column of armor.txt,
+misc.txt, or weapons.txt) and looks up their corresponding item code, and
+returns the result as a tab-delimited .txt file. This is super useful in some
+niche situations, such as creating Set or Unique items quickly when you don't
+have the item codes memorized.
+
+For example, let's take the following list:
+
+```
+Hunter's Bow
+Quilted Armor
+Light Belt
+Heavy Gloves
+Helm
+Composite Bow
+Ring Mail
+Long Battle Bow
+Light Plated Boots
+```
+
+If we ran this on this list, we would get the following:
+
+```
+hbw	Hunter's Bow
+qui	Quilted Armor
+vbl	Light Belt
+vgl	Heavy Gloves
+hlm	Helm
+cbw	Composite Bow
+rng	Ring Mail
+lbb	Long Battle Bow
+tbt	Light Plated Boots
+```
+
+...which can be copy-pasted into a tab-delimited TXT file for use in
+uniqueitems.txt or setitems.txt.
+
+### Bulk ItemGFX Lookup
+
+To use this utility, execute d2rlint from the commandline like so:
+
+```
+./d2rlint bulk-itemgfx-lookup <input file> <output file>
+```
+
+The input file is a list of item codes. The output is a list of entries from
+items.json that matches the given item indices.
+
+For example, let's take the following list:
+
+```
+hbw
+qui
+vbl
+vgl
+hlm
+cbw
+rng
+lbb
+tbt
+```
+
+If we ran this on this list, we would get the following:
+
+```
+bow/hunters_bow	hbw
+armor/quilted_armor	qui
+belt/light_belt	vbl
+glove/heavy_gloves	vgl
+helmet/helm	hlm
+bow/composite_bow	cbw
+armor/ring_mail	rng
+bow/long_battle_bow	lbb
+boot/light_plate_boots	tbt
+```
+
+This is particularly useful if we want to find which assets are used by what, or
+if we are constructing a new sets.json or uniqueitems.json. Speaking of that...
+
+### Bulk Set/Unique.json
+
+To use this utility, execute d2rlint from the commandline like so:
+
+```
+./d2rlint bulk-set-and-unique <input file> <output file>
+```
+
+The input file is a tab delimited list of set (or unique) items and the
+corresponding graphic you want to use. The output is a .json file, fit for using
+in setitems.json or uniqueitems.json.
+
+For example, if we ran this through the program:
+
+```
+Arctic Horn	bow/hunters_bow
+Arctic Furs	armor/quilted_armor
+Arctic Binding	belt/light_belt
+Arctic Mitts	glove/heavy_gloves
+Archer Helmet	helmet/helm
+Standard Bow	bow/composite_bow
+Military Garb	armor/ring_mail
+Vidala's Barb	bow/long_battle_bow
+Vidala's Fetlock	boot/light_plate_boots
+```
+
+The result would look like this:
+
+```json
+[
+  {
+    "arctic_horn": {
+      "normal": "bow/hunters_bow",
+      "uber": "bow/hunters_bow",
+      "ultra": "bow/hunters_bow"
+    }
+  },
+  {
+    "arctic_furs": {
+      "normal": "armor/quilted_armor",
+      "uber": "armor/quilted_armor",
+      "ultra": "armor/quilted_armor"
+    }
+  },
+  {
+    "arctic_binding": {
+      "normal": "belt/light_belt",
+      "uber": "belt/light_belt",
+      "ultra": "belt/light_belt"
+    }
+  },
+  {
+    "arctic_mitts": {
+      "normal": "glove/heavy_gloves",
+      "uber": "glove/heavy_gloves",
+      "ultra": "glove/heavy_gloves"
+    }
+  },
+  {
+    "archer_helmet": {
+      "normal": "helmet/helm",
+      "uber": "helmet/helm",
+      "ultra": "helmet/helm"
+    }
+  },
+  {
+    "standard_bow": {
+      "normal": "bow/composite_bow",
+      "uber": "bow/composite_bow",
+      "ultra": "bow/composite_bow"
+    }
+  },
+  {
+    "military_garb": {
+      "normal": "armor/ring_mail",
+      "uber": "armor/ring_mail",
+      "ultra": "armor/ring_mail"
+    }
+  },
+  {
+    "vidalas_barb": {
+      "normal": "bow/long_battle_bow",
+      "uber": "bow/long_battle_bow",
+      "ultra": "bow/long_battle_bow"
+    }
+  },
+  {
+    "vidalas_fetlock": {
+      "normal": "boot/light_plate_boots",
+      "uber": "boot/light_plate_boots",
+      "ultra": "boot/light_plate_boots"
+    }
+  },
+  {
+    "vidalas_ambush": {
+      "normal": "armor/plate_mail",
+      "uber": "armor/plate_mail",
+      "ultra": "armor/plate_mail"
+    }
+  },
+  {
+    "vidalas_snare": {
+      "normal": "amulet/amulet",
+      "uber": "amulet/amulet",
+      "ultra": "amulet/amulet"
+    }
+  }
+]
+```
+
+...which is a valid sets.json file.
 
 ## Licensing
 
