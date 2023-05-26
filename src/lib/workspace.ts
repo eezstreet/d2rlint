@@ -3569,6 +3569,15 @@ export class D2RSkills extends D2RExcelRecord {
   passivecalc10: unknown;
   // added in Diablo II: Resurrected 2.6
   itemuserestrict: unknown;
+  // added in Diablo II: Resurrected 2.7
+  passivestat11: unknown;
+  passivecalc11: unknown;
+  passivestat12: unknown;
+  passivecalc12: unknown;
+  passivestat13: unknown;
+  passivecalc13: unknown;
+  passivestat14: unknown;
+  passivecalc14: unknown;
 
   GetFileName(): string {
     return "skills.txt";
@@ -4214,7 +4223,7 @@ function ParseJsonText<T>(
 
   const decoder = new TextDecoder("utf-8");
   try {
-    return parse(decoder.decode(fileText)) as T;
+    return parse(decoder.decode(fileText)) as unknown as T;
   } catch (e) {
     console.log(`Couldn't parse ${fileName}: ${e.message}`);
   }
@@ -4421,9 +4430,8 @@ export function LoadWorkspace(
     objects: ParseExcel(location, fallback, D2RObjects),
     objGroup: ParseExcel(location, fallback, D2RObjGroup),
     objMode: ParseExcel(location, fallback, D2RObjMode),
-    objPreset: legacy
-      ? undefined
-      : ParseExcel(location, fallback, D2RObjPreset),
+    objPreset: legacy ? undefined
+    : ParseExcel(location, fallback, D2RObjPreset),
     objType: ParseExcel(location, fallback, D2RObjType),
     overlay: ParseExcel(location, fallback, D2ROverlay),
     petType: ParseExcel(location, fallback, D2RPetType),
@@ -4459,9 +4467,8 @@ export function LoadWorkspace(
     uniqueItems: ParseExcel(location, fallback, D2RUniqueItems),
     uniquePrefix: ParseExcel(location, fallback, D2RUniquePrefix),
     uniqueSuffix: ParseExcel(location, fallback, D2RUniqueSuffix),
-    wanderingMon: legacy
-      ? undefined
-      : ParseExcel(location, fallback, D2RWanderingMon),
+    wanderingMon: legacy ? undefined
+    : ParseExcel(location, fallback, D2RWanderingMon),
     weapons: ParseExcel(location, fallback, D2RWeapons),
 
     strings: LoadStrings(location, fallback),

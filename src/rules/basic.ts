@@ -1054,7 +1054,7 @@ export class LinkedExcel extends Rule {
     );
 
     // ensure passivestat, aurastat point to entries in itemstatcost.txt
-    const numPassiveFields = config.legacy ? 5 : 10; // 2.4 upped to 6, 2.5 upped again to 10
+    const numPassiveFields = config.legacy ? 5 : 14; // 2.4 upped to 6, 2.5 upped again to 10, 2.7 upped again to 14
     const skStatFields: (keyof D2RSkills)[] = [
       ...multifield1<D2RSkills>("aurastat", 6),
       ...multifield1<D2RSkills>(
@@ -1630,8 +1630,7 @@ export class NumericBounds extends Rule {
       index: string,
       field: string,
     ) => string;
-    const makeComparer =
-      (c: comparer, m: messager) =>
+    const makeComparer = (c: comparer, m: messager) =>
       <T extends D2RExcelRecord, U extends keyof T = keyof T>(
         records: T[] | undefined,
         field: U,
