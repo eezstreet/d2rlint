@@ -11,7 +11,7 @@ export class NoUntranslated extends Rule {
     return "String/NoUntranslated";
   }
 
-  GetDefaultAction(): RuleAction {
+  override GetDefaultAction(): RuleAction {
     return "ignore";
   }
 

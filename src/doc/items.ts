@@ -451,11 +451,12 @@ export function PropertyListToDescString(
 
         // find all stats in itemStatCost with the same group.
         const sameGroupAllStats = itemStatCost.filter((isc) =>
-          stat !== undefined && stat !== "ethereal" && isc.dgrp === stat.dgrp
+          stat !== undefined /*&& stat !== "ethereal"*/ &&
+          isc.dgrp === stat.dgrp
         ); // all lines in isc
         const sameGroupItemStats = stats.filter((s) =>
           s.stat !== "ethereal" && s.stat !== undefined &&
-          stat !== "ethereal" && stat !== undefined &&
+          /*stat !== "ethereal" && */ stat !== undefined &&
           s.stat.dgrp === stat.dgrp
         );
         const allGroupedStatsIncluded =
@@ -504,7 +505,7 @@ export function PropertyListToDescString(
       strSame: string,
       len?: string,
     ) => {
-      if (stat === undefined || stat === "ethereal") {
+      if (stat === undefined /* || stat === "ethereal"*/) {
         return false;
       }
       if (stat.stat !== stat1 && stat.stat !== stat2) {
