@@ -96,14 +96,11 @@ export abstract class Rule {
     const config = GetConfig();
     const ruleName = this.GetRuleName();
 
-    if (
-      config.rules[ruleName] === undefined ||
-      config.rules[ruleName].action === undefined
-    ) {
+    const action =
+      config.rules[ruleName]?.action ?? this.GetDefaultAction();
+    if (action === "ignore") {
       return;
     }
-
-    const action = config.rules[ruleName].action;
     if (action === "warn") {
       this.Log(`WARN\t${ruleName}\t${msg}`);
       console.log(

@@ -21,8 +21,8 @@ import "./rules/treasure.ts";
 
 // Load workspace, iterate through rules, passing workspace into rule
 const config = GetConfig();
-const { workspace, fallback, rules, legacy, iveConsideredDonating } = config;
-const ws = LoadWorkspace(workspace, fallback, legacy);
+const { workspace, fallback, rules, version, iveConsideredDonating } = config;
+const ws = LoadWorkspace(workspace, fallback, version);
 
 if (!iveConsideredDonating) {
   console.log(`-----------------------------------------`);

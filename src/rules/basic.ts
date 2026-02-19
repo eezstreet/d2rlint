@@ -3,8 +3,10 @@ import { seq } from "../lib/misc.ts";
 import { lintrule, Rule } from "../lib/rule.ts";
 import {
   D2RActInfo,
+  D2RArmor,
   D2RAutomagic,
   D2RCharStats,
+  D2RCubemain,
   D2RExcelRecord,
   D2RGems,
   D2RHireling,
@@ -12,6 +14,7 @@ import {
   D2RItemTypes,
   D2RLevels,
   D2RMagicBase,
+  D2RMisc,
   D2RMissiles,
   D2RMonEquip,
   D2RMonProp,
@@ -27,8 +30,12 @@ import {
   D2RSkillDesc,
   D2RSkills,
   D2RStates,
+  D2RSuperUniques,
   D2RUniqueItems,
+  D2RWeapons,
   FindMatchingStringIndex,
+  getColumnAliasesForVersion,
+  getFieldsNotExpectedForVersion,
   Workspace,
 } from "../lib/workspace.ts";
 
@@ -93,7 +100,7 @@ export class NoDuplicates extends Rule {
     anyDuplicates(workspace.monUMod, "uniquemod");
     anyDuplicates(workspace.monUMod, "id");
     anyDuplicates(workspace.npc, "npc");
-    if (!config.legacy) {
+    if (config.version !== "legacy") {
       anyDuplicates(workspace.objects, "class");
     }
     //anyDuplicates(workspace.objGroup, "groupname");
@@ -101,7 +108,7 @@ export class NoDuplicates extends Rule {
     anyDuplicates(workspace.overlay, "overlay");
     anyDuplicates(workspace.petType, "pet type");
     anyDuplicates(workspace.properties, "code");
-    if (!config.legacy) {
+    if (config.version !== "legacy") {
       anyDuplicates(workspace.shrines, "name");
     }
     anyDuplicates(workspace.skills, "skill");
@@ -127,11 +134,43 @@ export class ExcelColumns extends Rule {
     headerFields: { field: string; idx: number }[],
     generic: T,
   ) {
-    const keys = Object.keys(generic);
+    // skipInDocs is a synthetic property set by the parser from @skipdocs,
+    // not a real column header, so exclude it from column checks.
+    const keys = Object.keys(generic).filter((k) => k !== "skipInDocs");
+    // Header fields are already lowercased by the parser; lowercase keys
+    // and version-change sets so all comparisons are case-insensitive.
+    const keysLower = keys.map((k) => k.toLocaleLowerCase());
+    const config = GetConfig();
+    const versionChanges = generic.GetVersionChanges();
+    const notExpected = getFieldsNotExpectedForVersion(
+      config.version,
+      versionChanges,
+    );
+    const notExpectedLower = new Set(
+      [...notExpected].map((f) => f.toLocaleLowerCase()),
+    );
+    const aliases = getColumnAliasesForVersion(
+      config.version,
+      versionChanges,
+    );
+    const aliasesLower = new Map(
+      [...aliases].map(([from, to]) => [from.toLocaleLowerCase(), to.toLocaleLowerCase()]),
+    );
+    // Build reverse lookup: currentPropertyName → oldColumnName(s) present in headers
+    const reverseAliases = new Map<string, string>();
+    for (const [oldName, newName] of aliasesLower) {
+      if (headerFields.find((field) => field.field === oldName) !== undefined) {
+        reverseAliases.set(newName, oldName);
+      }
+    }
 
     // Warn if there are non-standard columns in use
     headerFields.forEach((field) => {
-      if (!keys.includes(field.field) && !field.field.startsWith("@")) {
+      if (!keysLower.includes(field.field) && !field.field.startsWith("@")) {
+        // Don't warn if this is a known old column name for this version
+        if (aliasesLower.has(field.field)) {
+          return;
+        }
         this.Warn(
           `${generic.GetFileName()} - non-standard column '${field.field}' found`,
         );
@@ -139,14 +178,22 @@ export class ExcelColumns extends Rule {
     });
 
     // Warn if any non-optional columns are missing
-    const optional = generic.GetOptionalFields();
-    keys.forEach((key) => {
+    const optional = generic.GetOptionalFields().map((f) => f.toLocaleLowerCase());
+    keysLower.forEach((key) => {
       if (optional.includes(key)) {
         return; // skip optional
       }
-      if (headerFields.find((field) => field.field === key) === undefined) {
-        this.Warn(`${generic.GetFileName()} - missing column '${key}'`);
+      if (notExpectedLower.has(key)) {
+        return; // skip fields not expected for this game version
       }
+      if (headerFields.find((field) => field.field === key) !== undefined) {
+        return; // column present
+      }
+      // Check if an alias (old column name) is present instead
+      if (reverseAliases.has(key)) {
+        return;
+      }
+      this.Warn(`${generic.GetFileName()} - missing column '${key}'`);
     });
   }
 }
@@ -607,7 +654,7 @@ export class LinkedExcel extends Rule {
       );
     };
 
-    if (config.legacy) {
+    if (config.version === "legacy") {
       const ntcFields = multifield1<D2RMonStats>("treasureclass", 4);
       const ntcNFields = multifield2<D2RMonStats>("treasureclass", "(n)", 4);
       const ntcHFields = multifield2<D2RMonStats>("treasureclass", "(h)", 4);
@@ -630,6 +677,10 @@ export class LinkedExcel extends Rule {
         "treasureclassdesecrated",
         "treasureclassdesecrated(n)",
         "treasureclassdesecrated(h)",
+        // Added in Diablo II: Resurrected 3.0
+        "treasureclassherald",
+        "treasureclassherald(n)",
+        "treasureclassherald(h)",
       ];
 
       monstatKeys.forEach((field) =>
@@ -1054,7 +1105,7 @@ export class LinkedExcel extends Rule {
     );
 
     // ensure passivestat, aurastat point to entries in itemstatcost.txt
-    const numPassiveFields = config.legacy ? 5 : 14; // 2.4 upped to 6, 2.5 upped again to 10, 2.7 upped again to 14
+    const numPassiveFields = config.version === "legacy" ? 5 : 14; // 2.4 upped to 6, 2.5 upped again to 10, 2.7 upped again to 14
     const skStatFields: (keyof D2RSkills)[] = [
       ...multifield1<D2RSkills>("aurastat", 6),
       ...multifield1<D2RSkills>(
@@ -1179,7 +1230,7 @@ export class LinkedExcel extends Rule {
       "treasure class",
       isOptional,
     );
-    if (!config.legacy) {
+    if (config.version !== "legacy") {
       // these were added in 2.5
       mustExist(
         superUniques,
@@ -1241,12 +1292,14 @@ export class LinkedExcel extends Rule {
       }
 
       records.forEach((record, i) => {
+        const indexValue = record[indexColumn] as unknown as string;
         if (
-          record[indexColumn] as unknown as string === "Expansion" ||
-          record[indexColumn] as unknown as string === "Null" ||
-          record[indexColumn] as unknown as string === "" ||
-          record[indexColumn] as unknown as string === "Elite Uniques" ||
-          (record[indexColumn] as unknown as string).startsWith("@")
+          indexValue == null ||
+          indexValue === "Expansion" ||
+          indexValue === "Null" ||
+          indexValue === "" ||
+          indexValue === "Elite Uniques" ||
+          indexValue.startsWith("@")
         ) {
           return;
         }
@@ -1327,7 +1380,7 @@ export class LinkedExcel extends Rule {
     lookForString(runes, "name", "name", false);
     lookForString(setItems, "index", "index", false);
     lookForString(sets, "name", "index", false);
-    if (!config.legacy) {
+    if (config.version !== "legacy") {
       lookForString(shrines, "stringname", "name", false);
       lookForString(shrines, "stringphrase", "name", false);
     }
@@ -1355,7 +1408,7 @@ export class LinkedExcel extends Rule {
     lookForString(uniqueItems, "index", "index", false);
 
     // Check for JSON entries
-    if (!config.legacy) {
+    if (config.version !== "legacy") {
       const jsonKeyConvert = (s: string) =>
         s.replace(/([a-z])([A-Z0-9])/g, "$1_$2").replace(
           /[A-Z]/g,
@@ -1412,18 +1465,21 @@ export class LinkedExcel extends Rule {
 
         // check monstats.txt against monsters.json
         if (json.monsters !== undefined && monStats !== undefined) {
-          const keys = Object.keys(json.monsters);
+          const monsterKeys = new Set(
+            json.monsters.map((entry) => entry.Key),
+          );
 
           monStats.forEach((monster, line) => {
             if (
               monster.id !== undefined && monster.id !== "" &&
-              monster.id !== "Expansion"
+              monster.id !== "Expansion" &&
+              monster.namestr !== undefined && monster.namestr !== ""
             ) {
-              if (!keys.includes(monster.id as string)) {
+              if (!monsterKeys.has(monster.namestr as string)) {
                 this.Warn(
                   `${monster.GetFileName()}, line ${
                     line + 2
-                  }: '${monster.id}' not found in monsters.json`,
+                  }: namestr '${monster.namestr}' for '${monster.id}' not found in monsters.json`,
                 );
               }
             }
@@ -1700,7 +1756,7 @@ export class NumericBounds extends Rule {
       gt(recordSet, "invheight", "code", 0);
     });
 
-    if (!config.legacy) {
+    if (config.version !== "legacy") {
       gt(charStats, "lightradius", "class", -1);
     }
 
@@ -1716,7 +1772,7 @@ export class NumericBounds extends Rule {
     gt(itemRatio, "magicmin", "function", 0, true);
     gt(itemRatio, "hiqualitydivisor", "function", 0, true);
     gt(itemRatio, "normaldivisor", "function", 0, true);
-    if (!config.legacy) {
+    if (config.version !== "legacy") {
       gt(hireling, "resurrectcostdivisor", "hireling", 0);
       gt(hireling, "resurrectcostmultiplier", "hireling", 0);
       gt(hireling, "resurrectcostmax", "hireling", 0);
@@ -1886,7 +1942,7 @@ export class NumericBounds extends Rule {
     inRng(itemTypes, "normal", "code", 0, 1);
     inRng(itemTypes, "beltable", "code", 0, 1);
     inRng(itemTypes, "treasureclass", "code", 0, 1);
-    if (!config.legacy) {
+    if (config.version !== "legacy") {
       inRng(levels, "act", "name", 0, 4, true);
     }
     inRng(levels, "questflag", "name", 0, 41);
@@ -1988,6 +2044,25 @@ export class NumericBounds extends Rule {
     //inRng(monStats, "level", "id", 0, 99);     FIXME
     //inRng(monStats, "level(n)", "id", 0, 99);  FIXME
     //inRng(monStats, "level(h)", "id", 0, 99);  PLEEZ
+    inRng(monStats, "crit", "id", 0, 100);
+    inRng(monStats, "toblock", "id", 0, 100);
+    inRng(monStats, "toblock(n)" as keyof D2RMonStats, "id", 0, 100);
+    inRng(monStats, "toblock(h)" as keyof D2RMonStats, "id", 0, 100);
+    inRng(monStats, "el1pct", "id", 0, 100);
+    inRng(monStats, "el1pct(n)" as keyof D2RMonStats, "id", 0, 100);
+    inRng(monStats, "el1pct(h)" as keyof D2RMonStats, "id", 0, 100);
+    inRng(monStats, "el2pct", "id", 0, 100);
+    inRng(monStats, "el2pct(n)" as keyof D2RMonStats, "id", 0, 100);
+    inRng(monStats, "el2pct(h)" as keyof D2RMonStats, "id", 0, 100);
+    inRng(monStats, "el3pct", "id", 0, 100);
+    inRng(monStats, "el3pct(n)" as keyof D2RMonStats, "id", 0, 100);
+    inRng(monStats, "el3pct(h)" as keyof D2RMonStats, "id", 0, 100);
+    inRng(monStats, "drain", "id", 0, 100);
+    inRng(monStats, "drain(n)" as keyof D2RMonStats, "id", 0, 100);
+    inRng(monStats, "drain(h)" as keyof D2RMonStats, "id", 0, 100);
+    inRng(monStats, "coldeffect", "id", 0, 100);
+    inRng(monStats, "coldeffect(n)" as keyof D2RMonStats, "id", 0, 100);
+    inRng(monStats, "coldeffect(h)" as keyof D2RMonStats, "id", 0, 100);
     inRng(monUMod, "fpick", "id", 0, 3);
     inRng(npc, "buy mult", "npc", 0, 2048);
     inRng(npc, "sell mult", "npc", 0, 2048);
@@ -2126,5 +2201,282 @@ export class NumericBounds extends Rule {
         });
       });
     }*/
+  }
+}
+
+/**
+ * Check that min values don't exceed max values.
+ */
+@lintrule
+export class MinMaxOrdering extends Rule {
+  GetRuleName(): string {
+    return "Basic/MinMaxOrdering";
+  }
+
+  Evaluate(workspace: Workspace) {
+    const checkMinMax = <T extends D2RExcelRecord, U extends keyof T = keyof T>(
+      records: T[] | undefined,
+      minField: U,
+      maxField: U,
+      index: U,
+    ) => {
+      if (records === undefined) {
+        return;
+      }
+
+      records.forEach((record, line) => {
+        const minStr = record[minField] as unknown as string;
+        const maxStr = record[maxField] as unknown as string;
+        const indexStr = record[index] as unknown as string;
+        if (
+          indexStr === "" || indexStr === "Expansion" ||
+          indexStr?.startsWith?.("@") ||
+          minStr === "" || maxStr === ""
+        ) {
+          return;
+        }
+
+        const minVal = parseInt(minStr);
+        const maxVal = parseInt(maxStr);
+        if (isNaN(minVal) || isNaN(maxVal)) {
+          return;
+        }
+
+        if (minVal > maxVal) {
+          this.Warn(
+            `${record.GetFileName()}, line ${
+              line + 2
+            }: '${String(minField)}' (${minVal}) > '${String(maxField)}' (${maxVal}) for '${indexStr}'`,
+          );
+        }
+      });
+    };
+
+    const {
+      armor,
+      weapons,
+      misc,
+      monStats,
+      missiles,
+      levels,
+      superUniques,
+      hireling,
+      cubemain,
+      setItems,
+      uniqueItems,
+      runes,
+    } = workspace;
+
+    // items: minac/maxac, mindam/maxdam, 2handmindam/2handmaxdam, minmisdam/maxmisdam
+    [armor, misc, weapons].forEach((itemFile) => {
+      checkMinMax(itemFile, "minac", "maxac", "name");
+      checkMinMax(itemFile, "mindam", "maxdam", "name");
+    });
+    checkMinMax(weapons, "2handmindam" as keyof D2RWeapons, "2handmaxdam" as keyof D2RWeapons, "name" as keyof D2RWeapons);
+    checkMinMax(weapons, "minmisdam" as keyof D2RWeapons, "maxmisdam" as keyof D2RWeapons, "name" as keyof D2RWeapons);
+
+    // monstats: MinGrp/MaxGrp, PartyMin/PartyMax, minHP/maxHP, attack damage pairs
+    checkMinMax(monStats, "mingrp", "maxgrp", "id");
+    checkMinMax(monStats, "partymin", "partymax", "id");
+    checkMinMax(monStats, "minhp", "maxhp", "id");
+    checkMinMax(monStats, "a1mind", "a1maxd", "id");
+    checkMinMax(monStats, "a2mind", "a2maxd", "id");
+    checkMinMax(monStats, "s1mind", "s1maxd", "id");
+    checkMinMax(monStats, "el1mind", "el1maxd", "id");
+    checkMinMax(monStats, "el2mind", "el2maxd", "id");
+    checkMinMax(monStats, "el3mind", "el3maxd", "id");
+    // nightmare variants
+    checkMinMax(monStats, "minhp(n)" as keyof D2RMonStats, "maxhp(n)" as keyof D2RMonStats, "id");
+    checkMinMax(monStats, "a1mind(n)" as keyof D2RMonStats, "a1maxd(n)" as keyof D2RMonStats, "id");
+    checkMinMax(monStats, "a2mind(n)" as keyof D2RMonStats, "a2maxd(n)" as keyof D2RMonStats, "id");
+    checkMinMax(monStats, "s1mind(n)" as keyof D2RMonStats, "s1maxd(n)" as keyof D2RMonStats, "id");
+    checkMinMax(monStats, "el1mind(n)" as keyof D2RMonStats, "el1maxd(n)" as keyof D2RMonStats, "id");
+    checkMinMax(monStats, "el2mind(n)" as keyof D2RMonStats, "el2maxd(n)" as keyof D2RMonStats, "id");
+    checkMinMax(monStats, "el3mind(n)" as keyof D2RMonStats, "el3maxd(n)" as keyof D2RMonStats, "id");
+    // hell variants
+    checkMinMax(monStats, "minhp(h)" as keyof D2RMonStats, "maxhp(h)" as keyof D2RMonStats, "id");
+    checkMinMax(monStats, "a1mind(h)" as keyof D2RMonStats, "a1maxd(h)" as keyof D2RMonStats, "id");
+    checkMinMax(monStats, "a2mind(h)" as keyof D2RMonStats, "a2maxd(h)" as keyof D2RMonStats, "id");
+    checkMinMax(monStats, "s1mind(h)" as keyof D2RMonStats, "s1maxd(h)" as keyof D2RMonStats, "id");
+    checkMinMax(monStats, "el1mind(h)" as keyof D2RMonStats, "el1maxd(h)" as keyof D2RMonStats, "id");
+    checkMinMax(monStats, "el2mind(h)" as keyof D2RMonStats, "el2maxd(h)" as keyof D2RMonStats, "id");
+    checkMinMax(monStats, "el3mind(h)" as keyof D2RMonStats, "el3maxd(h)" as keyof D2RMonStats, "id");
+
+    // missiles: MinDamage/MaxDamage, EMin/EMax
+    checkMinMax(missiles, "mindamage", "maxdamage", "missile");
+    checkMinMax(missiles, "emin", "emax", "missile");
+
+    // levels: MonUMin/MonUMax
+    checkMinMax(levels, "monumin", "monumax", "name");
+    checkMinMax(levels, "monumin(n)" as keyof D2RLevels, "monumax(n)" as keyof D2RLevels, "name");
+    checkMinMax(levels, "monumin(h)" as keyof D2RLevels, "monumax(h)" as keyof D2RLevels, "name");
+
+    // superuniques: MinGrp/MaxGrp
+    checkMinMax(superUniques, "mingrp", "maxgrp", "superunique");
+
+    // hireling: Dmg-Min/Dmg-Max
+    checkMinMax(hireling, "dmg-min" as keyof D2RHireling, "dmg-max" as keyof D2RHireling, "hireling");
+
+    // cubemain: mod min/max
+    seq(1, 5).forEach((i) => {
+      checkMinMax(
+        cubemain,
+        `mod ${i} min` as keyof D2RCubemain,
+        `mod ${i} max` as keyof D2RCubemain,
+        "description",
+      );
+    });
+
+    // uniqueitems: min/max for prop values
+    seq(1, 12).forEach((i) => {
+      checkMinMax(
+        uniqueItems,
+        `min${i}` as keyof D2RUniqueItems,
+        `max${i}` as keyof D2RUniqueItems,
+        "index",
+      );
+    });
+
+    // setitems: min/max for prop values
+    seq(1, 9).forEach((i) => {
+      checkMinMax(
+        setItems,
+        `min${i}` as keyof D2RSetItems,
+        `max${i}` as keyof D2RSetItems,
+        "index",
+      );
+    });
+
+    // runes: T1Min/T1Max for runeword properties
+    seq(1, 7).forEach((i) => {
+      checkMinMax(
+        runes,
+        `t1min${i}` as keyof D2RRunes,
+        `t1max${i}` as keyof D2RRunes,
+        "name",
+      );
+    });
+  }
+}
+
+/**
+ * Check that boolean fields only contain 0, 1, or empty.
+ * Complements NumericBounds which already checks many boolean fields via inRng.
+ * This rule covers additional boolean fields from the dataguide not yet checked.
+ */
+@lintrule
+export class BooleanFields extends Rule {
+  GetRuleName(): string {
+    return "Basic/BooleanFields";
+  }
+
+  Evaluate(workspace: Workspace) {
+    const checkBool = <T extends D2RExcelRecord, U extends keyof T = keyof T>(
+      records: T[] | undefined,
+      fields: U[],
+      index: U,
+    ) => {
+      if (records === undefined) {
+        return;
+      }
+
+      records.forEach((record, line) => {
+        const indexStr = record[index] as unknown as string;
+        if (indexStr === "" || indexStr === "Expansion" || indexStr?.startsWith?.("@")) {
+          return;
+        }
+
+        fields.forEach((field) => {
+          const val = record[field] as unknown as string;
+          if (val === "" || val === "0" || val === "1") {
+            return;
+          }
+          this.Warn(
+            `${record.GetFileName()}, line ${
+              line + 2
+            }: '${String(field)}' should be 0 or 1 (found '${val}') for '${indexStr}'`,
+          );
+        });
+      });
+    };
+
+    // monstats.txt - boolean fields not already checked in NumericBounds
+    checkBool(workspace.monStats, [
+      "enabled",
+      "rangedtype",
+      "placespawn",
+      "setboss",
+      "bossxfer",
+      "isspawn",
+      "ismelee",
+      "npc",
+      "interact",
+      "inventory",
+      "intown",
+      "lundead",
+      "demon",
+      "flying",
+      "opendoors",
+      "boss",
+      "primeevil",
+      "killable",
+      "switchai",
+      "noaura",
+      "nomultishot",
+      "nevercount",
+      "petignore",
+      "deathdmg",
+      "genericspawn",
+      "zoo",
+      "cannotdesecrate",
+    ] as (keyof D2RMonStats)[], "id");
+
+    // states.txt - boolean fields not already checked
+    checkBool(workspace.states, [
+      "remhit",
+      "nosend",
+      "transform",
+      "aura",
+      "curable",
+      "curse",
+      "active",
+      "restrict",
+      "disguise",
+      "exp",
+      "plrstaydeath",
+      "monstaydeath",
+      "bossstaydeath",
+      "hide",
+      "hidedead",
+      "shatter",
+      "udead",
+      "life",
+      "pgsv",
+      "nooverlays",
+      "noclear",
+      "bossinv",
+      "meleeonly",
+      "notondead",
+      "canstack",
+    ] as (keyof D2RStates)[], "state");
+
+    // superuniques.txt
+    checkBool(workspace.superUniques, [
+      "autopos",
+      "stacks",
+      "replaceable",
+    ] as (keyof D2RSuperUniques)[], "superunique");
+
+    // weapons.txt specific booleans
+    checkBool(workspace.weapons, [
+      "1or2handed" as keyof D2RWeapons,
+      "2handed" as keyof D2RWeapons,
+    ], "name" as keyof D2RWeapons);
+
+    // misc.txt specific booleans
+    checkBool(workspace.misc, [
+      "autobelt",
+      "multibuy",
+    ] as (keyof D2RMisc)[], "name" as keyof D2RMisc);
   }
 }

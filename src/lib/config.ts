@@ -12,6 +12,7 @@ import { D2RStringTable } from "./workspace.ts";
  * Types
  */
 export type RuleAction = "warn" | "error" | "ignore";
+export type GameVersion = "legacy" | "2.6" | "3.0";
 export type DocPageType =
   | "uniques"
   | "sets"
@@ -30,7 +31,7 @@ export interface RuleConfig {
 type AllRuleConfig = { [ruleName: string]: RuleConfig };
 
 export interface SavedConfiguration {
-  legacy: boolean;
+  version: GameVersion;
   workspace: string;
   fallback: string;
   log: string;
@@ -157,7 +158,7 @@ function CreateDefaultConfig(): SavedConfiguration {
 
   return {
     workspace: "",
-    legacy: false,
+    version: "3.0",
     fallback: "",
     logAppend: false,
     log: "output.txt",
@@ -332,11 +333,23 @@ function LoadConfigFirstTime(): SavedConfiguration {
   // Read the config file. If any fields are missing from it that exists in the default, go ahead and re-write.
   const config = Deno.readTextFileSync("config.json");
   try {
-    const parsed = JSON.parse(config) as SavedConfiguration;
+    // deno-lint-ignore no-explicit-any
+    const parsed = JSON.parse(config) as any;
     const defaultConfig = CreateDefaultConfig();
     const newConfig = deepMerge(defaultConfig, parsed);
-    SaveConfig(newConfig, "config.json");
-    return newConfig;
+
+    // Migrate old `legacy` boolean to `version` string
+    if (typeof parsed.legacy === "boolean") {
+      console.warn(
+        'WARNING: The "legacy" config option is deprecated. Please use "version" instead ("legacy", "2.6", or "3.0").',
+      );
+      newConfig.version = parsed.legacy ? "legacy" : "3.0";
+      // deno-lint-ignore no-explicit-any
+      delete (newConfig as any).legacy;
+    }
+
+    SaveConfig(newConfig as SavedConfiguration, "config.json");
+    return newConfig as SavedConfiguration;
   } catch {
     const defaultConfig = CreateDefaultConfig();
     SaveConfig(defaultConfig, "config.json");

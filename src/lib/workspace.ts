@@ -1,6 +1,17 @@
 import * as fs from "https://deno.land/std@0.130.0/fs/mod.ts";
 import * as path from "https://deno.land/std/path/mod.ts";
+import { GameVersion } from "./config.ts";
 import { ExcelColumns } from "../rules/basic.ts";
+
+export type PatchVersion = "2.4" | "2.5" | "2.6" | "2.7" | "3.0";
+
+export interface VersionDelta {
+  added?: string[];
+  removed?: string[];
+  renamed?: { from: string; to: string }[];
+}
+
+export const PATCH_ORDER: PatchVersion[] = ["2.4", "2.5", "2.6", "2.7", "3.0"];
 
 /**
  * Entries for every Excel file.
@@ -8,13 +19,79 @@ import { ExcelColumns } from "../rules/basic.ts";
 export abstract class D2RExcelRecord {
   abstract GetFileName(): string;
 
+  /** Fields that are always optional regardless of game version */
   GetOptionalFields(): string[] {
     return [];
   }
 
-  GetAllFields(): string[] {
-    return [];
+  /** Per-patch field additions/removals. Baseline = D2:LoD (legacy). */
+  GetVersionChanges(): Partial<Record<PatchVersion, VersionDelta>> {
+    return {};
   }
+}
+
+/** Returns the set of patches included for a given game version. */
+function includedPatches(version: GameVersion): Set<PatchVersion> {
+  return version === "legacy"
+    ? new Set()
+    : version === "2.6"
+    ? new Set(["2.4", "2.5", "2.6", "2.7"] as PatchVersion[])
+    : new Set(PATCH_ORDER);
+}
+
+/**
+ * Given a game version and a set of per-patch changes, returns the set of
+ * field names that should NOT be expected for that version.
+ */
+export function getFieldsNotExpectedForVersion(
+  version: GameVersion,
+  changes: Partial<Record<PatchVersion, VersionDelta>>,
+): Set<string> {
+  const included = includedPatches(version);
+
+  const notExpected = new Set<string>();
+  for (const patch of PATCH_ORDER) {
+    const delta = changes[patch];
+    if (!delta) continue;
+    if (included.has(patch)) {
+      // This patch is included: its additions are expected, its removals are not
+      delta.added?.forEach((f) => notExpected.delete(f));
+      delta.removed?.forEach((f) => notExpected.add(f));
+      // Renames: new name is expected, old name is not
+      delta.renamed?.forEach(({ to }) => notExpected.delete(to));
+    } else {
+      // This patch is NOT included: its additions are not expected
+      delta.added?.forEach((f) => notExpected.add(f));
+      // Renames: new name is not expected (old name is still in use)
+      delta.renamed?.forEach(({ to }) => notExpected.add(to));
+    }
+  }
+  return notExpected;
+}
+
+/**
+ * Given a game version and per-patch changes, returns a map of
+ * oldColumnName → currentPropertyName for renames that haven't happened yet.
+ * Used to suppress false "non-standard column" warnings for old column names.
+ */
+export function getColumnAliasesForVersion(
+  version: GameVersion,
+  changes: Partial<Record<PatchVersion, VersionDelta>>,
+): Map<string, string> {
+  const included = includedPatches(version);
+  const aliases = new Map<string, string>();
+
+  for (const patch of PATCH_ORDER) {
+    const delta = changes[patch];
+    if (!delta?.renamed) continue;
+    if (!included.has(patch)) {
+      // Rename hasn't happened yet — old name is valid for this version
+      for (const { from, to } of delta.renamed) {
+        aliases.set(from, to);
+      }
+    }
+  }
+  return aliases;
 }
 
 // misc.txt, armor.txt and weapons.txt all share the same base record type.
@@ -216,11 +293,31 @@ export abstract class D2RItemExcelRecord extends D2RExcelRecord {
   wclass: unknown;
   "2handedwclass": unknown;
   "hit class": unknown;
+  // Added in Diablo II: Resurrected 3.0
+  dropconditioncalc: unknown;
+  uicatoverride: unknown;
+  eventitem: unknown;
+  advancedstashstackable: unknown;
+  usageconditioncalc: unknown;
 
   /// Stuff specific for documentation
   skipInDocs: unknown;
 
   abstract override GetOptionalFields(): (keyof D2RItemExcelRecord)[];
+
+  override GetVersionChanges(): Partial<Record<PatchVersion, VersionDelta>> {
+    return {
+      "3.0": {
+        added: [
+          "dropconditioncalc",
+          "uicatoverride",
+          "eventitem",
+          "advancedstashstackable",
+          "usageconditioncalc",
+        ],
+      },
+    };
+  }
 }
 
 export class D2RArmor extends D2RItemExcelRecord {
@@ -529,6 +626,23 @@ export class D2RBelts extends D2RExcelRecord {
   GetFileName(): string {
     return "belts.txt";
   }
+
+  override GetVersionChanges(): Partial<Record<PatchVersion, VersionDelta>> {
+    return {
+      "2.4": {
+        added: [
+          "defaultitemtypecol1",
+          "defaultitemcodecol1",
+          "defaultitemtypecol2",
+          "defaultitemcodecol2",
+          "defaultitemtypecol3",
+          "defaultitemcodecol3",
+          "defaultitemtypecol4",
+          "defaultitemcodecol4",
+        ],
+      },
+    };
+  }
 }
 
 export class D2RBodyLocs extends D2RExcelRecord {
@@ -788,6 +902,14 @@ export class D2RCubemain extends D2RExcelRecord {
   GetFileName(): string {
     return "cubemain.txt";
   }
+
+  override GetVersionChanges(): Partial<Record<PatchVersion, VersionDelta>> {
+    return {
+      "2.6": {
+        added: ["firstLadderSeason", "lastLadderSeason"],
+      },
+    };
+  }
 }
 
 export class D2RCubemod extends D2RExcelRecord {
@@ -834,9 +956,26 @@ export class D2RDifficultyLevels extends D2RExcelRecord {
   playerhitreactbuffervsplayer: unknown;
   playerhitreactbuffervsmonster: unknown;
   monsterfireenchantexplosiondamagepercent: unknown;
+  // Added in Diablo II: Resurrected 3.0
+  resistfloor: unknown;
 
   GetFileName(): string {
     return "difficultylevels.txt";
+  }
+
+  override GetVersionChanges(): Partial<Record<PatchVersion, VersionDelta>> {
+    return {
+      "2.4": {
+        added: [
+          "playerhitreactbuffervsplayer",
+          "playerhitreactbuffervsmonster",
+          "monsterfireenchantexplosiondamagepercent",
+        ],
+      },
+      "3.0": {
+        added: ["resistfloor"],
+      },
+    };
   }
 }
 
@@ -1013,6 +1152,14 @@ export class D2RHireling extends D2RExcelRecord {
 
   GetFileName(): string {
     return "hireling.txt";
+  }
+
+  override GetVersionChanges(): Partial<Record<PatchVersion, VersionDelta>> {
+    return {
+      "2.4": {
+        added: ["equivalentcharclass"],
+      },
+    };
   }
 }
 
@@ -1236,20 +1383,60 @@ export class D2RItemTypes extends D2RExcelRecord {
   invgfx5: unknown;
   invgfx6: unknown;
   storepage: unknown;
+  // Added in Diablo II: Resurrected 3.0
+  uicategory: unknown;
+  runewordcategory1: unknown;
+  runewordcategory2: unknown;
+  restricted: unknown;
 
   GetFileName(): string {
     return "itemtypes.txt";
+  }
+
+  override GetVersionChanges(): Partial<Record<PatchVersion, VersionDelta>> {
+    return {
+      "3.0": {
+        added: [
+          "uicategory",
+          "runewordcategory1",
+          "runewordcategory2",
+          "restricted",
+        ],
+      },
+    };
   }
 }
 
 // Added in Diablo II: Resurrected 2.5
 export class D2RLevelGroups extends D2RExcelRecord {
+  // 2.6 fields
   name: unknown;
   id: unknown;
   groupname: unknown;
+  // 3.0 fields (complete restructure)
+  levelgroupid: unknown;
+  parentlevelgroupid: unknown;
+  completethreshold: unknown;
+  effect: unknown;
+  namestring: unknown;
 
   GetFileName(): string {
     return "levelgroups.txt";
+  }
+
+  override GetVersionChanges(): Partial<Record<PatchVersion, VersionDelta>> {
+    return {
+      "3.0": {
+        removed: ["name", "id", "groupname"],
+        added: [
+          "levelgroupid",
+          "parentlevelgroupid",
+          "completethreshold",
+          "effect",
+          "namestring",
+        ],
+      },
+    };
   }
 }
 
@@ -1439,9 +1626,22 @@ export class D2RLevels extends D2RExcelRecord {
   objprb7: unknown;
   // Added in Diablo II: Resurrected 2.5
   levelgroup: unknown;
+  // Added in Diablo II: Resurrected 3.0
+  preventtownportal: unknown;
 
   GetFileName(): string {
     return "levels.txt";
+  }
+
+  override GetVersionChanges(): Partial<Record<PatchVersion, VersionDelta>> {
+    return {
+      "2.5": {
+        added: ["levelgroup"],
+      },
+      "3.0": {
+        added: ["preventtownportal"],
+      },
+    };
   }
 }
 
@@ -1801,9 +2001,29 @@ export class D2RMissiles extends D2RExcelRecord {
   clthitsubmissile2: unknown;
   clthitsubmissile3: unknown;
   clthitsubmissile4: unknown;
+  // Added in Diablo II: Resurrected 3.0 (levrange renamed to radius)
+  radius: unknown;
+  collisionoverlap: unknown;
+  ondiedsound: unknown;
+  missileweaponvfx: unknown;
 
   GetFileName(): string {
     return "missiles.txt";
+  }
+
+  override GetVersionChanges(): Partial<Record<PatchVersion, VersionDelta>> {
+    return {
+      "3.0": {
+        added: [
+          "collisionoverlap",
+          "ondiedsound",
+          "missileweaponvfx",
+        ],
+        renamed: [
+          { from: "levrange", to: "radius" },
+        ],
+      },
+    };
   }
 }
 
@@ -2326,9 +2546,65 @@ export class D2RMonStats extends D2RExcelRecord {
   "treasureclasschampdesecrated(h)": unknown;
   "treasureclassuniquedesecrated(h)": unknown;
   cannotdesecrate: unknown;
+  // Added in Diablo II: Resurrected 3.0
+  nopreventmonsterheal: unknown;
+  cannotherald: unknown;
+  treasureclassherald: unknown;
+  "treasureclassherald(n)": unknown;
+  "treasureclassherald(h)": unknown;
 
   GetFileName(): string {
     return "monstats.txt";
+  }
+
+  override GetVersionChanges(): Partial<Record<PatchVersion, VersionDelta>> {
+    return {
+      "2.4": {
+        added: [
+          "rightarmitemtype",
+          "leftarmitemtype",
+          "cannotusetwohandeditems",
+        ],
+      },
+      "2.5": {
+        added: [
+          "treasureclassdesecrated",
+          "treasureclasschampdesecrated",
+          "treasureclassuniquedesecrated",
+          "treasureclassdesecrated(n)",
+          "treasureclasschampdesecrated(n)",
+          "treasureclassuniquedesecrated(n)",
+          "treasureclassdesecrated(h)",
+          "treasureclasschampdesecrated(h)",
+          "treasureclassuniquedesecrated(h)",
+          "cannotdesecrate",
+        ],
+        renamed: [
+          { from: "noshldblock", to: "shieldblockoverride" },
+          { from: "treasureclass1", to: "treasureclass" },
+          { from: "treasureclass2", to: "treasureclasschamp" },
+          { from: "treasureclass3", to: "treasureclassunique" },
+          { from: "treasureclass4", to: "treasureclassquest" },
+          { from: "treasureclass1(n)", to: "treasureclass(n)" },
+          { from: "treasureclass2(n)", to: "treasureclasschamp(n)" },
+          { from: "treasureclass3(n)", to: "treasureclassunique(n)" },
+          { from: "treasureclass4(n)", to: "treasureclassquest(n)" },
+          { from: "treasureclass1(h)", to: "treasureclass(h)" },
+          { from: "treasureclass2(h)", to: "treasureclasschamp(h)" },
+          { from: "treasureclass3(h)", to: "treasureclassunique(h)" },
+          { from: "treasureclass4(h)", to: "treasureclassquest(h)" },
+        ],
+      },
+      "3.0": {
+        added: [
+          "nopreventmonsterheal",
+          "cannotherald",
+          "treasureclassherald",
+          "treasureclassherald(n)",
+          "treasureclassherald(h)",
+        ],
+      },
+    };
   }
 }
 
@@ -2461,6 +2737,14 @@ export class D2RMonStats2 extends D2RExcelRecord {
 
   GetFileName(): string {
     return "monstats2.txt";
+  }
+
+  override GetVersionChanges(): Partial<Record<PatchVersion, VersionDelta>> {
+    return {
+      "2.4": {
+        added: ["spawnuniquemod"], // retail release, bucketed here
+      },
+    };
   }
 }
 
@@ -2761,9 +3045,25 @@ export class D2ROverlay extends D2RExcelRecord {
   blue: unknown;
   numdirections: unknown;
   localblood: unknown;
+  // Added in Diablo II: Resurrected 3.0
+  weaponstateflags: unknown;
+  weaponstategroup: unknown;
+  startsound: unknown;
 
   GetFileName(): string {
     return "overlay.txt";
+  }
+
+  override GetVersionChanges(): Partial<Record<PatchVersion, VersionDelta>> {
+    return {
+      "3.0": {
+        added: [
+          "weaponstateflags",
+          "weaponstategroup",
+          "startsound",
+        ],
+      },
+    };
   }
 }
 
@@ -2788,9 +3088,29 @@ export class D2RPetType extends D2RExcelRecord {
   micon3: unknown;
   mclass4: unknown;
   micon4: unknown;
+  // Added in Diablo II: Resurrected 3.0
+  pool: unknown;
+  overridename1: unknown;
+  overridename2: unknown;
+  overridename3: unknown;
+  overridename4: unknown;
 
   GetFileName(): string {
     return "pettype.txt";
+  }
+
+  override GetVersionChanges(): Partial<Record<PatchVersion, VersionDelta>> {
+    return {
+      "3.0": {
+        added: [
+          "pool",
+          "overridename1",
+          "overridename2",
+          "overridename3",
+          "overridename4",
+        ],
+      },
+    };
   }
 }
 
@@ -2852,9 +3172,19 @@ export class D2RProperties extends D2RExcelRecord {
   stat7: unknown;
   set7: unknown;
   val7: unknown;
+  // Added in Diablo II: Resurrected 3.0
+  uirangetype: unknown;
 
   GetFileName(): string {
     return "properties.txt";
+  }
+
+  override GetVersionChanges(): Partial<Record<PatchVersion, VersionDelta>> {
+    return {
+      "3.0": {
+        added: ["uirangetype"],
+      },
+    };
   }
 }
 
@@ -2961,6 +3291,9 @@ export class D2RRunes extends D2RExcelRecord {
   // added in Diablo II: Resurrected 2.6
   firstLadderSeason: unknown;
   lastLadderSeason: unknown;
+  // Added in Diablo II: Resurrected 3.0
+  disallowcraftinginladder: unknown;
+  disallowcraftinginnonladder: unknown;
 
   /// Internal use only
   skipInDocs: unknown;
@@ -2968,11 +3301,33 @@ export class D2RRunes extends D2RExcelRecord {
   GetFileName(): string {
     return "runes.txt";
   }
+
+  override GetVersionChanges(): Partial<Record<PatchVersion, VersionDelta>> {
+    return {
+      "2.6": {
+        added: ["firstLadderSeason", "lastLadderSeason"],
+      },
+      "3.0": {
+        added: [
+          "disallowcraftinginladder",
+          "disallowcraftinginnonladder",
+        ],
+      },
+    };
+  }
 }
 
 export class D2RSetItems extends D2RExcelRecord {
   index: unknown;
   set: unknown;
+  // Added in Diablo II: Resurrected 3.0
+  disabled: unknown;
+  spawnable: unknown;
+  disablechronicle: unknown;
+  dropconditioncalc: unknown;
+  firstladderseason: unknown;
+  lastladderseason: unknown;
+  //
   item: unknown;
   rarity: unknown;
   lvl: unknown;
@@ -3068,6 +3423,21 @@ export class D2RSetItems extends D2RExcelRecord {
   GetFileName(): string {
     return "setitems.txt";
   }
+
+  override GetVersionChanges(): Partial<Record<PatchVersion, VersionDelta>> {
+    return {
+      "3.0": {
+        added: [
+          "disabled",
+          "spawnable",
+          "disablechronicle",
+          "dropconditioncalc",
+          "firstladderseason",
+          "lastladderseason",
+        ],
+      },
+    };
+  }
 }
 
 export class D2RSets extends D2RExcelRecord {
@@ -3138,12 +3508,22 @@ export class D2RSets extends D2RExcelRecord {
   fparam8: unknown;
   fmin8: unknown;
   fmax8: unknown;
+  // Added in Diablo II: Resurrected 3.0
+  uiclass: unknown;
 
   /// Internal use only
   skipInDocs: unknown;
 
   GetFileName(): string {
     return "sets.txt";
+  }
+
+  override GetVersionChanges(): Partial<Record<PatchVersion, VersionDelta>> {
+    return {
+      "3.0": {
+        added: ["uiclass"],
+      },
+    };
   }
 }
 
@@ -3299,6 +3679,17 @@ export class D2RSkillDesc extends D2RExcelRecord {
   GetFileName(): string {
     return "skilldesc.txt";
   }
+
+  override GetVersionChanges(): Partial<Record<PatchVersion, VersionDelta>> {
+    return {
+      "2.5": {
+        added: ["hireableiconcel"],
+      },
+      "2.6": {
+        added: ["item proc text", "item proc descline count"],
+      },
+    };
+  }
 }
 
 export class D2RSkills extends D2RExcelRecord {
@@ -3345,6 +3736,10 @@ export class D2RSkills extends D2RExcelRecord {
   auraeventfunc2: unknown;
   auraevent3: unknown;
   auraeventfunc3: unknown;
+  // Added in Diablo II: Resurrected 3.0
+  auraevent4: unknown;
+  auraeventfunc4: unknown;
+  //
   passivestate: unknown;
   passiveitype: unknown;
   passivereqweaponcount: unknown;
@@ -3577,9 +3972,95 @@ export class D2RSkills extends D2RExcelRecord {
   passivecalc13: unknown;
   passivestat14: unknown;
   passivecalc14: unknown;
+  // Added in Diablo II: Resurrected 3.0
+  requirespettype: unknown;
+  requiresweapon: unknown;
+  periodicclearaura: unknown;
+  calc7: unknown;
+  calc8: unknown;
+  calc9: unknown;
+  calc10: unknown;
+  param13: unknown;
+  param14: unknown;
+  param15: unknown;
+  param16: unknown;
+  param17: unknown;
+  param18: unknown;
+  param19: unknown;
+  param20: unknown;
 
   GetFileName(): string {
     return "skills.txt";
+  }
+
+  override GetVersionChanges(): Partial<Record<PatchVersion, VersionDelta>> {
+    return {
+      "2.4": {
+        added: [
+          // added in retail release (bucketed here)
+          "srvstopfunc",
+          "useservermissilesonremoteclients",
+          "cltstopfunc",
+          // added in 2.4
+          "passivestat6",
+          "passivecalc6",
+          "calc5",
+          "calc6",
+          "param9",
+          "param10",
+          "param11",
+          "param12",
+        ],
+      },
+      "2.5": {
+        added: [
+          "passivestat7",
+          "passivecalc7",
+          "passivestat8",
+          "passivecalc8",
+          "passivestat9",
+          "passivecalc9",
+          "passivestat10",
+          "passivecalc10",
+        ],
+      },
+      "2.6": {
+        added: ["itemuserestrict"],
+      },
+      "2.7": {
+        added: [
+          "passivestat11",
+          "passivecalc11",
+          "passivestat12",
+          "passivecalc12",
+          "passivestat13",
+          "passivecalc13",
+          "passivestat14",
+          "passivecalc14",
+        ],
+      },
+      "3.0": {
+        added: [
+          "auraevent4",
+          "auraeventfunc4",
+          "requirespettype",
+          "requiresweapon",
+          "periodicclearaura",
+          "calc7",
+          "calc8",
+          "calc9",
+          "calc10",
+          "param13",
+          "param14",
+          "param15",
+          "param16",
+          "param17",
+          "param18",
+          "param19",
+          "param20",
+        ],
+      },
+    };
   }
 }
 
@@ -3625,6 +4106,14 @@ export class D2RSoundEnviron extends D2RExcelRecord {
 
   GetFileName(): string {
     return "soundenviron.txt";
+  }
+
+  override GetVersionChanges(): Partial<Record<PatchVersion, VersionDelta>> {
+    return {
+      "2.5": {
+        added: ["inheritenvironment"],
+      },
+    };
   }
 }
 
@@ -3745,9 +4234,25 @@ export class D2RStates extends D2RExcelRecord {
   "sunder-res-reduce": unknown;
   // new in retail release
   hidedead: unknown;
+  // Added in Diablo II: Resurrected 3.0
+  vfxweaponstate: unknown;
 
   GetFileName(): string {
     return "states.txt";
+  }
+
+  override GetVersionChanges(): Partial<Record<PatchVersion, VersionDelta>> {
+    return {
+      "2.4": {
+        added: ["hidedead"], // retail release, bucketed here
+      },
+      "2.6": {
+        added: ["sunder-res-reduce"],
+      },
+      "3.0": {
+        added: ["vfxweaponstate"],
+      },
+    };
   }
 }
 
@@ -3788,6 +4293,18 @@ export class D2RSuperUniques extends D2RExcelRecord {
   GetFileName(): string {
     return "superuniques.txt";
   }
+
+  override GetVersionChanges(): Partial<Record<PatchVersion, VersionDelta>> {
+    return {
+      "2.5": {
+        added: [
+          "tc desecrated",
+          "tc(n) desecrated",
+          "tc(h) desecrated",
+        ],
+      },
+    };
+  }
 }
 
 export class D2RTreasureClassEx extends D2RExcelRecord {
@@ -3823,9 +4340,28 @@ export class D2RTreasureClassEx extends D2RExcelRecord {
   // 'ladder' was added in 2.5, but was replaced by the following in 2.6
   firstLadderSeason: unknown;
   lastLadderSeason: unknown;
+  // Added in Diablo II: Resurrected 3.0
+  conditioncalc: unknown;
+  questflag: unknown;
+  questflagex: unknown;
 
   GetFileName(): string {
     return "treasureclassex.txt";
+  }
+
+  override GetVersionChanges(): Partial<Record<PatchVersion, VersionDelta>> {
+    return {
+      "2.6": {
+        added: ["firstLadderSeason", "lastLadderSeason"],
+      },
+      "3.0": {
+        added: [
+          "conditioncalc",
+          "questflag",
+          "questflagex",
+        ],
+      },
+    };
   }
 }
 
@@ -3840,7 +4376,12 @@ export class D2RUniqueAppellation extends D2RExcelRecord {
 export class D2RUniqueItems extends D2RExcelRecord {
   index: unknown;
   version: unknown;
+  // 2.6: 'enabled' column. 3.0: replaced by 'disabled', 'spawnable', 'disablechronicle', 'dropconditioncalc'
   enabled: unknown;
+  disabled: unknown;
+  spawnable: unknown;
+  disablechronicle: unknown;
+  dropconditioncalc: unknown;
   // 'firstLadderSeason' and 'lastLadderSeason' replace 'ladder' in Diablo II: Resurrected 2.6
   firstLadderSeason: unknown;
   lastLadderSeason: unknown;
@@ -3915,6 +4456,23 @@ export class D2RUniqueItems extends D2RExcelRecord {
   GetFileName(): string {
     return "uniqueitems.txt";
   }
+
+  override GetVersionChanges(): Partial<Record<PatchVersion, VersionDelta>> {
+    return {
+      "2.6": {
+        added: ["firstLadderSeason", "lastLadderSeason"],
+      },
+      "3.0": {
+        removed: ["enabled"],
+        added: [
+          "disabled",
+          "spawnable",
+          "disablechronicle",
+          "dropconditioncalc",
+        ],
+      },
+    };
+  }
 }
 
 export class D2RUniquePrefix extends D2RExcelRecord {
@@ -3941,6 +4499,113 @@ export class D2RWanderingMon extends D2RExcelRecord {
   }
 }
 
+// Added in Diablo II: Resurrected 3.0
+export class D2RItemUICategories extends D2RExcelRecord {
+  name: unknown;
+  isequipment: unknown;
+  parentcategory: unknown;
+  qualityfilter: unknown;
+  numcolumns: unknown;
+
+  GetFileName(): string {
+    return "itemuicategories.txt";
+  }
+}
+
+// Added in Diablo II: Resurrected 3.0
+export class D2RMonPet extends D2RExcelRecord {
+  monster: unknown;
+  hirelingalternatevoice: unknown;
+  consumestat1: unknown;
+  consumepar1: unknown;
+  consumecalc1: unknown;
+  consumestat2: unknown;
+  consumepar2: unknown;
+  consumecalc2: unknown;
+  consumestat3: unknown;
+  consumepar3: unknown;
+  consumecalc3: unknown;
+  consumestat4: unknown;
+  consumepar4: unknown;
+  consumecalc4: unknown;
+  consumestat5: unknown;
+  consumepar5: unknown;
+  consumecalc5: unknown;
+  numunderlingcalc: unknown;
+  bindchancecalc: unknown;
+
+  GetFileName(): string {
+    return "monpet.txt";
+  }
+}
+
+// Added in Diablo II: Resurrected 3.0
+export class D2RPropertyGroups extends D2RExcelRecord {
+  code: unknown;
+  pickmode: unknown;
+  prop1: unknown;
+  parmin1: unknown;
+  parmax1: unknown;
+  modmin1: unknown;
+  modmax1: unknown;
+  chance1: unknown;
+  prop2: unknown;
+  parmin2: unknown;
+  parmax2: unknown;
+  modmin2: unknown;
+  modmax2: unknown;
+  chance2: unknown;
+  prop3: unknown;
+  parmin3: unknown;
+  parmax3: unknown;
+  modmin3: unknown;
+  modmax3: unknown;
+  chance3: unknown;
+  prop4: unknown;
+  parmin4: unknown;
+  parmax4: unknown;
+  modmin4: unknown;
+  modmax4: unknown;
+  chance4: unknown;
+  prop5: unknown;
+  parmin5: unknown;
+  parmax5: unknown;
+  modmin5: unknown;
+  modmax5: unknown;
+  chance5: unknown;
+  prop6: unknown;
+  parmin6: unknown;
+  parmax6: unknown;
+  modmin6: unknown;
+  modmax6: unknown;
+  chance6: unknown;
+  prop7: unknown;
+  parmin7: unknown;
+  parmax7: unknown;
+  modmin7: unknown;
+  modmax7: unknown;
+  chance7: unknown;
+  prop8: unknown;
+  parmin8: unknown;
+  parmax8: unknown;
+  modmin8: unknown;
+  modmax8: unknown;
+  chance8: unknown;
+
+  GetFileName(): string {
+    return "propertygroups.txt";
+  }
+}
+
+// Added in Diablo II: Resurrected 3.0
+export class D2RRunewordUICategories extends D2RExcelRecord {
+  name: unknown;
+
+  GetFileName(): string {
+    return "runeworduicategories.txt";
+  }
+}
+
 export interface D2RStringTable {
   id: number;
   Key: string;
@@ -3960,7 +4625,7 @@ export interface D2RStringTable {
 }
 
 export interface D2RJsonTables {
-  monsters: { [key: string]: string } | undefined;
+  monsters: D2RStringTable[] | undefined;
   items: { [key: string]: { asset: string } }[] | undefined;
   sets:
     | { [key: string]: { normal: string; uber: string; ultra: string } }[]
@@ -4005,6 +4670,7 @@ export interface Workspace {
   itemRatio?: D2RItemRatio[];
   itemStatCost?: D2RItemStatCost[];
   itemTypes?: D2RItemTypes[];
+  itemUICategories?: D2RItemUICategories[];
   levels?: D2RLevels[];
   levelGroups?: D2RLevelGroups[];
   lowQualityItems?: D2RLowQualityItems[];
@@ -4020,6 +4686,7 @@ export interface Workspace {
   missiles?: D2RMissiles[];
   monAi?: D2RMonAi[];
   monEquip?: D2RMonEquip[];
+  monPet?: D2RMonPet[];
   monLvl?: D2RMonLvl[];
   monMode?: D2RMonMode[];
   monPlace?: D2RMonPlace[];
@@ -4043,10 +4710,12 @@ export interface Workspace {
   plrMode?: D2RPlrMode[];
   plrType?: D2RPlrType[];
   properties?: D2RProperties[];
+  propertyGroups?: D2RPropertyGroups[];
   qualityItems?: D2RQualityItems[];
   rarePrefix?: D2RRarePrefix[];
   rareSuffix?: D2RRareSuffix[];
   runes?: D2RRunes[];
+  runewordUICategories?: D2RRunewordUICategories[];
   setItems?: D2RSetItems[];
   sets?: D2RSets[];
   shrines?: D2RShrines[];
@@ -4360,10 +5029,10 @@ function LoadJsonFiles(
 export function LoadWorkspace(
   location: string,
   fallback: string,
-  legacy: boolean,
+  version: GameVersion,
 ): Workspace {
   return {
-    actInfo: legacy ? undefined : ParseExcel(location, fallback, D2RActInfo),
+    actInfo: version === "legacy" ? undefined : ParseExcel(location, fallback, D2RActInfo),
     armor: ParseExcel(location, fallback, D2RArmor),
     armType: ParseExcel(location, fallback, D2RArmType),
     autoMagic: ParseExcel(location, fallback, D2RAutomagic),
@@ -4393,8 +5062,9 @@ export function LoadWorkspace(
     itemRatio: ParseExcel(location, fallback, D2RItemRatio),
     itemStatCost: ParseExcel(location, fallback, D2RItemStatCost),
     itemTypes: ParseExcel(location, fallback, D2RItemTypes),
+    itemUICategories: version === "legacy" ? undefined : ParseExcel(location, fallback, D2RItemUICategories),
     levels: ParseExcel(location, fallback, D2RLevels),
-    levelGroups: legacy
+    levelGroups: version === "legacy"
       ? undefined
       : ParseExcel(location, fallback, D2RLevelGroups),
     lowQualityItems: ParseExcel(
@@ -4414,6 +5084,7 @@ export function LoadWorkspace(
     missiles: ParseExcel(location, fallback, D2RMissiles),
     monAi: ParseExcel(location, fallback, D2RMonAi),
     monEquip: ParseExcel(location, fallback, D2RMonEquip),
+    monPet: version === "legacy" ? undefined : ParseExcel(location, fallback, D2RMonPet),
     monLvl: ParseExcel(location, fallback, D2RMonLvl),
     monMode: ParseExcel(location, fallback, D2RMonMode),
     monPlace: ParseExcel(location, fallback, D2RMonPlace),
@@ -4429,7 +5100,7 @@ export function LoadWorkspace(
     objects: ParseExcel(location, fallback, D2RObjects),
     objGroup: ParseExcel(location, fallback, D2RObjGroup),
     objMode: ParseExcel(location, fallback, D2RObjMode),
-    objPreset: legacy
+    objPreset: version === "legacy"
       ? undefined
       : ParseExcel(location, fallback, D2RObjPreset),
     objType: ParseExcel(location, fallback, D2RObjType),
@@ -4439,10 +5110,12 @@ export function LoadWorkspace(
     plrMode: ParseExcel(location, fallback, D2RPlrMode),
     plrType: ParseExcel(location, fallback, D2RPlrType),
     properties: ParseExcel(location, fallback, D2RProperties),
+    propertyGroups: version === "legacy" ? undefined : ParseExcel(location, fallback, D2RPropertyGroups),
     qualityItems: ParseExcel(location, fallback, D2RQualityItems),
     rarePrefix: ParseExcel(location, fallback, D2RRarePrefix),
     rareSuffix: ParseExcel(location, fallback, D2RRareSuffix),
     runes: ParseExcel(location, fallback, D2RRunes),
+    runewordUICategories: version === "legacy" ? undefined : ParseExcel(location, fallback, D2RRunewordUICategories),
     setItems: ParseExcel(location, fallback, D2RSetItems),
     sets: ParseExcel(location, fallback, D2RSets),
     shrines: ParseExcel(location, fallback, D2RShrines),
@@ -4467,7 +5140,7 @@ export function LoadWorkspace(
     uniqueItems: ParseExcel(location, fallback, D2RUniqueItems),
     uniquePrefix: ParseExcel(location, fallback, D2RUniquePrefix),
     uniqueSuffix: ParseExcel(location, fallback, D2RUniqueSuffix),
-    wanderingMon: legacy
+    wanderingMon: version === "legacy"
       ? undefined
       : ParseExcel(location, fallback, D2RWanderingMon),
     weapons: ParseExcel(location, fallback, D2RWeapons),
