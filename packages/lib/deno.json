@@ -1,0 +1,9 @@
+{
+  "name": "@d2rlint/lib",
+  "version": "1.0.0",
+  "exports": {
+    ".": "./mod.ts",
+    "./rules": "./rules/mod.ts",
+    "./commands": "./commands/mod.ts"
+  }
+}

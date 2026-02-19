@@ -3,21 +3,10 @@
  */
 
 import { executeCommands } from "./commands/index.ts";
-import GenerateDocs from "./doc/doc.ts";
-import { GetConfig } from "./lib/config.ts";
-import { GetAllRules } from "./lib/rule.ts";
-import { LoadWorkspace } from "./lib/workspace.ts";
+import { GenerateDocs, GetConfig, GetAllRules, LoadWorkspace } from "@d2rlint/lib";
 
-// Import all rules here so that they get loaded.
-import "./rules/basic.ts";
-import "./rules/cube.ts";
-import "./rules/items.ts";
-import "./rules/levels.ts";
-import "./rules/monsters.ts";
-import "./rules/skills.ts";
-import "./rules/string.ts";
-import "./rules/treasure.ts";
-/////////////////////////////////////////////////
+// Import all rules so that they get registered via @lintrule.
+import "@d2rlint/lib/rules";
 
 // Load workspace, iterate through rules, passing workspace into rule
 const config = GetConfig();

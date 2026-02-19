@@ -1,7 +1,5 @@
-import { Workspace } from "../lib/workspace.ts";
-import { ExecuteBulkCodeLookup } from "./bulk-code-lookup.ts";
-import { ExecuteBulkItemGfxLookup } from "./bulk-itemgfx-lookup.ts";
-import { ExecuteBulkSetAndUnique } from "./bulk-set-and-unique.ts";
+import { Workspace } from "@d2rlint/lib";
+import { ExecuteBulkCodeLookup, ExecuteBulkItemGfxLookup, ExecuteBulkSetAndUnique } from "@d2rlint/lib/commands";
 
 const commands: { [key: string]: (ws: Workspace, args: string[]) => void } = {
   "bulk-code-lookup": ExecuteBulkCodeLookup,
