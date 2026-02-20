@@ -2060,9 +2060,9 @@ export class NumericBounds extends Rule {
     inRng(monStats, "drain", "id", 0, 100);
     inRng(monStats, "drain(n)" as keyof D2RMonStats, "id", 0, 100);
     inRng(monStats, "drain(h)" as keyof D2RMonStats, "id", 0, 100);
-    inRng(monStats, "coldeffect", "id", 0, 100);
-    inRng(monStats, "coldeffect(n)" as keyof D2RMonStats, "id", 0, 100);
-    inRng(monStats, "coldeffect(h)" as keyof D2RMonStats, "id", 0, 100);
+    inRng(monStats, "coldeffect", "id", -100, 100);
+    inRng(monStats, "coldeffect(n)" as keyof D2RMonStats, "id", -100, 100);
+    inRng(monStats, "coldeffect(h)" as keyof D2RMonStats, "id", -100, 100);
     inRng(monUMod, "fpick", "id", 0, 3);
     inRng(npc, "buy mult", "npc", 0, 2048);
     inRng(npc, "sell mult", "npc", 0, 2048);

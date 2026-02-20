@@ -5,5 +5,5 @@
     ".": "./mod.ts",
     "./rules": "./rules/mod.ts",
     "./commands": "./commands/mod.ts"
-  }
+  },
 }
