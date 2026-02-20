@@ -304,9 +304,46 @@ function CreateDefaultConfig(): SavedConfiguration {
  * @param config - the configuration to save
  * @param location - the location where to save it
  */
-function SaveConfig(config: SavedConfiguration, location: string) {
+export function SaveConfig(config: SavedConfiguration, location: string) {
   const text = JSON.stringify(config, undefined, 2);
   Deno.writeTextFileSync(location, text);
+}
+
+/**
+ * Overrides that can be supplied via CLI flags for a single run.
+ * Fields left undefined are not overridden.
+ */
+export type CliOverrides = {
+  workspace?: string;
+  fallback?: string;
+  version?: GameVersion;
+  log?: string;
+  logAppend?: boolean;
+  generateDocs?: boolean;
+  rules?: Record<string, RuleAction>;
+};
+
+/**
+ * Applies CLI flag overrides to a loaded config object in-place.
+ * Only fields present (non-undefined) in `overrides` are changed.
+ */
+export function ApplyCliOverrides(
+  config: SavedConfiguration,
+  overrides: CliOverrides,
+): void {
+  if (overrides.workspace !== undefined) config.workspace = overrides.workspace;
+  if (overrides.fallback !== undefined) config.fallback = overrides.fallback;
+  if (overrides.version !== undefined) config.version = overrides.version;
+  if (overrides.log !== undefined) config.log = overrides.log;
+  if (overrides.logAppend !== undefined) config.logAppend = overrides.logAppend;
+  if (overrides.generateDocs !== undefined) {
+    config.generateDocs = overrides.generateDocs;
+  }
+  if (overrides.rules !== undefined) {
+    for (const [name, action] of Object.entries(overrides.rules)) {
+      config.rules[name] = { action };
+    }
+  }
 }
 
 /**

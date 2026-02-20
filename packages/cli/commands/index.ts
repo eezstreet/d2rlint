@@ -21,15 +21,11 @@ const commands: { [key: string]: CommandEntry } = {
   },
 };
 
-export const executeCommands = (args: string[], ws: Workspace) => {
-  if (args[0] === "--help" || args[0] === "help") {
-    console.log("Available commands:");
-    for (const { usage } of Object.values(commands)) {
-      console.log(`  ${usage}`);
-    }
-    return true;
-  }
+export function getCommandUsages(): string[] {
+  return Object.values(commands).map(({ usage }) => usage);
+}
 
+export const executeCommands = (args: string[], ws: Workspace) => {
   const keys = Object.keys(commands);
   for (let i = 0; i < keys.length; i++) {
     const key = keys[i];
