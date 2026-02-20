@@ -1,0 +1,41 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "compile",
+      "type": "shell",
+      "command": "deno task compile-cli",
+      "group": {
+        "kind": "build",
+        "isDefault": true
+      },
+      "presentation": {
+        "reveal": "always",
+        "panel": "shared"
+      },
+      "problemMatcher": "$deno"
+    },
+    {
+      "label": "run",
+      "type": "shell",
+      "command": "deno run --allow-read --allow-write --allow-env packages/cli/main.ts",
+      "group": "none",
+      "presentation": {
+        "reveal": "always",
+        "panel": "shared"
+      },
+      "problemMatcher": "$deno"
+    },
+    {
+      "label": "check",
+      "type": "shell",
+      "command": "deno check packages/cli/main.ts",
+      "group": "test",
+      "presentation": {
+        "reveal": "always",
+        "panel": "shared"
+      },
+      "problemMatcher": "$deno"
+    }
+  ]
+}

@@ -1,0 +1,6 @@
+{
+  "recommendations": [
+    // Deno language server — required for type-checking, formatting, and import completion
+    "denoland.vscode-deno"
+  ]
+}

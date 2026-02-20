@@ -1,24 +1,28 @@
 {
-  // Use IntelliSense to learn about possible attributes.
-  // Hover to view descriptions of existing attributes.
-  // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
   "version": "0.2.0",
   "configurations": [
     {
       "request": "launch",
-      "name": "Launch Program",
+      "name": "Launch (debug)",
       "type": "node",
-      "program": "${workspaceFolder}/src/main.ts",
+      "program": "${workspaceFolder}/packages/cli/main.ts",
       "cwd": "${workspaceFolder}",
-      "runtimeExecutable": "deno.exe",
+      "runtimeExecutable": "deno",
       "runtimeArgs": [
         "run",
-        "--unstable",
         "--inspect-wait",
-        "--allow-all"
+        "--allow-read",
+        "--allow-write",
+        "--allow-env"
       ],
       "attachSimplePort": 9229,
       "outputCapture": "std"
+    },
+    {
+      "request": "attach",
+      "name": "Attach to Deno",
+      "type": "node",
+      "port": 9229
     }
   ]
 }
