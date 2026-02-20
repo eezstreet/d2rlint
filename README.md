@@ -33,9 +33,9 @@ You will find that it has produced a `config.json` file:
 {
   "workspace": "",
   "fallback": "",
+  "version": "3.0",
   "log": "output.txt",
   "logAppend": false,
-  "legacy": false,
   "iveConsideredDonating": false,
   "rules": {
     "Basic/NoDuplicateExcel": {
@@ -88,10 +88,7 @@ You can adjust the level of concern for each individual rule within the
   continue execution
 - `"ignore"`: if this is set, the rule will be ignored (the rule is not even
   evaluated)
-- `"error"`: throw an error if this rule fails and don't continue
-
-Please note that only `"ignore"` has any impact at the moment as this tool is
-still under development.
+- `"error"`: halt and exit with a non-zero code if this rule fires
 
 The program by default writes to `stdout`, but it can also write to a log file.
 If `logAppend` is turned on, it will write to the same log file over and over
@@ -99,6 +96,39 @@ again.
 
 The program will output a banner at the top of `stdout` unless
 `iveConsideredDonating` has been turned on. **Please consider donating!**
+
+### CLI Flags
+
+Any config field can be overridden for a single run without editing
+`config.json`. Flags are ephemeral by default; use `--save` to persist them.
+
+| Flag | Short | Description |
+|------|-------|-------------|
+| `--workspace <path>` | `-w` | Override workspace directory |
+| `--fallback <path>` | `-f` | Override fallback directory |
+| `--game-version <version>` | | Override game version (`legacy`, `2.6`, `3.0`) |
+| `--log <path>` | `-l` | Override log file path |
+| `--log-append` / `--no-log-append` | | Append to or overwrite the log file |
+| `--generate-docs` / `--no-generate-docs` | | Enable or disable doc generation |
+| `--rule <Name=action>` | | Override a single rule action (repeatable) |
+| `--save` | | Write overrides back to `config.json` |
+| `--help` | `-h` | Show flag and command reference |
+
+Examples:
+
+```
+# Lint a different mod directory without editing config.json
+d2rlint --workspace "C:/MyMod"
+
+# Treat a specific rule as fatal for this run
+d2rlint --rule Basic/NoDuplicateExcel=error
+
+# Run a command against a legacy workspace
+d2rlint --game-version legacy bulk-code-lookup in.txt out.txt
+
+# Override workspace and save it as the new default
+d2rlint --workspace "C:/MyMod" --save
+```
 
 ### List of Rules
 
@@ -153,17 +183,20 @@ Note that the files that ship with the original game will trigger some of these
 rules. **This is normal.** There are genuine errors in their own files, and this
 is to be expected.
 
-### Legacy Mode
+### Game Version
 
-By changing `legacy: false` to `legacy: true` in the config.json, your workspace
-will be treated as a Diablo II: Legacy workspace instead of a Diablo II:
-Resurrected one. The support for Legacy is not quite there yet. Mainly, it has a
-few issues:
+The `"version"` field in `config.json` controls which game version your
+workspace is treated as. Valid values are:
 
-- TBL files aren't parsed yet, so it can't check if strings are unfound or
-  untranslated. (`String/NoUntranslated` does not work _at all_ in legacy mode
-  currently.)
-- A few of the column changes from Legacy to Resurrected aren't fully reflected
+- `"3.0"` — Diablo II: Resurrected 3.0 (default)
+- `"2.6"` — Diablo II: Resurrected 2.6
+- `"legacy"` — Diablo II: Lord of Destruction (classic)
+
+Legacy support is partial. Known limitations:
+
+- TBL files aren't parsed, so `String/NoUntranslated` does not work in legacy
+  mode.
+- A few column differences between LoD and Resurrected aren't fully reflected
   yet.
 
 ## For developers
