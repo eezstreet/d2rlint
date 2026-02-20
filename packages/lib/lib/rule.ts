@@ -3,8 +3,7 @@
  * Each rule checks the entire workspace for problems and reports it according to the rule settings.
  */
 
-// @deno-types="https://deno.land/x/chalk_deno@v4.1.1-deno/index.d.ts"
-import chalk from "https://deno.land/x/chalk_deno@v4.1.1-deno/source/index.js";
+import { brightRed, brightYellow, cyan, gray } from "jsr:@std/fmt/colors";
 import { GetConfig, RuleAction } from "./config.ts";
 import { GetLogfile } from "./log.ts";
 import { Workspace } from "./workspace.ts";
@@ -84,7 +83,7 @@ export abstract class Rule {
   Message(msg: string): void {
     this.Log(`MESSAGE\t${this.GetRuleName()}\t${msg}`);
     console.log(
-      `${chalk.cyan("MESSAGE")}\t${chalk.grey(this.GetRuleName())}\t${msg}`,
+      `${cyan("MESSAGE")}\t${gray(this.GetRuleName())}\t${msg}`,
     );
   }
 
@@ -104,12 +103,12 @@ export abstract class Rule {
     if (action === "warn") {
       this.Log(`WARN\t${ruleName}\t${msg}`);
       console.log(
-        `${chalk.yellowBright("WARN")}\t${chalk.grey(ruleName)}\t${msg}`,
+        `${brightYellow("WARN")}\t${gray(ruleName)}\t${msg}`,
       );
     } else if (action === "error") {
       this.Log(`ERROR\t${ruleName}\t${msg}`);
       console.log(
-        `${chalk.redBright("ERROR")}\t${chalk.grey(ruleName)}\t${msg}`,
+        `${brightRed("ERROR")}\t${gray(ruleName)}\t${msg}`,
       );
       console.log("Press any key to exit...");
       Deno.stdin.readSync(new Uint8Array(32));
