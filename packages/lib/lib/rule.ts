@@ -5,7 +5,7 @@
 
 import { brightRed, brightYellow, cyan, gray } from "jsr:@std/fmt/colors";
 import { GetConfig, RuleAction } from "./config.ts";
-import { GetLogfile } from "./log.ts";
+import { FlushLogfileIfExists, GetLogfile, LogEntry } from "./log.ts";
 import { Workspace } from "./workspace.ts";
 
 export type Constructor<T extends unknown = unknown> = {
@@ -70,10 +70,10 @@ export abstract class Rule {
   /**
    * Makes a log message.
    */
-  Log(msg: string): void {
+  Log(entry: LogEntry): void {
     const config = GetConfig();
     const log = GetLogfile(config);
-    log.WriteLine(msg);
+    log.WriteLine(entry);
   }
 
   /**
@@ -81,10 +81,9 @@ export abstract class Rule {
    * @param msg - the message to print to the log (and console)
    */
   Message(msg: string): void {
-    this.Log(`MESSAGE\t${this.GetRuleName()}\t${msg}`);
-    console.log(
-      `${cyan("MESSAGE")}\t${gray(this.GetRuleName())}\t${msg}`,
-    );
+    const ruleName = this.GetRuleName();
+    this.Log({ severity: "MESSAGE", ruleName, message: msg });
+    console.log(`${cyan("MESSAGE")}\t${gray(ruleName)}\t${msg}`);
   }
 
   /**
@@ -101,12 +100,13 @@ export abstract class Rule {
       return;
     }
     if (action === "warn") {
-      this.Log(`WARN\t${ruleName}\t${msg}`);
+      this.Log({ severity: "WARN", ruleName, message: msg });
       console.log(
         `${brightYellow("WARN")}\t${gray(ruleName)}\t${msg}`,
       );
     } else if (action === "error") {
-      this.Log(`ERROR\t${ruleName}\t${msg}`);
+      this.Log({ severity: "ERROR", ruleName, message: msg });
+      FlushLogfileIfExists();
       console.log(
         `${brightRed("ERROR")}\t${gray(ruleName)}\t${msg}`,
       );

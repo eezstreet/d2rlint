@@ -13,6 +13,13 @@ import { D2RStringTable } from "./workspace.ts";
  */
 export type RuleAction = "warn" | "error" | "ignore";
 export type GameVersion = "legacy" | "2.6" | "3.0";
+export type OutputFormat =
+  | "tsv"
+  | "tsv-buffered"
+  | "csv"
+  | "csv-buffered"
+  | "json"
+  | "json-buffered";
 export type DocPageType =
   | "uniques"
   | "sets"
@@ -36,6 +43,7 @@ export interface SavedConfiguration {
   fallback: string;
   log: string;
   logAppend: boolean;
+  outputFormat: OutputFormat;
   iveConsideredDonating: boolean;
   rules: { [ruleName: string]: RuleConfig };
   generateDocs: boolean;
@@ -162,6 +170,7 @@ function CreateDefaultConfig(): SavedConfiguration {
     fallback: "",
     logAppend: false,
     log: "output.txt",
+    outputFormat: "tsv",
     iveConsideredDonating: false,
     rules,
     generateDocs: false,
@@ -319,6 +328,7 @@ export type CliOverrides = {
   version?: GameVersion;
   log?: string;
   logAppend?: boolean;
+  outputFormat?: OutputFormat;
   generateDocs?: boolean;
   rules?: Record<string, RuleAction>;
 };
@@ -336,6 +346,7 @@ export function ApplyCliOverrides(
   if (overrides.version !== undefined) config.version = overrides.version;
   if (overrides.log !== undefined) config.log = overrides.log;
   if (overrides.logAppend !== undefined) config.logAppend = overrides.logAppend;
+  if (overrides.outputFormat !== undefined) config.outputFormat = overrides.outputFormat;
   if (overrides.generateDocs !== undefined) {
     config.generateDocs = overrides.generateDocs;
   }

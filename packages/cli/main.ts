@@ -7,11 +7,13 @@ import { executeCommands, getCommandUsages } from "./commands/index.ts";
 import {
   ApplyCliOverrides,
   CliOverrides,
+  FlushLogfileIfExists,
   GameVersion,
   GenerateDocs,
   GetConfig,
   GetAllRules,
   LoadWorkspace,
+  OutputFormat,
   RuleAction,
   SaveConfig,
 } from "@d2rlint/lib";
@@ -24,7 +26,7 @@ import "@d2rlint/lib/rules";
 // ---------------------------------------------------------------------------
 
 const parsed = parseArgs(Deno.args, {
-  string: ["workspace", "fallback", "game-version", "log"],
+  string: ["workspace", "fallback", "game-version", "log", "output-format"],
   boolean: [
     "generate-docs",
     "no-generate-docs",
@@ -53,6 +55,13 @@ if (parsed.help) {
     "  --game-version <version>      Override game version (legacy|2.6|3.0)",
   );
   console.log("  --log,       -l <path>        Override log file path");
+  console.log(
+    "  --output-format <fmt>         Override log output format",
+  );
+  console.log(
+    "                                tsv, tsv-buffered, csv, csv-buffered,",
+  );
+  console.log("                                json, json-buffered");
   console.log(
     "  --log-append                  Append to log instead of overwriting",
   );
@@ -99,6 +108,25 @@ if (
   Deno.exit(1);
 }
 
+// Validate --output-format value
+const outputFormatRaw = parsed["output-format"] as string | undefined;
+const validOutputFormats = [
+  "tsv",
+  "tsv-buffered",
+  "csv",
+  "csv-buffered",
+  "json",
+  "json-buffered",
+];
+if (outputFormatRaw !== undefined && !validOutputFormats.includes(outputFormatRaw)) {
+  console.error(
+    `Invalid --output-format "${outputFormatRaw}". Expected: ${
+      validOutputFormats.join(", ")
+    }`,
+  );
+  Deno.exit(1);
+}
+
 // Parse --rule Name=action flags
 const ruleOverrides: Record<string, RuleAction> = {};
 for (const r of (parsed["rule"] as string[])) {
@@ -124,6 +152,7 @@ if (parsed.workspace !== undefined) overrides.workspace = parsed.workspace as st
 if (parsed.fallback !== undefined) overrides.fallback = parsed.fallback as string;
 if (gameVersionRaw !== undefined) overrides.version = gameVersionRaw as GameVersion;
 if (parsed.log !== undefined) overrides.log = parsed.log as string;
+if (outputFormatRaw !== undefined) overrides.outputFormat = outputFormatRaw as OutputFormat;
 if (parsed["log-append"]) overrides.logAppend = true;
 else if (parsed["no-log-append"]) overrides.logAppend = false;
 if (parsed["generate-docs"]) overrides.generateDocs = true;
@@ -172,6 +201,7 @@ if (positionalArgs.length > 0) {
       `ERROR: A command by that name (${positionalArgs[0]}) does not exist.`,
     );
   }
+  FlushLogfileIfExists();
   if (parsed.save) {
     SaveConfig(config, "config.json");
     console.log("Config saved to config.json");
@@ -210,6 +240,7 @@ if (config.generateDocs === true) {
 // --save
 // ---------------------------------------------------------------------------
 
+FlushLogfileIfExists();
 if (parsed.save) {
   SaveConfig(config, "config.json");
   console.log("Config saved to config.json");

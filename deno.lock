@@ -1,9 +1,13 @@
 {
   "version": "5",
   "specifiers": {
+    "jsr:@std/cli@*": "1.0.27",
     "jsr:@std/fmt@*": "1.0.8"
   },
   "jsr": {
+    "@std/cli@1.0.27": {
+      "integrity": "eba97edd0891871a7410e835dd94b3c260c709cca5983df2689c25a71fbe04de"
+    },
     "@std/fmt@1.0.8": {
       "integrity": "71e1fc498787e4434d213647a6e43e794af4fd393ef8f52062246e06f7e372b7"
     }
