@@ -1,5 +1,5 @@
 import { GetConfig } from "../../lib/config.ts";
-import {
+import type {
   D2RItemExcelRecord,
   D2RSetItems,
   D2RSets,
@@ -7,7 +7,7 @@ import {
 } from "../../lib/workspace.ts";
 import {
   MakePropertyList,
-  PropertyList,
+  type PropertyList,
   PropertyListToDescString,
 } from "../items.ts";
 import { StringForIndex, StringForIndexFormatted } from "../lib.ts";

@@ -1,5 +1,5 @@
 import { lintrule, Rule } from "../lib/rule.ts";
-import { D2RCubemain, Workspace } from "../lib/workspace.ts";
+import type { D2RCubemain, Workspace } from "../lib/workspace.ts";
 
 const isQuality = (s: string) =>
   s === "low" || s === "hiq" || s === "nor" || s === "mag" ||

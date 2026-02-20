@@ -1,4 +1,4 @@
-import {
+import type {
   D2RGems,
   D2RItemTypes,
   D2RRunes,
@@ -6,7 +6,7 @@ import {
 } from "../../lib/workspace.ts";
 import {
   MakePropertyList,
-  PropertyList,
+  type PropertyList,
   PropertyListToDescString,
 } from "../items.ts";
 import {

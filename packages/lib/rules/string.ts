@@ -1,6 +1,6 @@
-import { RuleAction } from "../lib/config.ts";
+import type { RuleAction } from "../lib/config.ts";
 import { lintrule, Rule } from "../lib/rule.ts";
-import { D2RStringTable, Workspace } from "../lib/workspace.ts";
+import type { D2RStringTable, Workspace } from "../lib/workspace.ts";
 
 /**
  * No untranslated strings allowed.

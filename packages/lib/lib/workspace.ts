@@ -1,6 +1,5 @@
 import * as fs from "https://deno.land/std@0.130.0/fs/mod.ts";
-import * as path from "https://deno.land/std/path/mod.ts";
-import { GameVersion } from "./config.ts";
+import type { GameVersion } from "./config.ts";
 import { ExcelColumns } from "../rules/basic.ts";
 
 export type PatchVersion = "2.4" | "2.5" | "2.6" | "2.7" | "3.0";
@@ -5032,7 +5031,9 @@ export function LoadWorkspace(
   version: GameVersion,
 ): Workspace {
   return {
-    actInfo: version === "legacy" ? undefined : ParseExcel(location, fallback, D2RActInfo),
+    actInfo: version === "legacy"
+      ? undefined
+      : ParseExcel(location, fallback, D2RActInfo),
     armor: ParseExcel(location, fallback, D2RArmor),
     armType: ParseExcel(location, fallback, D2RArmType),
     autoMagic: ParseExcel(location, fallback, D2RAutomagic),
@@ -5062,7 +5063,9 @@ export function LoadWorkspace(
     itemRatio: ParseExcel(location, fallback, D2RItemRatio),
     itemStatCost: ParseExcel(location, fallback, D2RItemStatCost),
     itemTypes: ParseExcel(location, fallback, D2RItemTypes),
-    itemUICategories: version === "legacy" ? undefined : ParseExcel(location, fallback, D2RItemUICategories),
+    itemUICategories: version === "legacy"
+      ? undefined
+      : ParseExcel(location, fallback, D2RItemUICategories),
     levels: ParseExcel(location, fallback, D2RLevels),
     levelGroups: version === "legacy"
       ? undefined
@@ -5084,7 +5087,9 @@ export function LoadWorkspace(
     missiles: ParseExcel(location, fallback, D2RMissiles),
     monAi: ParseExcel(location, fallback, D2RMonAi),
     monEquip: ParseExcel(location, fallback, D2RMonEquip),
-    monPet: version === "legacy" ? undefined : ParseExcel(location, fallback, D2RMonPet),
+    monPet: version === "legacy"
+      ? undefined
+      : ParseExcel(location, fallback, D2RMonPet),
     monLvl: ParseExcel(location, fallback, D2RMonLvl),
     monMode: ParseExcel(location, fallback, D2RMonMode),
     monPlace: ParseExcel(location, fallback, D2RMonPlace),
@@ -5110,12 +5115,16 @@ export function LoadWorkspace(
     plrMode: ParseExcel(location, fallback, D2RPlrMode),
     plrType: ParseExcel(location, fallback, D2RPlrType),
     properties: ParseExcel(location, fallback, D2RProperties),
-    propertyGroups: version === "legacy" ? undefined : ParseExcel(location, fallback, D2RPropertyGroups),
+    propertyGroups: version === "legacy"
+      ? undefined
+      : ParseExcel(location, fallback, D2RPropertyGroups),
     qualityItems: ParseExcel(location, fallback, D2RQualityItems),
     rarePrefix: ParseExcel(location, fallback, D2RRarePrefix),
     rareSuffix: ParseExcel(location, fallback, D2RRareSuffix),
     runes: ParseExcel(location, fallback, D2RRunes),
-    runewordUICategories: version === "legacy" ? undefined : ParseExcel(location, fallback, D2RRunewordUICategories),
+    runewordUICategories: version === "legacy"
+      ? undefined
+      : ParseExcel(location, fallback, D2RRunewordUICategories),
     setItems: ParseExcel(location, fallback, D2RSetItems),
     sets: ParseExcel(location, fallback, D2RSets),
     shrines: ParseExcel(location, fallback, D2RShrines),

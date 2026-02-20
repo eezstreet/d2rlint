@@ -1,5 +1,9 @@
 import { GetConfig } from "../../lib/config.ts";
-import { D2RCubemain, D2RMagicBase, Workspace } from "../../lib/workspace.ts";
+import type {
+  D2RCubemain,
+  D2RMagicBase,
+  Workspace,
+} from "../../lib/workspace.ts";
 import { MakePropertyList, PropertyListToDescString } from "../items.ts";
 import { StringForIndex } from "../lib.ts";
 

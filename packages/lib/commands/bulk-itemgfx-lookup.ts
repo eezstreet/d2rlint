@@ -1,4 +1,4 @@
-import { Workspace } from "../lib/workspace.ts";
+import type { Workspace } from "../lib/workspace.ts";
 
 export const ExecuteBulkItemGfxLookup = (ws: Workspace, args: string[]) => {
   if (args.length < 2) {

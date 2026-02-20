@@ -1,4 +1,4 @@
-import { OutputFormat, SavedConfiguration } from "./config.ts";
+import type { OutputFormat, SavedConfiguration } from "./config.ts";
 
 export type LogEntry = {
   severity: "MESSAGE" | "WARN" | "ERROR";

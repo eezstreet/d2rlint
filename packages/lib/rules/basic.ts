@@ -2,41 +2,41 @@ import { GetConfig } from "../lib/config.ts";
 import { seq } from "../lib/misc.ts";
 import { lintrule, Rule } from "../lib/rule.ts";
 import {
-  D2RActInfo,
-  D2RArmor,
-  D2RAutomagic,
-  D2RCharStats,
-  D2RCubemain,
-  D2RExcelRecord,
-  D2RGems,
-  D2RHireling,
-  D2RItemStatCost,
-  D2RItemTypes,
-  D2RLevels,
-  D2RMagicBase,
-  D2RMisc,
-  D2RMissiles,
-  D2RMonEquip,
-  D2RMonProp,
-  D2RMonSounds,
-  D2RMonStats,
-  D2RMonType,
-  D2RMonUMod,
-  D2RQualityItems,
-  D2RRareBase,
-  D2RRunes,
-  D2RSetItems,
-  D2RSets,
-  D2RSkillDesc,
-  D2RSkills,
-  D2RStates,
-  D2RSuperUniques,
-  D2RUniqueItems,
-  D2RWeapons,
+  type D2RActInfo,
+  type D2RArmor,
+  type D2RAutomagic,
+  type D2RCharStats,
+  type D2RCubemain,
+  type D2RExcelRecord,
+  type D2RGems,
+  type D2RHireling,
+  type D2RItemStatCost,
+  type D2RItemTypes,
+  type D2RLevels,
+  type D2RMagicBase,
+  type D2RMisc,
+  type D2RMissiles,
+  type D2RMonEquip,
+  type D2RMonProp,
+  type D2RMonSounds,
+  type D2RMonStats,
+  type D2RMonType,
+  type D2RMonUMod,
+  type D2RQualityItems,
+  type D2RRareBase,
+  type D2RRunes,
+  type D2RSetItems,
+  type D2RSets,
+  type D2RSkillDesc,
+  type D2RSkills,
+  type D2RStates,
+  type D2RSuperUniques,
+  type D2RUniqueItems,
+  type D2RWeapons,
   FindMatchingStringIndex,
   getColumnAliasesForVersion,
   getFieldsNotExpectedForVersion,
-  Workspace,
+  type Workspace,
 } from "../lib/workspace.ts";
 
 /**
@@ -154,7 +154,9 @@ export class ExcelColumns extends Rule {
       versionChanges,
     );
     const aliasesLower = new Map(
-      [...aliases].map(([from, to]) => [from.toLocaleLowerCase(), to.toLocaleLowerCase()]),
+      [...aliases].map((
+        [from, to],
+      ) => [from.toLocaleLowerCase(), to.toLocaleLowerCase()]),
     );
     // Build reverse lookup: currentPropertyName → oldColumnName(s) present in headers
     const reverseAliases = new Map<string, string>();
@@ -178,7 +180,9 @@ export class ExcelColumns extends Rule {
     });
 
     // Warn if any non-optional columns are missing
-    const optional = generic.GetOptionalFields().map((f) => f.toLocaleLowerCase());
+    const optional = generic.GetOptionalFields().map((f) =>
+      f.toLocaleLowerCase()
+    );
     keysLower.forEach((key) => {
       if (optional.includes(key)) {
         return; // skip optional
@@ -1686,7 +1690,8 @@ export class NumericBounds extends Rule {
       index: string,
       field: string,
     ) => string;
-    const makeComparer = (c: comparer, m: messager) =>
+    const makeComparer =
+      (c: comparer, m: messager) =>
       <T extends D2RExcelRecord, U extends keyof T = keyof T>(
         records: T[] | undefined,
         field: U,
@@ -2244,9 +2249,11 @@ export class MinMaxOrdering extends Rule {
 
         if (minVal > maxVal) {
           this.Warn(
-            `${record.GetFileName()}, line ${
-              line + 2
-            }: '${String(minField)}' (${minVal}) > '${String(maxField)}' (${maxVal}) for '${indexStr}'`,
+            `${record.GetFileName()}, line ${line + 2}: '${
+              String(minField)
+            }' (${minVal}) > '${
+              String(maxField)
+            }' (${maxVal}) for '${indexStr}'`,
           );
         }
       });
@@ -2272,8 +2279,18 @@ export class MinMaxOrdering extends Rule {
       checkMinMax(itemFile, "minac", "maxac", "name");
       checkMinMax(itemFile, "mindam", "maxdam", "name");
     });
-    checkMinMax(weapons, "2handmindam" as keyof D2RWeapons, "2handmaxdam" as keyof D2RWeapons, "name" as keyof D2RWeapons);
-    checkMinMax(weapons, "minmisdam" as keyof D2RWeapons, "maxmisdam" as keyof D2RWeapons, "name" as keyof D2RWeapons);
+    checkMinMax(
+      weapons,
+      "2handmindam" as keyof D2RWeapons,
+      "2handmaxdam" as keyof D2RWeapons,
+      "name" as keyof D2RWeapons,
+    );
+    checkMinMax(
+      weapons,
+      "minmisdam" as keyof D2RWeapons,
+      "maxmisdam" as keyof D2RWeapons,
+      "name" as keyof D2RWeapons,
+    );
 
     // monstats: MinGrp/MaxGrp, PartyMin/PartyMax, minHP/maxHP, attack damage pairs
     checkMinMax(monStats, "mingrp", "maxgrp", "id");
@@ -2286,21 +2303,91 @@ export class MinMaxOrdering extends Rule {
     checkMinMax(monStats, "el2mind", "el2maxd", "id");
     checkMinMax(monStats, "el3mind", "el3maxd", "id");
     // nightmare variants
-    checkMinMax(monStats, "minhp(n)" as keyof D2RMonStats, "maxhp(n)" as keyof D2RMonStats, "id");
-    checkMinMax(monStats, "a1mind(n)" as keyof D2RMonStats, "a1maxd(n)" as keyof D2RMonStats, "id");
-    checkMinMax(monStats, "a2mind(n)" as keyof D2RMonStats, "a2maxd(n)" as keyof D2RMonStats, "id");
-    checkMinMax(monStats, "s1mind(n)" as keyof D2RMonStats, "s1maxd(n)" as keyof D2RMonStats, "id");
-    checkMinMax(monStats, "el1mind(n)" as keyof D2RMonStats, "el1maxd(n)" as keyof D2RMonStats, "id");
-    checkMinMax(monStats, "el2mind(n)" as keyof D2RMonStats, "el2maxd(n)" as keyof D2RMonStats, "id");
-    checkMinMax(monStats, "el3mind(n)" as keyof D2RMonStats, "el3maxd(n)" as keyof D2RMonStats, "id");
+    checkMinMax(
+      monStats,
+      "minhp(n)" as keyof D2RMonStats,
+      "maxhp(n)" as keyof D2RMonStats,
+      "id",
+    );
+    checkMinMax(
+      monStats,
+      "a1mind(n)" as keyof D2RMonStats,
+      "a1maxd(n)" as keyof D2RMonStats,
+      "id",
+    );
+    checkMinMax(
+      monStats,
+      "a2mind(n)" as keyof D2RMonStats,
+      "a2maxd(n)" as keyof D2RMonStats,
+      "id",
+    );
+    checkMinMax(
+      monStats,
+      "s1mind(n)" as keyof D2RMonStats,
+      "s1maxd(n)" as keyof D2RMonStats,
+      "id",
+    );
+    checkMinMax(
+      monStats,
+      "el1mind(n)" as keyof D2RMonStats,
+      "el1maxd(n)" as keyof D2RMonStats,
+      "id",
+    );
+    checkMinMax(
+      monStats,
+      "el2mind(n)" as keyof D2RMonStats,
+      "el2maxd(n)" as keyof D2RMonStats,
+      "id",
+    );
+    checkMinMax(
+      monStats,
+      "el3mind(n)" as keyof D2RMonStats,
+      "el3maxd(n)" as keyof D2RMonStats,
+      "id",
+    );
     // hell variants
-    checkMinMax(monStats, "minhp(h)" as keyof D2RMonStats, "maxhp(h)" as keyof D2RMonStats, "id");
-    checkMinMax(monStats, "a1mind(h)" as keyof D2RMonStats, "a1maxd(h)" as keyof D2RMonStats, "id");
-    checkMinMax(monStats, "a2mind(h)" as keyof D2RMonStats, "a2maxd(h)" as keyof D2RMonStats, "id");
-    checkMinMax(monStats, "s1mind(h)" as keyof D2RMonStats, "s1maxd(h)" as keyof D2RMonStats, "id");
-    checkMinMax(monStats, "el1mind(h)" as keyof D2RMonStats, "el1maxd(h)" as keyof D2RMonStats, "id");
-    checkMinMax(monStats, "el2mind(h)" as keyof D2RMonStats, "el2maxd(h)" as keyof D2RMonStats, "id");
-    checkMinMax(monStats, "el3mind(h)" as keyof D2RMonStats, "el3maxd(h)" as keyof D2RMonStats, "id");
+    checkMinMax(
+      monStats,
+      "minhp(h)" as keyof D2RMonStats,
+      "maxhp(h)" as keyof D2RMonStats,
+      "id",
+    );
+    checkMinMax(
+      monStats,
+      "a1mind(h)" as keyof D2RMonStats,
+      "a1maxd(h)" as keyof D2RMonStats,
+      "id",
+    );
+    checkMinMax(
+      monStats,
+      "a2mind(h)" as keyof D2RMonStats,
+      "a2maxd(h)" as keyof D2RMonStats,
+      "id",
+    );
+    checkMinMax(
+      monStats,
+      "s1mind(h)" as keyof D2RMonStats,
+      "s1maxd(h)" as keyof D2RMonStats,
+      "id",
+    );
+    checkMinMax(
+      monStats,
+      "el1mind(h)" as keyof D2RMonStats,
+      "el1maxd(h)" as keyof D2RMonStats,
+      "id",
+    );
+    checkMinMax(
+      monStats,
+      "el2mind(h)" as keyof D2RMonStats,
+      "el2maxd(h)" as keyof D2RMonStats,
+      "id",
+    );
+    checkMinMax(
+      monStats,
+      "el3mind(h)" as keyof D2RMonStats,
+      "el3maxd(h)" as keyof D2RMonStats,
+      "id",
+    );
 
     // missiles: MinDamage/MaxDamage, EMin/EMax
     checkMinMax(missiles, "mindamage", "maxdamage", "missile");
@@ -2308,14 +2395,29 @@ export class MinMaxOrdering extends Rule {
 
     // levels: MonUMin/MonUMax
     checkMinMax(levels, "monumin", "monumax", "name");
-    checkMinMax(levels, "monumin(n)" as keyof D2RLevels, "monumax(n)" as keyof D2RLevels, "name");
-    checkMinMax(levels, "monumin(h)" as keyof D2RLevels, "monumax(h)" as keyof D2RLevels, "name");
+    checkMinMax(
+      levels,
+      "monumin(n)" as keyof D2RLevels,
+      "monumax(n)" as keyof D2RLevels,
+      "name",
+    );
+    checkMinMax(
+      levels,
+      "monumin(h)" as keyof D2RLevels,
+      "monumax(h)" as keyof D2RLevels,
+      "name",
+    );
 
     // superuniques: MinGrp/MaxGrp
     checkMinMax(superUniques, "mingrp", "maxgrp", "superunique");
 
     // hireling: Dmg-Min/Dmg-Max
-    checkMinMax(hireling, "dmg-min" as keyof D2RHireling, "dmg-max" as keyof D2RHireling, "hireling");
+    checkMinMax(
+      hireling,
+      "dmg-min" as keyof D2RHireling,
+      "dmg-max" as keyof D2RHireling,
+      "hireling",
+    );
 
     // cubemain: mod min/max
     seq(1, 5).forEach((i) => {
@@ -2382,7 +2484,10 @@ export class BooleanFields extends Rule {
 
       records.forEach((record, line) => {
         const indexStr = record[index] as unknown as string;
-        if (indexStr === "" || indexStr === "Expansion" || indexStr?.startsWith?.("@")) {
+        if (
+          indexStr === "" || indexStr === "Expansion" ||
+          indexStr?.startsWith?.("@")
+        ) {
           return;
         }
 
@@ -2392,9 +2497,9 @@ export class BooleanFields extends Rule {
             return;
           }
           this.Warn(
-            `${record.GetFileName()}, line ${
-              line + 2
-            }: '${String(field)}' should be 0 or 1 (found '${val}') for '${indexStr}'`,
+            `${record.GetFileName()}, line ${line + 2}: '${
+              String(field)
+            }' should be 0 or 1 (found '${val}') for '${indexStr}'`,
           );
         });
       });

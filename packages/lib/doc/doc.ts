@@ -1,5 +1,5 @@
-import { DocPageType, GetConfig } from "../lib/config.ts";
-import { Workspace } from "../lib/workspace.ts";
+import { type DocPageType, GetConfig } from "../lib/config.ts";
+import type { Workspace } from "../lib/workspace.ts";
 import DocCubeRecipes from "./cube/cube.ts";
 import { DocArmor, DocMisc, DocWeapons } from "./items/base.ts";
 import { DocGems } from "./items/gems.ts";

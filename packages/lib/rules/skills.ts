@@ -1,5 +1,5 @@
 import { lintrule, Rule } from "../lib/rule.ts";
-import { Workspace } from "../lib/workspace.ts";
+import type { Workspace } from "../lib/workspace.ts";
 
 @lintrule
 export class EqualSkills extends Rule {

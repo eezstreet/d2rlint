@@ -1,4 +1,4 @@
-import { Workspace } from "../lib/workspace.ts";
+import type { Workspace } from "../lib/workspace.ts";
 
 type MappedType = { normal: string; uber: string; ultra: string };
 type MapOfMappedType = { [key: string]: MappedType };

@@ -4,9 +4,9 @@
  */
 
 import { brightRed, brightYellow, cyan, gray } from "jsr:@std/fmt/colors";
-import { GetConfig, RuleAction } from "./config.ts";
-import { FlushLogfileIfExists, GetLogfile, LogEntry } from "./log.ts";
-import { Workspace } from "./workspace.ts";
+import { GetConfig, type RuleAction } from "./config.ts";
+import { FlushLogfileIfExists, GetLogfile, type LogEntry } from "./log.ts";
+import type { Workspace } from "./workspace.ts";
 
 export type Constructor<T extends unknown = unknown> = {
   new (...args: unknown[]): T;
@@ -94,8 +94,7 @@ export abstract class Rule {
     const config = GetConfig();
     const ruleName = this.GetRuleName();
 
-    const action =
-      config.rules[ruleName]?.action ?? this.GetDefaultAction();
+    const action = config.rules[ruleName]?.action ?? this.GetDefaultAction();
     if (action === "ignore") {
       return;
     }

@@ -6,7 +6,7 @@
 import { GetAllRules } from "./rule.ts";
 import * as fs from "https://deno.land/std@0.130.0/fs/mod.ts";
 import { deepMerge } from "./misc.ts";
-import { D2RStringTable } from "./workspace.ts";
+import type { D2RStringTable } from "./workspace.ts";
 
 /**
  * Types
@@ -346,7 +346,9 @@ export function ApplyCliOverrides(
   if (overrides.version !== undefined) config.version = overrides.version;
   if (overrides.log !== undefined) config.log = overrides.log;
   if (overrides.logAppend !== undefined) config.logAppend = overrides.logAppend;
-  if (overrides.outputFormat !== undefined) config.outputFormat = overrides.outputFormat;
+  if (overrides.outputFormat !== undefined) {
+    config.outputFormat = overrides.outputFormat;
+  }
   if (overrides.generateDocs !== undefined) {
     config.generateDocs = overrides.generateDocs;
   }

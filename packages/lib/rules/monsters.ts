@@ -1,5 +1,5 @@
 import { lintrule, Rule } from "../lib/rule.ts";
-import { Workspace } from "../lib/workspace.ts";
+import type { Workspace } from "../lib/workspace.ts";
 
 /**
  * Ensure that all baseid chains in monstats.txt are contiguous and don't have gaps.

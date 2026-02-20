@@ -1,7 +1,7 @@
-import { D2RMagicBase, Workspace } from "../../lib/workspace.ts";
+import type { D2RMagicBase, Workspace } from "../../lib/workspace.ts";
 import {
   MakePropertyList,
-  PropertyList,
+  type PropertyList,
   PropertyListToDescString,
 } from "../items.ts";
 import {

@@ -1,5 +1,5 @@
 import { GetConfig } from "../lib/config.ts";
-import { Workspace } from "../lib/workspace.ts";
+import type { Workspace } from "../lib/workspace.ts";
 
 function GeneratePage(inner: string): string {
   const config = GetConfig();

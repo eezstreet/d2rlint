@@ -1,5 +1,5 @@
 import { lintrule, Rule } from "../lib/rule.ts";
-import {
+import type {
   D2RExcelRecord,
   D2RTreasureClassEx,
   Workspace,

@@ -1,5 +1,5 @@
 import { GetConfig } from "../lib/config.ts";
-import {
+import type {
   D2RExcelRecord,
   D2RItemStatCost,
   D2RProperties,

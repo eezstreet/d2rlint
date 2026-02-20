@@ -1,4 +1,4 @@
-import {
+import type {
   D2RArmor,
   D2RMisc,
   D2RUniqueItems,
@@ -7,7 +7,7 @@ import {
 } from "../../lib/workspace.ts";
 import {
   MakePropertyList,
-  PropertyList,
+  type PropertyList,
   PropertyListToDescString,
 } from "../items.ts";
 import { StringForIndex } from "../lib.ts";

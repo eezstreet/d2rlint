@@ -1,5 +1,5 @@
 import { lintrule, Rule } from "../lib/rule.ts";
-import { D2RLevels, Workspace } from "../lib/workspace.ts";
+import type { D2RLevels, Workspace } from "../lib/workspace.ts";
 
 /**
  * Check to make sure that the level has valid vis/warp entries
