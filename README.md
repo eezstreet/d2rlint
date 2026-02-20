@@ -178,18 +178,18 @@ In order to compile the program, use the following (assuming `deno` is available
 in your `PATH`):
 
 ```
-deno compile --allow-read --allow-write --allow-env src/main.ts
+deno task compile-cli
 ```
 
-This will produce a `src.exe` or `src` executable (depending on your platform).
+This will produce a `d2rlint.exe` or `d2rlint` executable (depending on your platform).
 
 ### Creating new rules
 
 The program is designed to be extensible and customizable for your needs. In the
-`src/rules` directory you can create new rules. They are pretty straightforward:
+`packages/lib/rules` directory you can create new rules. They are pretty straightforward:
 
 ```ts
-import { lintrule, Rule } from "../lib/rule.ts";
+import { lintrule, Rule } from "@d2rlint/lib";
 
 @lintrule
 export default class MyCustomRule extends Rule {
@@ -207,7 +207,7 @@ export default class MyCustomRule extends Rule {
 This example rule will always pass, but check out some examples of rules that
 have already been created within that directory.
 
-Remember that rules need to be imported within the `main.ts` otherwise they will
+Remember that rules need to be re-exported from `packages/lib/rules/mod.ts` otherwise they will
 not be called.
 
 ## Advanced Feature: Automatic Mod Documentation

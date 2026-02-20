@@ -1,3 +1,6 @@
 {
-  "workspace": ["packages/lib", "packages/cli"]
+  "workspace": ["packages/lib", "packages/cli"],
+  "tasks": {
+    "compile-cli": "deno compile --allow-read --allow-write --allow-env --output d2rlint packages/cli/main.ts"
+  }
 }
