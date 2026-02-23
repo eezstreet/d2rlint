@@ -120,8 +120,10 @@ export class NoDuplicates extends Rule {
 
 /**
  * Ensure that Excel files have the correct columns.
- * @lintrule intentionally skipped here because we don't want to auto-evaluate this one
+ * Checked at parse time via Check(); Evaluate() is a no-op.
+ * Registering with @lintrule allows the action to be configured in config.json.
  */
+@lintrule
 export class ExcelColumns extends Rule {
   GetRuleName(): string {
     return "Basic/ExcelColumns";

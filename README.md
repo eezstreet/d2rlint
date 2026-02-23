@@ -24,7 +24,7 @@ wrote a config file:
 d2rlint didn't start, because the configuration file was missing. One has been generated for you.
 Please edit the configuration file (config.json) to set your workspace location.
 By default, this will look in the current working directory.
-Press any key to continue.
+Press enter to continue.
 ```
 
 You will find that it has produced a `config.json` file:
@@ -36,6 +36,7 @@ You will find that it has produced a `config.json` file:
   "version": "3.0",
   "log": "output.txt",
   "logAppend": false,
+  "outputFormat": "tsv",
   "iveConsideredDonating": false,
   "rules": {
     "Basic/NoDuplicateExcel": {
@@ -86,13 +87,21 @@ You can adjust the level of concern for each individual rule within the
 
 - `"warn"`: the default for most rules, this will warn about the rule but
   continue execution
-- `"ignore"`: if this is set, the rule will be ignored (the rule is not even
-  evaluated)
+- `"ignore"`: if this is set, the rule's output will be suppressed
 - `"error"`: halt and exit with a non-zero code if this rule fires
 
 The program by default writes to `stdout`, but it can also write to a log file.
 If `logAppend` is turned on, it will write to the same log file over and over
 again.
+
+The `outputFormat` field controls the format of log output. Valid values are:
+
+- `"tsv"` (default): tab-separated values, written immediately on each line
+- `"tsv-buffered"`: same format, buffered and flushed at the end of the run
+- `"csv"`: comma-separated values, written immediately
+- `"csv-buffered"`: same format, buffered
+- `"json"`: JSON output, written immediately
+- `"json-buffered"`: same format, buffered and flushed at the end of the run
 
 The program will output a banner at the top of `stdout` unless
 `iveConsideredDonating` has been turned on. **Please consider donating!**
@@ -108,6 +117,7 @@ Any config field can be overridden for a single run without editing
 | `--fallback <path>` | `-f` | Override fallback directory |
 | `--game-version <version>` | | Override game version (`legacy`, `2.6`, `3.0`) |
 | `--log <path>` | `-l` | Override log file path |
+| `--output-format <fmt>` | | Override log output format (`tsv`, `tsv-buffered`, `csv`, `csv-buffered`, `json`, `json-buffered`) |
 | `--log-append` / `--no-log-append` | | Append to or overwrite the log file |
 | `--generate-docs` / `--no-generate-docs` | | Enable or disable doc generation |
 | `--rule <Name=action>` | | Override a single rule action (repeatable) |
@@ -138,14 +148,26 @@ d2rlint --workspace "C:/MyMod" --save
 - `Basic/ExcelColumns`: Columns that aren't optional and are missing will throw
   a warning. Likewise, columns that aren't supposed to be there will throw a
   warning. (Columns that start with an asterisk (*) are not parsed, and are
-  ignored.)
+  ignored.) Note: this check always runs at parse time regardless of the action
+  setting; setting the action to `"ignore"` silences its output without skipping
+  the check itself.
 - `Basic/LinkedExcel`: Ensures that all inter-file linkage is accurate, with a
   few exceptions. Examples include things like checking for missing strings,
   checking for invalid item codes and so on. This won't check Treasure Class or
   Cube linkage, this is handled by other rules.
+- `Basic/StringCheck`: Ensures that no two strings across all string tables
+  share the same numeric ID. Duplicate IDs can cause one string to silently
+  override another at runtime.
 - `Basic/NumericBounds`: Ensures that no fields go out of bounds. For example, a
   number greater than 6 for 'Picks' in TreasureClassEx.txt would be considered
   invalid for a TC.
+- `Basic/MinMaxOrdering`: Ensures that minimum values do not exceed their
+  corresponding maximum values. Checks pairs such as `mindam`/`maxdam` and
+  `minac`/`maxac` across items, monsters, cube recipes, set/unique items, and
+  more.
+- `Basic/BooleanFields`: Ensures that fields which only accept boolean values
+  contain `0`, `1`, or are empty. Covers boolean columns in `monstats.txt`,
+  `weapons.txt`, `armor.txt`, `misc.txt`, and several other files.
 - `Cube/ValidInputs`: Ensures that both the number of inputs and the inputs
   themselves to cube recipes are valid.
 - `Cube/ValidOutputs`: Ensures that the outputs to cube recipes are valid.
