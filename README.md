@@ -10,7 +10,7 @@ partially backwards-compatible with the legacy version of the game.
 This tool also provides two more features:
 
 - **Automatic mod documentation**. Once enabled in the configuration file,
-  d2rlint will genenerate HTML documentation for your mod. This includes
+  d2rlint will generate HTML documentation for your mod. This includes
   information about Horadric Cube recipes, runewords, sets, and more.
 - **Other helpful utilities**. There are a number of different commands that you
   can execute in the commandline to make your life a little bit easier.
@@ -119,6 +119,7 @@ Any config field can be overridden for a single run without editing
 | `--log <path>` | `-l` | Override log file path |
 | `--output-format <fmt>` | | Override log output format (`tsv`, `tsv-buffered`, `csv`, `csv-buffered`, `json`, `json-buffered`) |
 | `--log-append` / `--no-log-append` | | Append to or overwrite the log file |
+| `--color` / `--no-color` | | Force enable or disable color output |
 | `--generate-docs` / `--no-generate-docs` | | Enable or disable doc generation |
 | `--rule <Name=action>` | | Override a single rule action (repeatable) |
 | `--save` | | Write overrides back to `config.json` |
@@ -258,8 +259,8 @@ export default class MyCustomRule extends Rule {
 This example rule will always pass, but check out some examples of rules that
 have already been created within that directory.
 
-Remember that rules need to be re-exported from `packages/lib/rules/mod.ts` otherwise they will
-not be called.
+Remember that rules need to be imported in `packages/lib/rules/mod.ts` (as a side-effect import)
+otherwise they will not be called.
 
 ## Advanced Feature: Automatic Mod Documentation
 
@@ -322,8 +323,8 @@ We might want certain things to be hidden or discovered by the player, or we
 might want to just hide lots of superfluous recipes in the cube - there's sure
 to be a lot of them.
 
-In the following files, you can add a `@skipdocs` column. Anything with a '1' in
-this column will be hidden in the documentation:
+In the following files, you can add a `@skipdocs` column. Anything with a
+non-empty value in this column will be hidden in the documentation:
 
 - armor.txt
 - misc.txt
@@ -333,6 +334,8 @@ this column will be hidden in the documentation:
 - sets.txt
 - runes.txt
 - cubemain.txt
+- magicprefix.txt
+- magicsuffix.txt
 
 ### Section Headers
 
@@ -348,6 +351,7 @@ that to the list of section headers. It's really that simple.
 You can do this in the following files:
 
 - armor.txt
+- misc.txt
 - weapons.txt
 - gems.txt
 - uniqueitems.txt
