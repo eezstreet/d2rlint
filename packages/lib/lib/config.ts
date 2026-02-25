@@ -44,6 +44,7 @@ export interface SavedConfiguration {
   log: string;
   logAppend: boolean;
   outputFormat: OutputFormat;
+  color: "auto" | boolean;
   iveConsideredDonating: boolean;
   rules: { [ruleName: string]: RuleConfig };
   generateDocs: boolean;
@@ -171,6 +172,7 @@ function CreateDefaultConfig(): SavedConfiguration {
     logAppend: false,
     log: "output.txt",
     outputFormat: "tsv",
+    color: "auto",
     iveConsideredDonating: false,
     rules,
     generateDocs: false,
@@ -329,6 +331,7 @@ export type CliOverrides = {
   log?: string;
   logAppend?: boolean;
   outputFormat?: OutputFormat;
+  color?: boolean;
   generateDocs?: boolean;
   rules?: Record<string, RuleAction>;
 };
@@ -349,6 +352,7 @@ export function ApplyCliOverrides(
   if (overrides.outputFormat !== undefined) {
     config.outputFormat = overrides.outputFormat;
   }
+  if (overrides.color !== undefined) config.color = overrides.color;
   if (overrides.generateDocs !== undefined) {
     config.generateDocs = overrides.generateDocs;
   }

@@ -8,6 +8,16 @@ import { GetConfig, type RuleAction } from "./config.ts";
 import { FlushLogfileIfExists, GetLogfile, type LogEntry } from "./log.ts";
 import type { Workspace } from "./workspace.ts";
 
+let colorsEnabled = true;
+
+export function setColorsEnabled(enabled: boolean): void {
+  colorsEnabled = enabled;
+}
+
+function c(fn: (s: string) => string, s: string): string {
+  return colorsEnabled ? fn(s) : s;
+}
+
 export type Constructor<T extends unknown = unknown> = {
   new (...args: unknown[]): T;
 };
@@ -83,7 +93,7 @@ export abstract class Rule {
   Message(msg: string): void {
     const ruleName = this.GetRuleName();
     this.Log({ severity: "MESSAGE", ruleName, message: msg });
-    console.log(`${cyan("MESSAGE")}\t${gray(ruleName)}\t${msg}`);
+    console.log(`${c(cyan, "MESSAGE")}\t${c(gray, ruleName)}\t${msg}`);
   }
 
   /**
@@ -101,13 +111,13 @@ export abstract class Rule {
     if (action === "warn") {
       this.Log({ severity: "WARN", ruleName, message: msg });
       console.log(
-        `${brightYellow("WARN")}\t${gray(ruleName)}\t${msg}`,
+        `${c(brightYellow, "WARN")}\t${c(gray, ruleName)}\t${msg}`,
       );
     } else if (action === "error") {
       this.Log({ severity: "ERROR", ruleName, message: msg });
       FlushLogfileIfExists();
       console.log(
-        `${brightRed("ERROR")}\t${gray(ruleName)}\t${msg}`,
+        `${c(brightRed, "ERROR")}\t${c(gray, ruleName)}\t${msg}`,
       );
       console.log("Press any key to exit...");
       Deno.stdin.readSync(new Uint8Array(32));
