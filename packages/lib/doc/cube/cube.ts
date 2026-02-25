@@ -534,7 +534,7 @@ export default function DocCubeRecipes(ws: Workspace): string {
     "input 7",
   ];
 
-  return cubemain.filter((recipe) => recipe.enabled === "1").map((recipe) => {
+  return cubemain.filter((recipe) => recipe.enabled === "1" && recipe.skipInDocs !== true).map((recipe) => {
     const inputs = inputFields.map((field) =>
       EvaluateCubeInput(recipe[field] as string, ws)
     ).filter((s) => s !== "");
