@@ -161,10 +161,6 @@ d2rlint --workspace "C:/MyMod" --save
 - `Basic/NumericBounds`: Ensures that no fields go out of bounds. For example, a
   number greater than 6 for 'Picks' in TreasureClassEx.txt would be considered
   invalid for a TC.
-- `Basic/MinMaxOrdering`: Ensures that minimum values do not exceed their
-  corresponding maximum values. Checks pairs such as `mindam`/`maxdam` and
-  `minac`/`maxac` across items, monsters, cube recipes, set/unique items, and
-  more.
 - `Basic/BooleanFields`: Ensures that fields which only accept boolean values
   contain `0`, `1`, or are empty. Covers boolean columns in `monstats.txt`,
   `weapons.txt`, `armor.txt`, `misc.txt`, and several other files.
